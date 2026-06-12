@@ -628,7 +628,7 @@ export default function App() {
 const fetchPrices = useCallback(async () => {
     setRefresh(true);
     try {
-      const symbols = COMPANIES.map(c => c.ticker);
+      const symbols = [...new Set(COMPANIES.flatMap(c => c.altTicker && c.altTicker !== c.ticker ? [c.ticker, c.altTicker] : [c.ticker]))];
       const response = await fetch("/.netlify/functions/prices", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
