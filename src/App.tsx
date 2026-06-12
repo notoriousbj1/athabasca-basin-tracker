@@ -929,10 +929,6 @@ export default function App() {
 
         {/* Video / Interviews */}
         <div style={{ marginBottom:20 }}>
-          <div style={RuleH}>
-            <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Featured Interviews & Analysis</div>
-            <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Key voices on the Athabasca Basin uranium opportunity</div>
-          </div>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", ...RuleH }}>
             <div>
               <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Featured Interviews & Analysis</div>
