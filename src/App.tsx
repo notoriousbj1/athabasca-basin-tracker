@@ -479,7 +479,7 @@ const usTk = (c) => {
 // HELPERS
 // ─────────────────────────────────────────────
 async function aiSearch(userPrompt, system = "") {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("/.netlify/functions/claude", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({
@@ -628,19 +628,20 @@ export default function App() {
   const fetchPrices = useCallback(async () => {
     setRefresh(true);
     try {
-      const tickers = COMPANIES.map(c=>`${c.ticker}${c.altTicker&&c.altTicker!==c.ticker?' ('+c.altTicker+')':''}`).join(', ');
-      const raw = await aiSearch(
-        `Get the current live stock prices and today's percentage change for these uranium company ticker symbols: ${tickers}. For Canadian stocks on TSX (.TO) or TSX-V (.V) return prices in CAD. For US stocks return prices in USD. Use Yahoo Finance, Google Finance, or any reliable source. Return ONLY valid JSON with no markdown, no explanation: {"CCO.TO":{"price":56.78,"changePct":1.23},"NXE":{"price":8.45,"changePct":-0.50},...} Include every ticker.`,
-        "Return ONLY a valid flat JSON object. Keys are ticker symbols. Values are objects with 'price' (number) and 'changePct' (number). No markdown, no explanation."
-      );
-      const data = JSON.parse(raw.replace(/```json|```/g,"").trim());
+      const symbols = [...new Set(COMPANIES.flatMap(c => c.altTicker && c.altTicker !== c.ticker ? [c.ticker, c.altTicker] : [c.ticker]))];
+      const response = await fetch("/.netlify/functions/prices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbols })
+      });
+      const data = await response.json();
       const upd = {};
       COMPANIES.forEach(c => {
-        const hit = data[c.ticker] || data[c.altTicker] || data[c.ticker.replace('.TO','').replace('.V','')];
-        if (hit?.price) upd[c.id] = { price: Number(hit.price), changePct: Number(hit.changePct||0) };
+        const hit = data[c.ticker] || data[c.altTicker];
+        if (hit?.price) upd[c.id] = { price: hit.price, changePct: hit.changePct };
       });
       if (Object.keys(upd).length > 0) setPrices(upd);
-    } catch(e) { console.error('Price fetch failed', e); }
+    } catch(e) { console.error("Price fetch failed", e); }
     setRefresh(false);
   }, []);
 
