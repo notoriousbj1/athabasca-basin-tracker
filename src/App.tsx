@@ -479,8 +479,7 @@ const usTk = (c) => {
 // HELPERS
 // ─────────────────────────────────────────────
 async function aiSearch(userPrompt, system = "") {
-  const res = await fetch("/.netlify/functions/claude
-", {
+  const res = await fetch("/.netlify/functions/claude", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({
