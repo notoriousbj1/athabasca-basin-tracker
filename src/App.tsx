@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LineChart, Line } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LineChart, Line, AreaChart, Area } from "recharts";
 import { Atom, Hammer, Timer, DollarSign, Building2, Zap, Globe, TrendingUp, BarChart3, Newspaper, Landmark, Play, Map, Activity, Flag, Scale, Users, Tag, Radio, Linkedin, Star } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -579,8 +579,8 @@ export default function App() {
     setNL(true);
     try {
       const raw = await aiSearch(
-        `Today is June 2026. Search for the very latest press releases and news from Athabasca Basin uranium companies published in the past 14 days. Companies to search: Cameco (CCO, CCJ), NexGen Energy (NXE, NXG), Denison Mines (DML, DNN), Fission Uranium (FCU), IsoEnergy (ISO), Skyharbour Resources (SYH), F3 Uranium (FUU), Uranium Energy Corp (UEC), Baselode Energy (FIND), Canadian Uranium (CANU), Atha Energy (SASK), Fission 3.0 (FIS), Purepoint Uranium (PTU), Standard Uranium (STND). Search SEDAR+, company websites, and financial news sites. Return ONLY a JSON array (8-12 items, no markdown): [{"company":"NexGen","ticker":"NXE","date":"Jun 10, 2026","headline":"...","summary":"...","type":"Drilling Results"}]`,
-        "Return ONLY a valid JSON array with no markdown. Use real current 2026 dates."
+        `Today is June 2026. Search for the very latest press releases and news from Athabasca Basin uranium companies published in the past 14 days. Companies to search: Cameco (CCO, CCJ), NexGen Energy (NXE, NXG), Denison Mines (DML, DNN), Fission Uranium (FCU), IsoEnergy (ISO), Skyharbour Resources (SYH), F3 Uranium (FUU), Uranium Energy Corp (UEC), Baselode Energy (FIND), Canadian Uranium (CANU), Atha Energy (SASK), Fission 3.0 (FIS), Purepoint Uranium (PTU), Standard Uranium (STND). Search SEDAR+, company websites, and financial news sites. Return ONLY a JSON array (8-12 items, no markdown): [{"company":"NexGen","ticker":"NXE","date":"Jun 10, 2026","headline":"...","summary":"...","type":"Drilling Results","url":"https://..."}]`,
+        "Return ONLY a valid JSON array with no markdown. Include real article URLs. Use real current 2026 dates."
       );
       try { const a=JSON.parse(raw.replace(/```json|```/g,"").trim()); if(Array.isArray(a)) setNews(a); } catch {}
     } catch {}
@@ -713,12 +713,18 @@ export default function App() {
               <button onClick={fetchSpot} style={{ ...S.btn("s"), padding:"3px 10px", fontSize:10, marginLeft:"auto" }} disabled={spotLoading}>\u21bb</button>
             </div>
             <div style={{ ...S.lbl, marginBottom:6 }}>U\u2083O\u2088 SPOT \u2014 30-DAY PRICE TREND</div>
-            <ResponsiveContainer width="100%" height={70}>
-              <LineChart data={sparkData} margin={{ top:2, right:4, bottom:2, left:0 }}>
-                <Line type="monotone" dataKey="price" stroke="#B07A08" strokeWidth={1.5} dot={false}/>
+            <ResponsiveContainer width="100%" height={100}>
+              <AreaChart data={sparkData} margin={{ top:2, right:4, bottom:2, left:0 }}>
+                <defs>
+                  <linearGradient id="spotGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#B07A08" stopOpacity={0.6}/>
+                    <stop offset="100%" stopColor="#B07A08" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <Area type="monotone" dataKey="price" stroke="#B07A08" strokeWidth={1.5} fill="url(#spotGradient)" dot={false}/>
                 <YAxis domain={["auto","auto"]} hide/>
-                <Tooltip formatter={(v)=>[`$${v.toFixed(2)}`,"U\u2083O\u2088/lb"]} contentStyle={{ background:"#F5F3EE", border:"1px solid #D8D0C4", fontSize:11, borderRadius:4 }}/>
-              </LineChart>
+                <Tooltip formatter={(v)=>[`$${v.toFixed(2)}`,"U\u2083O\u2088/lb"]} contentStyle={{ background:"#FFFFFF", border:"1px solid #D8D0C4", fontSize:11, borderRadius:4 }}/>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
           <div style={{ display:"grid", gridTemplateRows:"1fr 1fr 1fr", gridTemplateColumns:"1fr" }}>
@@ -746,33 +752,47 @@ export default function App() {
                 <div key={i} style={{ width:w, height:h, background:"#F0EDE8", borderRadius:4, marginBottom:10, animation:"pulse 1.4s ease-in-out infinite" }}/>
               ))}
             </div>
-          ) : (
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 220px", gap:20, alignItems:"start" }}>
-              <div>
-                {featuredStory.ticker && (
-                  <span style={{ ...S.badge("amber"), fontSize:10, marginBottom:8, display:"inline-block" }}>
-                    {featuredStory.ticker} · {featuredStory.type||"News"}
-                  </span>
-                )}
-                <h2 style={{ ...SERIF, fontSize:26, fontWeight:700, color:"#1A1A14", lineHeight:1.3, margin:"6px 0 10px", letterSpacing:"-0.01em" }}>
-                  {featuredStory.headline}
-                </h2>
-                <p style={{ fontSize:14, color:"#6A6A5A", lineHeight:1.75, margin:"0 0 8px" }}>
-                  {featuredStory.summary}
-                </p>
-                <span style={{ fontSize:11, color:"#6A6A5A" }}>{featuredStory.date}</span>
-              </div>
-              <div style={{ ...S.card, marginBottom:0 }}>
-                <div style={{ ...S.lbl, marginBottom:12, fontSize:12 }}>BASIN AT A GLANCE</div>
-                {[["Active Drills","6"],["Pending Assays","27"],["Total Resources","~900 Mlb"],["Open Raises","2"]].map(([k,v])=>(
-                  <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid #D8D0C4", fontSize:14 }}>
-                    <span style={{ color:"#6A6A5A", fontWeight:500 }}>{k}</span>
-                    <span style={{ fontWeight:800, color:"#1A1A14", ...MONO, fontSize:16 }}>{v}</span>
+          ) : (()=>{
+            const co = COMPANIES.find(c=>c.ticker===featuredStory.ticker||c.altTicker===featuredStory.ticker||c.name?.includes(featuredStory.company?.split(" ")[0]||""));
+            const accentColor = co?.color || "#B07A08";
+            return (
+              <div style={{ display:"grid", gridTemplateColumns:"190px 1fr 220px", gap:20, alignItems:"start" }}>
+                {/* Thumbnail */}
+                <a href={featuredStory.url||"#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+                  <div style={{ borderRadius:10, overflow:"hidden", border:`1px solid ${accentColor}33`, cursor:"pointer", aspectRatio:"4/3", background:`linear-gradient(145deg, ${accentColor}18 0%, ${accentColor}38 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:8, padding:16, position:"relative" }}>
+                    <div style={{ fontSize:28, fontWeight:900, color:accentColor, letterSpacing:"-0.03em", textAlign:"center" }}>{featuredStory.ticker||"—"}</div>
+                    <div style={{ ...S.badge("amber"), fontSize:10 }}>{featuredStory.type||"News"}</div>
+                    <div style={{ position:"absolute", bottom:10, right:10, fontSize:10, color:accentColor, opacity:0.7, fontWeight:600 }}>Read →</div>
                   </div>
-                ))}
+                </a>
+                {/* Content */}
+                <a href={featuredStory.url||"#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+                  <div style={{ cursor:"pointer" }}>
+                    <h2 style={{ ...SERIF, fontSize:24, fontWeight:700, color:"#1A1A14", lineHeight:1.3, margin:"0 0 10px", letterSpacing:"-0.01em" }}>
+                      {featuredStory.headline}
+                    </h2>
+                    <p style={{ fontSize:13, color:"#6A6A5A", lineHeight:1.75, margin:"0 0 10px" }}>
+                      {featuredStory.summary}
+                    </p>
+                    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <span style={{ fontSize:11, color:"#9A9A8A" }}>{featuredStory.date}</span>
+                      {featuredStory.url && <span style={{ fontSize:11, color:"#B07A08", fontWeight:600 }}>Read full release →</span>}
+                    </div>
+                  </div>
+                </a>
+                {/* Basin at a Glance */}
+                <div style={{ ...S.card, marginBottom:0 }}>
+                  <div style={{ ...S.lbl, marginBottom:12, fontSize:12 }}>BASIN AT A GLANCE</div>
+                  {[["Active Drills","6"],["Pending Assays","27"],["Total Resources","~900 Mlb"],["Open Raises","2"]].map(([k,v])=>(
+                    <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid #D8D0C4", fontSize:14 }}>
+                      <span style={{ color:"#6A6A5A", fontWeight:500 }}>{k}</span>
+                      <span style={{ fontWeight:800, color:"#1A1A14", ...MONO, fontSize:16 }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Companies + News 2-col */}
