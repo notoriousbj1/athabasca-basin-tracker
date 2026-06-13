@@ -649,6 +649,24 @@ export default function App() {
 
   const gP  = (c) => prices[c.id]?.price ?? c.price;
   const gCh = (c) => prices[c.id]?.changePct ?? c.changePct;
+  const calcMktCap = (c) => {
+    const p = gP(c);
+    if (!p || !c.sharesBasic) return c.marketCap;
+    const parseShares = (s) => {
+      const n = parseFloat(s);
+      if (!n) return null;
+      if (s.includes('B')) return n * 1e9;
+      if (s.includes('M')) return n * 1e6;
+      if (s.includes('K')) return n * 1e3;
+      return n;
+    };
+    const shares = parseShares(c.sharesBasic);
+    if (!shares) return c.marketCap;
+    const cap = p * shares;
+    if (cap >= 1e9) return `$${(cap/1e9).toFixed(2)}B`;
+    if (cap >= 1e6) return `$${(cap/1e6).toFixed(1)}M`;
+    return `$${(cap/1e3).toFixed(0)}K`;
+  };
 
   // ── OVERVIEW ──
   const renderOverview = () => {
@@ -703,17 +721,16 @@ export default function App() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div style={{ display:"grid", gridTemplateRows:"1fr 1fr", gridTemplateColumns:"1fr 1fr" }}>
+          <div style={{ display:"grid", gridTemplateRows:"1fr 1fr 1fr", gridTemplateColumns:"1fr" }}>
             {[
-              ["52-Wk High",`$${spot.high52||106}`,"green"],
-              ["52-Wk Low", `$${spot.low52||73}`,  "red"  ],
-              ["Trend",     spot.trend||"Bearish",  (spot.trend==="bullish")?"green":"red"],
-              ["Reactors",  "440 online",           "blue" ],
-            ].map(([label,val,color])=>(
+              ["52-Wk High", `$${spot.high52||106}`, "green",  false],
+              ["52-Wk Low",  `$${spot.low52||73}`,   "red",    false],
+              ["Trend",      spot.trend||"Bearish",  (spot.trend==="bullish")?"green":"red", false],
+            ].map(([label,val,color,big])=>(
               <div key={label} style={{ padding:"12px 14px", borderLeft:"1px solid #D8D0C4", borderBottom:"1px solid #D8D0C4" }}>
                 <div style={S.lbl}>{label}</div>
-                <div style={{ ...SERIF, fontSize:18, fontWeight:700, lineHeight:1.2,
-                  color:color==="green"?"#1A7A44":color==="red"?"#C01818":color==="blue"?"#1A5AA8":"#1A1A14" }}>{val}</div>
+                <div style={{ ...SERIF, fontSize:big?26:18, fontWeight:700, lineHeight:1.2,
+                  color:color==="green"?"#1A7A44":color==="red"?"#C01818":"#1A5AA8" }}>{val}</div>
               </div>
             ))}
           </div>
@@ -746,11 +763,11 @@ export default function App() {
                 <span style={{ fontSize:11, color:"#6A6A5A" }}>{featuredStory.date}</span>
               </div>
               <div style={{ ...S.card, marginBottom:0 }}>
-                <div style={{ ...S.lbl, marginBottom:10 }}>BASIN AT A GLANCE</div>
+                <div style={{ ...S.lbl, marginBottom:12, fontSize:12 }}>BASIN AT A GLANCE</div>
                 {[["Active Drills","6"],["Pending Assays","27"],["Total Resources","~900 Mlb"],["Open Raises","2"]].map(([k,v])=>(
-                  <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:"1px solid #D8D0C4", fontSize:12 }}>
-                    <span style={{ color:"#6A6A5A" }}>{k}</span>
-                    <span style={{ fontWeight:700, color:"#1A1A14", ...MONO }}>{v}</span>
+                  <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid #D8D0C4", fontSize:14 }}>
+                    <span style={{ color:"#6A6A5A", fontWeight:500 }}>{k}</span>
+                    <span style={{ fontWeight:800, color:"#1A1A14", ...MONO, fontSize:16 }}>{v}</span>
                   </div>
                 ))}
               </div>
@@ -1087,7 +1104,7 @@ export default function App() {
                 </div>
                 <div style={{ textAlign:"right" }}>
                   <div style={S.lbl}>Mkt Cap</div>
-                  <div style={{ fontWeight:700 }}>{c.marketCap}</div>
+                  <div style={{ fontWeight:700 }}>{calcMktCap(c)}</div>
                 </div>
                 <span style={{ color:"#6A6A5A", fontSize:16 }}>{isE?"▲":"▼"}</span>
               </div>
@@ -1361,7 +1378,7 @@ export default function App() {
                 <div style={{ display:"flex", gap:20 }}>
                   <div><div style={S.lbl}>Price</div><div style={{ fontWeight:900,...MONO }}>{fmtP(gP(c))}</div></div>
                   <div><div style={S.lbl}>Change</div><span style={S.badge(gCh(c)>=0?"green":"red")}>{fmtPct(gCh(c))}</span></div>
-                  <div><div style={S.lbl}>Mkt Cap</div><div style={{ fontWeight:700 }}>{c.marketCap}</div></div>
+                  <div><div style={S.lbl}>Mkt Cap</div><div style={{ fontWeight:700 }}>{calcMktCap(c)}</div></div>
                 </div>
               </div>
             </div>
@@ -1659,7 +1676,7 @@ export default function App() {
       {/* Header */}
       <header style={S.header}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <Atom size={22} strokeWidth={1.5} color="#B07A08"/>
+          <img src="data:image/png;base64,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" alt="logo" style={{ width:28, height:28, objectFit:"contain" }}/>
           <div>
             <div style={{ fontSize:17, fontWeight:800, color:"#B07A08", letterSpacing:"0.06em", lineHeight:1 }}>ATHABASCA BASIN TRACKER</div>
             <div style={{ fontSize:9, color:"#6A6A5A", letterSpacing:"0.12em", textTransform:"uppercase", marginTop:3 }}>Uranium Intelligence Dashboard by Juniorstocks.com</div>
