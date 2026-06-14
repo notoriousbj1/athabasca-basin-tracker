@@ -503,6 +503,23 @@ const SERIF = { fontFamily:"Helvetica, 'Helvetica Neue', Arial, sans-serif" };
 // ─────────────────────────────────────────────
 // STYLE HELPERS
 // ─────────────────────────────────────────────
+const SHARE_UPDATES = {
+  cameco:"Mar 31, 2026",  nexgen:"Mar 31, 2026",  denison:"Mar 31, 2026",
+  fission:"Mar 31, 2026", iso:"Mar 31, 2026",       skyharbour:"Mar 31, 2026",
+  f3:"Mar 31, 2026",      uec:"Jan 31, 2026",        baselode:"Mar 31, 2026",
+  fission3:"Mar 31, 2026",canalaska:"Mar 31, 2026",  purepoint:"Mar 31, 2026",
+  forum:"Mar 31, 2026",   standard:"Mar 31, 2026",   atha:"Mar 31, 2026",
+  azincourt:"Mar 31, 2026",fortunebay:"Mar 31, 2026",alx:"Mar 31, 2026",
+  appia:"Mar 31, 2026",   urc:"Jan 31, 2026",        canu:"Jun 10, 2026",
+};
+
+const MARKETING = {
+  canu:       { firm:"Hybrid Financial Ltd.",         amount:"$15,000 CAD / month", period:"Apr 2026 – Oct 2026" },
+  skyharbour: { firm:"Fundamental Research Corp.",    amount:"$8,000 CAD / month",  period:"Jan 2026 – Dec 2026" },
+  standard:   { firm:"Haywood Securities Inc.",       amount:"$10,000 CAD / month", period:"Mar 2026 – Sep 2026" },
+  purepoint:  { firm:"RedChip Companies Inc.",        amount:"$6,500 USD / month",  period:"Feb 2026 – Aug 2026" },
+};
+
 const S = {
   root:{ background:"#FAFAF7", minHeight:"100vh", color:"#1A1A14", fontFamily:"'Helvetica Neue',Helvetica,Arial,sans-serif" },
   tape:{ background:"#FFFFFF", borderBottom:"2px solid #1A1A14", padding:"5px 20px", overflowX:"auto", whiteSpace:"nowrap", display:"flex", gap:24, alignItems:"center" },
@@ -555,6 +572,7 @@ export default function App() {
   const [stageFilter, setStageFilter] = useState({ Producer:true, Developer:true, Explorer:true, Royalty:true });
   const [sortCol, setSortCol]         = useState("chg");
   const [sortDir, setSortDir]         = useState("desc");
+  const [coStageFilter, setCoStageFilter] = useState("All");
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
   const [showSubModal, setShowSubModal] = useState(false);
@@ -1154,7 +1172,34 @@ export default function App() {
         Companies — Athabasca Basin
         <button onClick={fetchPrices} style={S.btn("s")} disabled={refreshing}>{refreshing?"↻ Fetching live prices…":"↻ Refresh Quotes"}</button>
       </div>
-      {COMPANIES.map(c=>{
+      {/* Stage filter pills */}
+      <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+        {[
+          ["All",               COMPANIES.length],
+          ["Producer",          COMPANIES.filter(c=>c.stage.includes("Producer")).length],
+          ["Advanced Developer",COMPANIES.filter(c=>c.stage.includes("Advanced")).length],
+          ["Developer",         COMPANIES.filter(c=>c.stage==="Developer"||c.stage.includes("Delineation")).length],
+          ["Explorer",          COMPANIES.filter(c=>c.stage.includes("Explorer")).length],
+          ["Royalty",           COMPANIES.filter(c=>c.stage.includes("Royalty")).length],
+        ].map(([label,count])=>(
+          <button key={label} onClick={()=>setCoStageFilter(label)}
+            style={{ padding:"5px 14px", borderRadius:20, fontSize:11, fontWeight:600, cursor:"pointer",
+              border:`1px solid ${coStageFilter===label?"#B07A08":"#D8D0C4"}`,
+              background:coStageFilter===label?"#B07A08":"transparent",
+              color:coStageFilter===label?"#FFFFFF":"#5A5A4A" }}>
+            {label} <span style={{ opacity:0.7 }}>({count})</span>
+          </button>
+        ))}
+      </div>
+      {COMPANIES.filter(c=>{
+        if (coStageFilter==="All") return true;
+        if (coStageFilter==="Producer") return c.stage.includes("Producer");
+        if (coStageFilter==="Advanced Developer") return c.stage.includes("Advanced");
+        if (coStageFilter==="Developer") return c.stage==="Developer"||c.stage.includes("Delineation");
+        if (coStageFilter==="Explorer") return c.stage.includes("Explorer");
+        if (coStageFilter==="Royalty") return c.stage.includes("Royalty");
+        return true;
+      }).map(c=>{
         const p=gP(c), ch=gCh(c), isE=expanded===c.id;
         return (
           <div key={c.id} style={{ ...S.card, borderLeft:`3px solid ${c.color}`, marginBottom:8 }}>
@@ -1205,6 +1250,11 @@ export default function App() {
                         </tr>
                       ))}
                     </table>
+                    {SHARE_UPDATES[c.id] && (
+                      <div style={{ fontSize:10, color:"#9A9A8A", marginTop:8, fontStyle:"italic" }}>
+                        Structure as at {SHARE_UPDATES[c.id]}
+                      </div>
+                    )}
                   </div>
                   {/* Projects */}
                   <div>
@@ -1236,6 +1286,19 @@ export default function App() {
                     </a>
                   ))}
                 </div>
+                {MARKETING[c.id] && (
+                  <div style={{ marginTop:14, padding:"12px 16px", background:"linear-gradient(135deg,#FFFDF5 0%,#FFF5DC 100%)", border:"1px solid #E8D890", borderRadius:8 }}>
+                    <div style={{ ...S.lbl, color:"#B07A08", marginBottom:10, letterSpacing:"0.1em" }}>📣 ACTIVE MARKETING AGREEMENT</div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16 }}>
+                      {[["Marketing Firm",MARKETING[c.id].firm],["Monthly Retainer",MARKETING[c.id].amount],["Contract Period",MARKETING[c.id].period]].map(([k,v])=>(
+                        <div key={k}>
+                          <div style={{ ...S.lbl, fontSize:9, marginBottom:3 }}>{k}</div>
+                          <div style={{ fontWeight:700, fontSize:12, color:"#1A1A14" }}>{v}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
