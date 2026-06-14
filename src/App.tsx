@@ -1191,6 +1191,7 @@ export default function App() {
           </button>
         ))}
       </div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
       {COMPANIES.filter(c=>{
         if (coStageFilter==="All") return true;
         if (coStageFilter==="Producer") return c.stage.includes("Producer");
@@ -1202,7 +1203,7 @@ export default function App() {
       }).map(c=>{
         const p=gP(c), ch=gCh(c), isE=expanded===c.id;
         return (
-          <div key={c.id} style={{ ...S.card, borderLeft:`3px solid ${c.color}`, marginBottom:8 }}>
+          <div key={c.id} style={{ ...S.card, borderLeft:`3px solid ${c.color}`, marginBottom:0, gridColumn:isE?"span 2":"span 1" }}>
             <div onClick={()=>setExpanded(isE?null:c.id)} style={{ cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
               <div style={{ flex:1, minWidth:200 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4, flexWrap:"wrap" }}>
@@ -1304,6 +1305,7 @@ export default function App() {
           </div>
         );
       })}
+      </div>
     </div>
   );
 
