@@ -742,57 +742,110 @@ export default function App() {
           </div>
         </div>
 
-        {/* Featured Story */}
+        {/* Featured Stories — two column */}
         <div style={{ marginBottom:20, paddingBottom:20, borderBottom:"2px solid #D8D0C4" }}>
-          <div style={{ ...S.lbl, color:"#B07A08", marginBottom:10, letterSpacing:"0.15em" }}>FEATURED STORY</div>
-          {newsLoading && news.length===0 ? (
+          <div style={{ ...S.lbl, color:"#B07A08", marginBottom:12, letterSpacing:"0.15em" }}>FEATURED STORIES</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1px 1fr 1px 200px", gap:"0 20px" }}>
+
+            {/* Left — top basin story */}
             <div>
-              <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.45}}`}</style>
-              {[["55%","22px"],["85%","18px"],["100%","13px"],["75%","13px"]].map(([w,h],i)=>(
-                <div key={i} style={{ width:w, height:h, background:"#F0EDE8", borderRadius:4, marginBottom:10, animation:"pulse 1.4s ease-in-out infinite" }}/>
-              ))}
-            </div>
-          ) : (()=>{
-            const co = COMPANIES.find(c=>c.ticker===featuredStory.ticker||c.altTicker===featuredStory.ticker||c.name?.includes(featuredStory.company?.split(" ")[0]||""));
-            const accentColor = co?.color || "#B07A08";
-            return (
-              <div style={{ display:"grid", gridTemplateColumns:"190px 1fr 220px", gap:20, alignItems:"start" }}>
-                {/* Thumbnail */}
+              <div style={{ ...S.lbl, marginBottom:8 }}>TOP BASIN STORY</div>
+              {newsLoading && news.length===0 ? (
+                <div>
+                  <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.45}}`}</style>
+                  {[["80%","20px"],["100%","14px"],["70%","14px"]].map(([w,h],i)=>(
+                    <div key={i} style={{ width:w, height:h, background:"#F0EDE8", borderRadius:4, marginBottom:10, animation:"pulse 1.4s ease-in-out infinite" }}/>
+                  ))}
+                </div>
+              ) : (
                 <a href={featuredStory.url||"#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-                  <div style={{ borderRadius:10, overflow:"hidden", border:`1px solid ${accentColor}33`, cursor:"pointer", aspectRatio:"4/3", background:`linear-gradient(145deg, ${accentColor}18 0%, ${accentColor}38 100%)`, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:8, padding:16, position:"relative" }}>
-                    <div style={{ fontSize:28, fontWeight:900, color:accentColor, letterSpacing:"-0.03em", textAlign:"center" }}>{featuredStory.ticker||"—"}</div>
-                    <div style={{ ...S.badge("amber"), fontSize:10 }}>{featuredStory.type||"News"}</div>
-                    <div style={{ position:"absolute", bottom:10, right:10, fontSize:10, color:accentColor, opacity:0.7, fontWeight:600 }}>Read →</div>
-                  </div>
-                </a>
-                {/* Content */}
-                <a href={featuredStory.url||"#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-                  <div style={{ cursor:"pointer" }}>
-                    <h2 style={{ ...SERIF, fontSize:24, fontWeight:700, color:"#1A1A14", lineHeight:1.3, margin:"0 0 10px", letterSpacing:"-0.01em" }}>
+                  <div>
+                    {featuredStory.ticker && (()=>{
+                      const co = COMPANIES.find(c=>c.ticker===featuredStory.ticker||c.altTicker===featuredStory.ticker);
+                      const ch = co ? gCh(co) : null;
+                      const up = ch !== null && ch >= 0;
+                      return (
+                        <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center" }}>
+                          <span style={{ ...S.badge(ch!==null?(up?"green":"red"):"amber"), fontSize:10 }}>
+                            {featuredStory.ticker} {ch!==null ? `${up?"▲":"▼"} ${Math.abs(ch).toFixed(2)}%` : ""}
+                          </span>
+                          <span style={{ ...S.badge("gray"), fontSize:10 }}>{featuredStory.type||"News"}</span>
+                        </div>
+                      );
+                    })()}
+                    <h2 style={{ ...SERIF, fontSize:22, fontWeight:700, color:"#1A1A14", lineHeight:1.35, margin:"8px 0 10px", letterSpacing:"-0.01em" }}>
                       {featuredStory.headline}
                     </h2>
-                    <p style={{ fontSize:13, color:"#6A6A5A", lineHeight:1.75, margin:"0 0 10px" }}>
+                    <p style={{ fontSize:13, color:"#6A6A5A", lineHeight:1.7, margin:"0 0 10px" }}>
                       {featuredStory.summary}
                     </p>
                     <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                       <span style={{ fontSize:11, color:"#9A9A8A" }}>{featuredStory.date}</span>
-                      {featuredStory.url && <span style={{ fontSize:11, color:"#B07A08", fontWeight:600 }}>Read full release →</span>}
+                      <span style={{ fontSize:11, color:"#B07A08", fontWeight:600 }}>Read full release →</span>
                     </div>
                   </div>
                 </a>
-                {/* Basin at a Glance */}
-                <div style={{ ...S.card, marginBottom:0 }}>
-                  <div style={{ ...S.lbl, marginBottom:12, fontSize:12 }}>BASIN AT A GLANCE</div>
-                  {[["Active Drills","6"],["Pending Assays","27"],["Total Resources","~900 Mlb"],["Open Raises","2"]].map(([k,v])=>(
-                    <div key={k} style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid #D8D0C4", fontSize:14 }}>
-                      <span style={{ color:"#6A6A5A", fontWeight:500 }}>{k}</span>
-                      <span style={{ fontWeight:800, color:"#1A1A14", ...MONO, fontSize:16 }}>{v}</span>
-                    </div>
-                  ))}
+              )}
+            </div>
+
+            {/* Vertical rule */}
+            <div style={{ background:"#D8D0C4" }}/>
+
+            {/* Right — Juniorstocks.com feature */}
+            <div>
+              <div style={{ ...S.lbl, marginBottom:8 }}>FEATURED ON JUNIORSTOCKS.COM</div>
+              <a href="https://www.juniorstocks.com/saskatchewan-breaks-20-year-resource-drought-with-historic-copper-and-uranium-milestones"
+                target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+                <div>
+                  {(()=>{
+                    const co = COMPANIES.find(c=>c.ticker==="DML.TO"||c.altTicker==="DNN");
+                    const ch = co ? gCh(co) : null;
+                    const up = ch !== null && ch >= 0;
+                    return (
+                      <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center" }}>
+                        <span style={{ ...S.badge(ch!==null?(up?"green":"red"):"amber"), fontSize:10 }}>
+                          DML {ch!==null ? `${up?"▲":"▼"} ${Math.abs(ch).toFixed(2)}%` : ""}
+                        </span>
+                        <span style={{ ...S.badge("gray"), fontSize:10 }}>News</span>
+                      </div>
+                    );
+                  })()}
+                  <img
+                    src="https://cdn.investor-files.net/medium_hf_20260608_184353_4b88ea9a_7f4e_4acb_b0aa_0f4993f97029_93b621ab41.png"
+                    alt="Saskatchewan resource story"
+                    style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:160 }}
+                    onError={e=>{ e.target.style.display="none"; }}
+                  />
+                  <h2 style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14", lineHeight:1.35, margin:"0 0 8px", letterSpacing:"-0.01em" }}>
+                    Saskatchewan Breaks 20-Year Resource Drought with Historic Copper and Uranium Milestones
+                  </h2>
+                  <p style={{ fontSize:13, color:"#6A6A5A", lineHeight:1.7, margin:"0 0 10px" }}>
+                    How Eldorado Gold and Denison Mines are shattering a two-decade resource dry spell to anchor North America's clean energy supply chain.
+                  </p>
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <span style={{ fontSize:11, color:"#9A9A8A" }}>Jun 14, 2026</span>
+                    <span style={{ fontSize:11, color:"#B07A08", fontWeight:600 }}>Read on Juniorstocks.com →</span>
+                  </div>
                 </div>
-              </div>
-            );
-          })()}
+              </a>
+            </div>
+
+            {/* Vertical rule */}
+            <div style={{ background:"#D8D0C4" }}/>
+
+            {/* Basin at a Glance — vertical */}
+            <div style={{ ...S.card, marginBottom:0, background:"linear-gradient(145deg, #FFFDF5 0%, #FFF5DC 100%)", border:"1px solid #E8D890" }}>
+              <div style={{ ...S.lbl, marginBottom:12, fontSize:11, letterSpacing:"0.12em" }}>BASIN AT A GLANCE</div>
+              {[["Active Drills","6"],["Pending Assays","27"],["Total Resources","~900 Mlb"],["Open Raises","2"]].map(([k,v])=>(
+                <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #EDE8E0" }}>
+                  <span style={{ fontSize:12, color:"#6A6A5A", fontWeight:500 }}>{k}</span>
+                  <span style={{ fontWeight:800, color:"#B07A08", fontSize:16 }}>{v}</span>
+                </div>
+              ))}
+            </div>
+
+          </div>
+
         </div>
 
         {/* Companies + News 2-col */}
