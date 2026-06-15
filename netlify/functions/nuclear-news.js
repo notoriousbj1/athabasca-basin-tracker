@@ -1,19 +1,19 @@
 const FEEDS = [
-  { url:"https://www.world-nuclear-news.org/rss",                   source:"World Nuclear News"       },
-  { url:"https://www.ans.org/news/rss/",                            source:"American Nuclear Society" },
-  { url:"https://www.power-technology.com/category/nuclear/feed/",  source:"Power Technology"         },
-  { url:"https://www.neimagazine.com/rss",                          source:"NEI Magazine"             },
-  { url:"https://www.mining.com/category/uranium/feed/",            source:"Mining.com"               },
+  { url:"https://www.world-nuclear-news.org/rss",          source:"World Nuclear News"       },
+  { url:"https://www.ans.org/news/feed",                   source:"American Nuclear Society" },
+  { url:"https://www.iaea.org/newscenter/news/rss",        source:"IAEA"                     },
+  { url:"https://www.neimagazine.com/rss",                 source:"NEI Magazine"             },
+  { url:"https://www.mining.com/category/uranium/feed/",   source:"Mining.com"               },
 ];
 
 const CATEGORIES = [
-  { keys:["reactor","build","construct","new plant","unit"],  label:"New Builds" },
-  { keys:["policy","law","regulation","government","act"],    label:"Policy"     },
-  { keys:["uranium","fuel","supply","demand","price","spot"], label:"Market"     },
-  { keys:["smr","small modular","advanced","technology"],     label:"Technology" },
+  { keys:["reactor","build","construct","new plant","unit","hinkley","ap1000","bwrx"], label:"New Builds" },
+  { keys:["policy","law","regulation","government","act","congress","senate","bill"],  label:"Policy"     },
+  { keys:["uranium","fuel","supply","demand","price","spot","kazatomprom"],            label:"Market"     },
+  { keys:["smr","small modular","advanced reactor","fusion","technology"],             label:"Technology" },
 ];
 
-const CUTOFF = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+const CUTOFF = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // 90 days
 
 function classify(text) {
   const lower = text.toLowerCase();
@@ -21,15 +21,23 @@ function classify(text) {
 }
 
 function extractUrl(item) {
-  // Try href attribute first (Atom feeds)
   const href = item.match(/<link[^>]+href="([^"]+)"/)?.[1];
-  if (href && href.startsWith("http")) return href.trim();
-  // Try link tag content (RSS 2.0)
+  if (href?.startsWith("http")) return href.trim();
   const link = item.match(/<link>([^<]+)<\/link>/)?.[1];
-  if (link && link.trim().startsWith("http")) return link.trim();
-  // Try guid
+  if (link?.trim().startsWith("http")) return link.trim();
   const guid = item.match(/<guid[^>]*>([^<]+)<\/guid>/)?.[1];
-  if (guid && guid.trim().startsWith("http")) return guid.trim();
+  if (guid?.trim().startsWith("http")) return guid.trim();
+  return null;
+}
+
+function parseDate(str) {
+  if (!str) return null;
+  // Try standard parse
+  let d = new Date(str.trim());
+  if (!isNaN(d.getTime())) return d;
+  // Try stripping timezone issues
+  d = new Date(str.trim().replace(/\s*\+\d{4}$/, "").replace(/\s*[A-Z]{3}$/, ""));
+  if (!isNaN(d.getTime())) return d;
   return null;
 }
 
@@ -48,17 +56,16 @@ function parseRSS(xml, source) {
 
     const headline = getText("title");
     const url      = extractUrl(item);
-    const pubDate  = getText("pubDate") || getText("published") || getText("updated");
-    const summary  = (getText("description") || getText("summary") || getText("content"))
-      .replace(/<[^>]+>/g, "").replace(/&[^;]+;/g, " ").replace(/\s+/g, " ").trim().substring(0, 220);
+    const pubDate  = getText("pubDate") || getText("published") || getText("updated") || getText("dc:date");
+    const rawDesc  = getText("description") || getText("summary") || getText("content") || "";
+    const summary  = rawDesc.replace(/<[^>]+>/g,"").replace(/&[^;]+;/g," ").replace(/\s+/g," ").trim().substring(0,220);
 
     if (!headline || !url) return null;
 
-    let parsedDate;
-    try { parsedDate = new Date(pubDate); } catch { return null; }
-    if (!parsedDate || isNaN(parsedDate.getTime()) || parsedDate < CUTOFF) return null;
+    const parsedDate = parseDate(pubDate);
+    if (!parsedDate || parsedDate < CUTOFF) return null;
 
-    const date = parsedDate.toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
+    const date = parsedDate.toLocaleDateString("en-US",{ month:"short", day:"numeric", year:"numeric" });
     return { headline, url, date, dateMs:parsedDate.getTime(), summary, source,
              category:classify(headline + " " + summary) };
   }).filter(Boolean);
@@ -66,32 +73,41 @@ function parseRSS(xml, source) {
 
 exports.handler = async () => {
   try {
-    const allItems = [];
+    const perSource = {};
 
     await Promise.all(FEEDS.map(async ({ url, source }) => {
       try {
         const res = await fetch(url, {
-          headers: { "User-Agent":"Mozilla/5.0 (compatible; RSS reader)" },
-          signal:  AbortSignal.timeout(8000),
+          headers:{ "User-Agent":"Mozilla/5.0 (compatible; RSS reader)" },
+          signal: AbortSignal.timeout(9000),
         });
         if (!res.ok) return;
-        const xml  = await res.text();
+        const xml   = await res.text();
         const items = parseRSS(xml, source);
-        // Max 3 articles per source to ensure variety
-        allItems.push(...items.slice(0, 3));
+        // Keep max 3 per source for variety
+        perSource[source] = items.slice(0, 3);
       } catch(e) { console.error(`Feed error ${url}:`, e.message); }
     }));
 
+    // Interleave sources for variety rather than sorting by date alone
+    const allItems = [];
+    const sources  = Object.values(perSource);
+    const maxLen   = Math.max(...sources.map(a => a.length), 0);
+    for (let i = 0; i < maxLen; i++) {
+      sources.forEach(arr => { if (arr[i]) allItems.push(arr[i]); });
+    }
+
+    // Deduplicate then sort newest first
     const seen = new Set();
     const results = allItems
       .filter(i => { if (seen.has(i.headline)) return false; seen.add(i.headline); return true; })
-      .sort((a, b) => b.dateMs - a.dateMs)
+      .sort((a,b) => b.dateMs - a.dateMs)
       .map(({ dateMs, ...rest }) => rest)
       .slice(0, 10);
 
     return {
-      statusCode: 200,
-      headers: { "Access-Control-Allow-Origin": "*" },
+      statusCode:200,
+      headers:{ "Access-Control-Allow-Origin":"*" },
       body: JSON.stringify(results),
     };
   } catch(e) {
