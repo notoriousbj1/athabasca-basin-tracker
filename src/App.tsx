@@ -580,6 +580,7 @@ export default function App() {
   const [subEmail, setSubEmail]         = useState("");
   const [videoData, setVideoData]       = useState([]);
   const [videosLoading, setVideosLoading] = useState(false);
+  const [ytdLive, setYtdLive]           = useState({});
 
   const fetchSpot = useCallback(async () => {
     setSL(true);
@@ -637,6 +638,19 @@ export default function App() {
     setVideosLoading(false);
   }, []);
 
+  const fetchYTD = useCallback(async () => {
+    try {
+      const symbols = COMPANIES.map(c => ({ id:c.id, ticker:cadTk(c) }));
+      const res = await fetch("/.netlify/functions/ytd", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ symbols }),
+      });
+      const data = await res.json();
+      if (data && typeof data === "object") setYtdLive(data);
+    } catch(e) { console.error("YTD fetch failed", e); }
+  }, []);
+
   const fetchPrices = useCallback(async () => {
     setRefresh(true);
     try {
@@ -657,7 +671,7 @@ export default function App() {
     setRefresh(false);
   }, []);
 
-  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); },[]);
+  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); },[]);
 
   const gP  = (c) => prices[c.id]?.price ?? c.price;
   const gCh = (c) => prices[c.id]?.changePct ?? c.changePct;
@@ -1011,17 +1025,29 @@ export default function App() {
             <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Year-to-date returns: Athabasca Basin uranium equities</div>
           </div>
           <div style={{ ...S.card, padding:12 }}>
-            <ResponsiveContainer width="100%" height={showAllYTD?480:140}>
-              <BarChart data={showAllYTD?YTD_PERF:YTD_PERF.slice(0,5)} layout="vertical" margin={{ left:0, right:32, top:4, bottom:0 }}>
-                <XAxis type="number" tick={{ fill:"#6A6A5A", fontSize:10 }} tickFormatter={v=>`${v}%`}/>
-                <YAxis type="category" dataKey="ticker" width={56} tick={{ fill:"#1A1A14", fontSize:10 }}/>
-                <Tooltip formatter={(v)=>[`${v.toFixed(1)}%`,"YTD"]} contentStyle={{ background:"#FFFFFF", border:"1px solid #D8D0C4", borderRadius:6, fontSize:11 }}/>
-                <ReferenceLine x={0} stroke="#D8D0C4" strokeWidth={1.5}/>
-                <Bar dataKey="ytd" radius={[0,3,3,0]} maxBarSize={16}>
-                  {(showAllYTD?YTD_PERF:YTD_PERF.slice(0,5)).map(d=><Cell key={d.ticker} fill={d.ytd>=0?"#1A7A44":"#C01818"}/>)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {(()=>{
+              const chartData = [...COMPANIES]
+                .map(c => {
+                  const cad = cadTk(c);
+                  const ytdVal = ytdLive[c.id]?.ytd ?? (YTD_PERF.find(y=>y.ticker===cad||y.ticker===c.ticker||y.ticker===c.altTicker)?.ytd || 0);
+                  return { label:`${c.name}  ${cad}`, ticker:cad, ytd:ytdVal };
+                })
+                .sort((a,b)=>b.ytd-a.ytd);
+              const display = showAllYTD ? chartData : chartData.slice(0,5);
+              return (
+                <ResponsiveContainer width="100%" height={showAllYTD ? 560 : 160}>
+                  <BarChart data={display} layout="vertical" margin={{ left:0, right:40, top:4, bottom:0 }}>
+                    <XAxis type="number" tick={{ fill:"#6A6A5A", fontSize:10 }} tickFormatter={v=>`${v}%`}/>
+                    <YAxis type="category" dataKey="label" width={200} tick={{ fill:"#1A1A14", fontSize:10 }}/>
+                    <Tooltip formatter={(v)=>[`${v.toFixed(1)}%`,"YTD"]} contentStyle={{ background:"#FFFFFF", border:"1px solid #D8D0C4", borderRadius:6, fontSize:11 }}/>
+                    <ReferenceLine x={0} stroke="#D8D0C4" strokeWidth={1.5}/>
+                    <Bar dataKey="ytd" radius={[0,3,3,0]} maxBarSize={16}>
+                      {display.map(d=><Cell key={d.ticker} fill={d.ytd>=0?"#1A7A44":"#C01818"}/>)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              );
+            })()}
           </div>
           <button onClick={()=>setShowAllYTD(v=>!v)}
             style={{ width:"100%", padding:"8px", background:"#F0EDE8", border:"1px solid #D8D0C4", borderTop:"none", borderRadius:"0 0 8px 8px", color:"#6A6A5A", fontSize:11, fontWeight:600, cursor:"pointer" }}>
