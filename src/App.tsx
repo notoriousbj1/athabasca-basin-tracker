@@ -734,9 +734,9 @@ export default function App() {
               <span style={{ ...S.badge(spot.weekChange>=0?"green":"red"), fontSize:11 }}>
                 {spot.weekChange>=0?"+":""}{spot.weekChange?.toFixed(2)} ({spot.weekChangePct?.toFixed(1)}% WoW)
               </span>
-              <button onClick={fetchSpot} style={{ ...S.btn("s"), padding:"3px 10px", fontSize:10, marginLeft:"auto" }} disabled={spotLoading}>\u21bb</button>
+              <button onClick={fetchSpot} style={{ ...S.btn("s"), padding:"3px 10px", fontSize:10, marginLeft:"auto" }} disabled={spotLoading}>↻</button>
             </div>
-            <div style={{ ...S.lbl, marginBottom:6 }}>U\u2083O\u2088 SPOT \u2014 30-DAY PRICE TREND</div>
+            <div style={{ ...S.lbl, marginBottom:6 }}>U₃O₈ SPOT — 30-DAY PRICE TREND</div>
             <ResponsiveContainer width="100%" height={100}>
               <AreaChart data={sparkData} margin={{ top:2, right:4, bottom:2, left:0 }}>
                 <defs>
@@ -747,7 +747,7 @@ export default function App() {
                 </defs>
                 <Area type="monotone" dataKey="price" stroke="#B07A08" strokeWidth={1.5} fill="url(#spotGradient)" dot={false}/>
                 <YAxis domain={["auto","auto"]} hide/>
-                <Tooltip formatter={(v)=>[`$${v.toFixed(2)}`,"U\u2083O\u2088/lb"]} contentStyle={{ background:"#FFFFFF", border:"1px solid #D8D0C4", fontSize:11, borderRadius:4 }}/>
+                <Tooltip formatter={(v)=>[`$${v.toFixed(2)}`,"U₃O₈/lb"]} contentStyle={{ background:"#FFFFFF", border:"1px solid #D8D0C4", fontSize:11, borderRadius:4 }}/>
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -863,7 +863,7 @@ export default function App() {
               {[
                   ["Active Drills",  null,         DRILLING.filter(d=>d.status==="Active"||d.status==="Drilling").length],
                   ["Pending Assays", null,         DRILLING.reduce((s,d)=>s+(d.pending||0),0)],
-                  ["Total Resources","Estimate",       "~900 Mlb"],
+                  ["Total Resources","Estimate · ~10% of global uranium resources (est.)", "~900 Mlb"],
                   ["Open Raises",    null,         FINANCINGS.filter(f=>f.status==="Open").length],
                 ].map(([k,note,v])=>(
                   <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #EDE8E0" }}>
@@ -989,18 +989,18 @@ export default function App() {
             <div style={{ fontSize:11, color:"#9A9A8A", padding:"12px 0" }}>Searching for latest releases…</div>
           )}
             {(news.length>0 ? news.slice(0,5) : [
-              { company:"NexGen Energy",  ticker:"NXE",    date:"Jun 9",  headline:"Arrow CNSC Environmental Assessment Advancing \u2014 Q4 Decision Expected",  type:"Regulatory"  },
-              { company:"IsoEnergy",      ticker:"ISO.V",  date:"Jun 7",  headline:"Hurricane Delineation Complete \u2014 Resource Update Due Q3 2025",           type:"Drilling"    },
+              { company:"NexGen Energy",  ticker:"NXE",    date:"Jun 9",  headline:"Arrow CNSC Environmental Assessment Advancing — Q4 Decision Expected",  type:"Regulatory"  },
+              { company:"IsoEnergy",      ticker:"ISO.V",  date:"Jun 7",  headline:"Hurricane Delineation Complete — Resource Update Due Q3 2025",           type:"Drilling"    },
               { company:"Denison Mines",  ticker:"DML.TO", date:"Jun 5",  headline:"Wheeler River Phoenix ISR Pilot Approval Received",                            type:"Regulatory"  },
               { company:"Atha Energy",    ticker:"SASK.V", date:"Jun 4",  headline:"CMB 5,000m Summer Campaign Underway",                                          type:"Exploration"  },
-              { company:"Skyharbour",     ticker:"SYH.V",  date:"Jun 2",  headline:"Moore Lake Best Hole: 0.62% U\u2083O\u2088 / 4.2m at 563m",                  type:"Drilling"    },
+              { company:"Skyharbour",     ticker:"SYH.V",  date:"Jun 2",  headline:"Moore Lake Best Hole: 0.62% U₃O₈ / 4.2m at 563m",                  type:"Drilling"    },
             ]).map((n,i)=>{
               const co=COMPANIES.find(c=>c.ticker===n.ticker||c.altTicker===n.ticker||c.name.toLowerCase().includes((n.company||"").split(" ")[0]?.toLowerCase()));
               const ch=co?gCh(co):0, up=ch>=0;
               return (
                 <div key={i} style={{ paddingBottom:10, marginBottom:10, borderBottom:"1px solid #D8D0C4" }}>
                   <div style={{ display:"flex", gap:5, alignItems:"center", marginBottom:4 }}>
-                    <span style={{ fontSize:12, color:up?"#1A7A44":"#C01818", fontWeight:900 }}>{up?"\u25b2":"\u25bc"}</span>
+                    <span style={{ fontSize:12, color:up?"#1A7A44":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
                     <span style={{ ...MONO, fontSize:10, fontWeight:700, color:co?.color||"#B07A08" }}>{n.ticker}</span>
                     <span style={{ ...S.badge("gray"), fontSize:9 }}>{n.type}</span>
                     <span style={{ fontSize:9, color:"#6A6A5A", marginLeft:"auto" }}>{n.date}</span>
@@ -1057,7 +1057,7 @@ export default function App() {
           </div>
           <button onClick={()=>setShowAllYTD(v=>!v)}
             style={{ width:"100%", padding:"8px", background:"#F0EDE8", border:"1px solid #D8D0C4", borderTop:"none", borderRadius:"0 0 8px 8px", color:"#6A6A5A", fontSize:11, fontWeight:600, cursor:"pointer" }}>
-            {showAllYTD?`\u25b2 Top 5 only`:`\u25bc All ${YTD_PERF.length} companies`}
+            {showAllYTD?`▲ Top 5 only`:`▼ All ${YTD_PERF.length} companies`}
           </button>
         </div>
 
@@ -1167,7 +1167,7 @@ export default function App() {
             <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
               <div style={{ ...SERIF, fontSize:18, fontWeight:700, color:"#1A1A14" }}>Global Nuclear News</div>
               <button onClick={fetchGlobalNews} style={{ ...S.btn("s"), fontSize:10, padding:"4px 10px" }} disabled={globalNewsLoading}>
-                {globalNewsLoading?"Fetching\u2026":"\u21bb Refresh"}
+                {globalNewsLoading?"Fetching…":"↻ Refresh"}
               </button>
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
@@ -1180,7 +1180,7 @@ export default function App() {
                       <span style={{ fontSize:9, color:"#6A6A5A", marginLeft:"auto" }}>{n.date}</span>
                     </div>
                     <div style={{ fontSize:12, color:"#1A1A14", fontWeight:600, lineHeight:1.4, marginBottom:4 }}>{n.headline}</div>
-                    <div style={{ fontSize:11, color:"#6A6A5A", lineHeight:1.4, marginBottom:6 }}>{(n.summary||"").substring(0,90)}{(n.summary||"").length>90?"\u2026":""}</div>
+                    <div style={{ fontSize:11, color:"#6A6A5A", lineHeight:1.4, marginBottom:6 }}>{(n.summary||"").substring(0,90)}{(n.summary||"").length>90?"…":""}</div>
                     <div style={{ fontSize:10, color:"#B07A08", fontWeight:600 }}>Read article →</div>
                   </div>
                 </a>
