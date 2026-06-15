@@ -1279,8 +1279,11 @@ export default function App() {
                   {[
                     [`https://www.youtube.com/results?search_query=${encodeURIComponent(c.ytSearch)}`, "▶ YouTube"],
                     [`https://finance.yahoo.com/quote/${c.altTicker||c.ticker}`, "📈 Yahoo Finance"],
-                    ["https://www.sedar.com", "📄 SEDAR"],
+                    [`https://ceo.ca/${c.ticker.replace('.V','').replace('.TO','').replace('.CN','')}`, "💬 CEO.CA"],
+                    ["https://www.sedar.com", "📄 SEDAR+"],
                     [`https://finance.yahoo.com/quote/${c.altTicker||c.ticker}/news`, "📰 News"],
+                    ...(SOCIAL[c.id]?.x  ? [[SOCIAL[c.id].x,  "𝕏 Twitter"]]  : []),
+                    ...(SOCIAL[c.id]?.li ? [[SOCIAL[c.id].li, "in LinkedIn"]] : []),
                   ].map(([href,label])=>(
                     <a key={label} href={href} target="_blank" rel="noopener noreferrer">
                       <button style={S.btn("s")}>{label}</button>
@@ -1940,13 +1943,24 @@ export default function App() {
               placeholder="your@email.com"
               value={subEmail}
               onChange={e=>setSubEmail(e.target.value)}
-              onKeyDown={e=>{ if(e.key==="Enter" && subEmail.includes("@")){ setSubscribed(true); setShowSubModal(false); }}}
+              onKeyDown={e=>{ if(e.key==="Enter" && subEmail.includes("@")){ fetch("/.netlify/functions/subscribe",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email:subEmail}) }).catch(()=>{}).finally(()=>{ setSubscribed(true); setShowSubModal(false); }); }}}
               style={{ width:"100%", padding:"12px 14px", border:"1px solid #D8D0C4", borderRadius:6, fontSize:14, outline:"none", boxSizing:"border-box", marginBottom:10, fontFamily:"'Helvetica Neue',Helvetica,Arial,sans-serif", color:"#1A1A14" }}
             />
 
             {/* Submit */}
             <button
-              onClick={()=>{ if(subEmail.includes("@")){ setSubscribed(true); setShowSubModal(false); }}}
+              onClick={async ()=>{
+                if(!subEmail.includes("@")) return;
+                try {
+                  await fetch("/.netlify/functions/subscribe", {
+                    method:"POST",
+                    headers:{ "Content-Type":"application/json" },
+                    body: JSON.stringify({ email: subEmail }),
+                  });
+                } catch(e) { console.error("Subscribe error", e); }
+                setSubscribed(true);
+                setShowSubModal(false);
+              }}
               style={{ width:"100%", padding:"13px", background:"#B07A08", color:"#FFFFFF", border:"none", borderRadius:6, fontSize:14, fontWeight:700, cursor:"pointer", letterSpacing:"0.04em" }}>
               Get Free Access
             </button>
