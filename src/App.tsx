@@ -596,12 +596,10 @@ export default function App() {
   const fetchNews = useCallback(async () => {
     setNL(true);
     try {
-      const raw = await aiSearch(
-        `Today is June 2026. Search for the very latest press releases and news from Athabasca Basin uranium companies published in the past 14 days. Companies to search: Cameco (CCO, CCJ), NexGen Energy (NXE, NXG), Denison Mines (DML, DNN), Fission Uranium (FCU), IsoEnergy (ISO), Skyharbour Resources (SYH), F3 Uranium (FUU), Uranium Energy Corp (UEC), Baselode Energy (FIND), Canadian Uranium (CANU), Atha Energy (SASK), Fission 3.0 (FIS), Purepoint Uranium (PTU), Standard Uranium (STND). Search SEDAR+, company websites, and financial news sites. Return ONLY a JSON array (8-12 items, no markdown): [{"company":"NexGen","ticker":"NXE","date":"Jun 10, 2026","headline":"...","summary":"...","type":"Drilling Results","url":"https://..."}]`,
-        "Return ONLY a valid JSON array with no markdown. Include real article URLs. Use real current 2026 dates."
-      );
-      try { const a=JSON.parse(raw.replace(/```json|```/g,"").trim()); if(Array.isArray(a)) setNews(a); } catch {}
-    } catch {}
+      const res = await fetch("/.netlify/functions/basin-news");
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) setNews(data);
+    } catch(e) { console.error("News fetch failed", e); }
     setNL(false);
   }, []);
 
@@ -1529,35 +1527,38 @@ export default function App() {
   const renderNews = () => (
     <div>
       <div style={{ ...S.sectionTitle, justifyContent:"space-between" }}>
-        News Releases — Live AI Feed
-        <button onClick={fetchNews} style={S.btn()} disabled={newsLoading}>{newsLoading?"⟳ Fetching…":"⟳ Fetch Latest News"}</button>
+        News Releases — Live Feed
+        <button onClick={fetchNews} style={S.btn()} disabled={newsLoading}>{newsLoading?"↻ Fetching…":"↻ Refresh"}</button>
       </div>
       {newsLoading && (
         <div style={{ ...S.card, textAlign:"center", padding:48 }}>
           <div style={{ display:"flex", justifyContent:"center", color:"#6A6A5A", marginBottom:12 }}><Newspaper size={28} strokeWidth={1}/></div>
-          <div style={{ color:"#6A6A5A" }}>Searching news across the Athabasca Basin…</div>
-          <div style={{ fontSize:11, color:"#9A9A8A", marginTop:8 }}>AI web search in progress</div>
+          <div style={{ color:"#6A6A5A" }}>Pulling latest press releases from GlobeNewswire & Newsfile…</div>
         </div>
       )}
       {!newsLoading && news.length===0 && (
         <div style={{ ...S.card, textAlign:"center", padding:48 }}>
           <div style={{ display:"flex", justifyContent:"center", color:"#B07A08", marginBottom:12 }}><Radio size={36} strokeWidth={1}/></div>
-          <div style={{ color:"#1A1A14", fontWeight:700 }}>Click "Fetch Latest News" to pull real-time press releases</div>
-          <div style={{ fontSize:12, color:"#6A6A5A", marginTop:8 }}>Searches for drilling results, corporate announcements, and sector news</div>
+          <div style={{ color:"#1A1A14", fontWeight:700 }}>Click "Refresh" to pull the latest basin press releases</div>
+          <div style={{ fontSize:12, color:"#6A6A5A", marginTop:8 }}>Sourced directly from GlobeNewswire and Newsfile Corp</div>
         </div>
       )}
       {news.map((n,i)=>{
         const co=COMPANIES.find(c=>c.name.toLowerCase().includes((n.company||"").split(" ")[0]?.toLowerCase())||c.ticker===n.ticker);
         return (
-          <div key={i} style={{ ...S.card, borderLeft:`3px solid ${co?.color||"#B07A08"}`, marginBottom:8 }}>
-            <div style={{ display:"flex", gap:8, marginBottom:6, alignItems:"center", flexWrap:"wrap" }}>
-              <span style={{ ...MONO, fontWeight:700, color:co?.color||"#B07A08" }}>{n.ticker||n.company}</span>
-              <span style={S.badge("blue")}>{n.type}</span>
-              <span style={{ fontSize:11, color:"#6A6A5A" }}>{n.date}</span>
+          <a key={i} href={n.url||"#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+            <div style={{ ...S.card, borderLeft:`3px solid ${co?.color||"#B07A08"}`, marginBottom:8, cursor:"pointer" }}>
+              <div style={{ display:"flex", gap:8, marginBottom:6, alignItems:"center", flexWrap:"wrap" }}>
+                <span style={{ ...MONO, fontWeight:700, color:co?.color||"#B07A08" }}>{n.ticker||n.company}</span>
+                {n.type  && <span style={S.badge("blue")}>{n.type}</span>}
+                {n.source && <span style={S.badge("gray")}>{n.source}</span>}
+                <span style={{ fontSize:11, color:"#6A6A5A", marginLeft:"auto" }}>{n.date}</span>
+              </div>
+              <div style={{ fontWeight:700, fontSize:14, color:"#1A1A14", marginBottom:4 }}>{n.headline}</div>
+              <div style={{ fontSize:12, color:"#6A6A5A", lineHeight:1.5 }}>{n.summary}</div>
+              {n.url && <div style={{ fontSize:11, color:"#B07A08", marginTop:6, fontWeight:600 }}>Read full release →</div>}
             </div>
-            <div style={{ fontWeight:700, fontSize:14, marginBottom:4 }}>{n.headline}</div>
-            <div style={{ fontSize:12, color:"#6A6A5A", lineHeight:1.5 }}>{n.summary}</div>
-          </div>
+          </a>
         );
       })}
     </div>
