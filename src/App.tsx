@@ -707,7 +707,7 @@ export default function App() {
             {new Date().toLocaleDateString("en-CA",{ weekday:"long", year:"numeric", month:"long", day:"numeric" })}
           </div>
           <div style={{ ...SERIF, fontSize:11, color:"#6A6A5A", fontStyle:"italic" }}>
-            Uranium Intelligence \u2014 Athabasca Basin Edition
+            Uranium Intelligence: Athabasca Basin Edition
           </div>
         </div>
 
