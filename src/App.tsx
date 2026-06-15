@@ -1270,14 +1270,14 @@ export default function App() {
                   <div>
                     <div style={{ ...S.lbl, marginBottom:8 }}>⛏ Projects & Resources</div>
                     {c.projects.map(pr=>(
-                      <div key={pr.name} style={{ background:"#111827", borderRadius:6, padding:"8px 12px", marginBottom:6 }}>
-                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
-                          <span style={{ fontWeight:700, fontSize:13 }}>{pr.name}</span>
+                      <div key={pr.name} style={{ background:"#F5F3EE", border:"1px solid #D8D0C4", borderRadius:6, padding:"10px 14px", marginBottom:8 }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+                          <span style={{ fontWeight:700, fontSize:13, color:"#1A1A14" }}>{pr.name}</span>
                           <span style={S.badge("blue")}>{pr.stage}</span>
                         </div>
                         <div style={{ display:"flex", flexWrap:"wrap", gap:16, fontSize:11 }}>
                           {[["Ownership",pr.ownership],["Grade",pr.grade],["Resource",pr.resource],["Depth",pr.depth]].map(([k,v])=> v&&v!=="—"&&(
-                            <span key={k}><span style={{ color:"#6A6A5A" }}>{k}: </span><span style={{ fontWeight:600 }}>{v}</span></span>
+                            <span key={k}><span style={{ color:"#9A9A8A", fontWeight:500 }}>{k}: </span><span style={{ fontWeight:700, color:"#1A1A14" }}>{v}</span></span>
                           ))}
                         </div>
                       </div>
