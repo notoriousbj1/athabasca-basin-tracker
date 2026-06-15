@@ -1192,38 +1192,27 @@ export default function App() {
         Companies — Athabasca Basin
         <button onClick={fetchPrices} style={S.btn("s")} disabled={refreshing}>{refreshing?"↻ Fetching live prices…":"↻ Refresh Quotes"}</button>
       </div>
-      {/* Stage filter pills */}
-      <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
-        {[
-          ["All",               COMPANIES.length],
-          ["Producer",          COMPANIES.filter(c=>c.stage.includes("Producer")).length],
-          ["Advanced Developer",COMPANIES.filter(c=>c.stage.includes("Advanced")).length],
-          ["Developer",         COMPANIES.filter(c=>c.stage==="Developer"||c.stage.includes("Delineation")).length],
-          ["Explorer",          COMPANIES.filter(c=>c.stage.includes("Explorer")).length],
-          ["Royalty",           COMPANIES.filter(c=>c.stage.includes("Royalty")).length],
-        ].map(([label,count])=>(
-          <button key={label} onClick={()=>setCoStageFilter(label)}
-            style={{ padding:"5px 14px", borderRadius:20, fontSize:11, fontWeight:600, cursor:"pointer",
-              border:`1px solid ${coStageFilter===label?"#B07A08":"#D8D0C4"}`,
-              background:coStageFilter===label?"#B07A08":"transparent",
-              color:coStageFilter===label?"#FFFFFF":"#5A5A4A" }}>
-            {label} <span style={{ opacity:0.7 }}>({count})</span>
-          </button>
-        ))}
-      </div>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-      {COMPANIES.filter(c=>{
-        if (coStageFilter==="All") return true;
-        if (coStageFilter==="Producer") return c.stage.includes("Producer");
-        if (coStageFilter==="Advanced Developer") return c.stage.includes("Advanced");
-        if (coStageFilter==="Developer") return c.stage==="Developer"||c.stage.includes("Delineation");
-        if (coStageFilter==="Explorer") return c.stage.includes("Explorer");
-        if (coStageFilter==="Royalty") return c.stage.includes("Royalty");
-        return true;
-      }).map(c=>{
-        const p=gP(c), ch=gCh(c), isE=expanded===c.id;
+
+      {[
+        { label:"Producers",           test:c=>c.stage.includes("Producer")                             },
+        { label:"Advanced Developers", test:c=>c.stage.includes("Advanced")                             },
+        { label:"Developers",          test:c=>c.stage==="Developer"||c.stage.includes("Delineation")   },
+        { label:"Explorers",           test:c=>c.stage.includes("Explorer")                             },
+        { label:"Royalty Companies",   test:c=>c.stage.includes("Royalty")                              },
+      ].map(cat=>{
+        const cats=COMPANIES.filter(cat.test);
+        if(cats.length===0) return null;
         return (
-          <div key={c.id} style={{ ...S.card, borderLeft:`3px solid ${c.color}`, marginBottom:0, gridColumn:isE?"span 2":"span 1" }}>
+          <div key={cat.label} style={{ marginBottom:28 }}>
+            <div style={{ borderBottom:"2px solid #1A1A14", paddingBottom:6, marginBottom:14, display:"flex", alignItems:"baseline", gap:10 }}>
+              <span style={{ fontWeight:800, fontSize:13, letterSpacing:"0.1em", textTransform:"uppercase" }}>{cat.label}</span>
+              <span style={{ fontSize:11, color:"#9A9A8A", marginLeft:6 }}>{cats.length} {cats.length===1?"company":"companies"}</span>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+            {cats.map(c=>{
+              const p=gP(c), ch=gCh(c), isE=expanded===c.id;
+              return (
+                <div key={c.id} style={{ ...S.card, borderLeft:`3px solid ${c.color}`, marginBottom:0, gridColumn:isE?"span 2":"span 1" }}>
             <div onClick={()=>setExpanded(isE?null:c.id)} style={{ cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
               <div style={{ flex:1, minWidth:200 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4, flexWrap:"wrap" }}>
@@ -1326,9 +1315,12 @@ export default function App() {
               </div>
             )}
           </div>
+              );
+            })}
+            </div>
+          </div>
         );
       })}
-      </div>
     </div>
   );
 
