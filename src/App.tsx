@@ -671,7 +671,7 @@ export default function App() {
     setRefresh(false);
   }, []);
 
-  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); },[]);
+  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); },[]);
 
   const gP  = (c) => prices[c.id]?.price ?? c.price;
   const gCh = (c) => prices[c.id]?.changePct ?? c.changePct;
@@ -862,7 +862,12 @@ export default function App() {
             {/* Basin at a Glance — vertical */}
             <div style={{ ...S.card, marginBottom:0, background:"linear-gradient(145deg, #FFFDF5 0%, #FFF5DC 100%)", border:"1px solid #E8D890" }}>
               <div style={{ ...S.lbl, marginBottom:12, fontSize:11, letterSpacing:"0.12em" }}>BASIN AT A GLANCE</div>
-              {[["Active Drills","6"],["Pending Assays","27"],["Total Resources","~900 Mlb"],["Open Raises","2"]].map(([k,v])=>(
+              {[
+                  ["Active Drills",  DRILLING.filter(d=>d.status==="Active"||d.status==="Drilling").length],
+                  ["Pending Assays", DRILLING.reduce((s,d)=>s+(d.pending||0),0)],
+                  ["Total Resources","~900 Mlb est."],
+                  ["Open Raises",    FINANCINGS.filter(f=>f.status==="Open").length],
+                ].map(([k,v])=>(
                 <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #EDE8E0" }}>
                   <span style={{ fontSize:12, color:"#6A6A5A", fontWeight:500 }}>{k}</span>
                   <span style={{ fontWeight:800, color:"#B07A08", fontSize:16 }}>{v}</span>
@@ -1173,7 +1178,7 @@ export default function App() {
                     <span style={{ fontSize:9, color:"#6A6A5A", marginLeft:"auto" }}>{n.date}</span>
                   </div>
                   <a href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-                    <div style={{ fontSize:12, color:"#1A5AA8", fontWeight:600, lineHeight:1.4, marginBottom:4 }}>{n.headline}</div>
+                    <div style={{ fontSize:12, color:"#1A1A14", fontWeight:600, lineHeight:1.4, marginBottom:4 }}>{n.headline}</div>
                   </a>
                   <div style={{ fontSize:11, color:"#6A6A5A", lineHeight:1.4 }}>{(n.summary||"").substring(0,90)}{(n.summary||"").length>90?"\u2026":""}</div>
                 </div>
