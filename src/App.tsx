@@ -861,16 +861,19 @@ export default function App() {
             <div style={{ ...S.card, marginBottom:0, background:"linear-gradient(145deg, #FFFDF5 0%, #FFF5DC 100%)", border:"1px solid #E8D890" }}>
               <div style={{ ...S.lbl, marginBottom:12, fontSize:11, letterSpacing:"0.12em" }}>BASIN AT A GLANCE</div>
               {[
-                  ["Active Drills",  DRILLING.filter(d=>d.status==="Active"||d.status==="Drilling").length],
-                  ["Pending Assays", DRILLING.reduce((s,d)=>s+(d.pending||0),0)],
-                  ["Total Resources","~900 Mlb est."],
-                  ["Open Raises",    FINANCINGS.filter(f=>f.status==="Open").length],
-                ].map(([k,v])=>(
-                <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #EDE8E0" }}>
-                  <span style={{ fontSize:12, color:"#6A6A5A", fontWeight:500 }}>{k}</span>
-                  <span style={{ fontWeight:800, color:"#B07A08", fontSize:16 }}>{v}</span>
-                </div>
-              ))}
+                  ["Active Drills",  null,         DRILLING.filter(d=>d.status==="Active"||d.status==="Drilling").length],
+                  ["Pending Assays", null,         DRILLING.reduce((s,d)=>s+(d.pending||0),0)],
+                  ["Total Resources","Estimate",       "~900 Mlb"],
+                  ["Open Raises",    null,         FINANCINGS.filter(f=>f.status==="Open").length],
+                ].map(([k,note,v])=>(
+                  <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #EDE8E0" }}>
+                    <div>
+                      <span style={{ fontSize:12, color:"#6A6A5A", fontWeight:500 }}>{k}</span>
+                      {note && <div style={{ fontSize:9, color:"#9A9A8A", fontStyle:"italic", marginTop:1 }}>{note}</div>}
+                    </div>
+                    <span style={{ fontWeight:800, color:"#B07A08", fontSize:16 }}>{v}</span>
+                  </div>
+                ))}
             </div>
 
           </div>
@@ -1169,17 +1172,18 @@ export default function App() {
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
               {(globalNews.length>0?globalNews:STATIC_GLOBAL_NEWS).slice(0,6).map((n,i)=>(
-                <div key={i} style={{ paddingBottom:10, borderBottom:"1px solid #D8D0C4" }}>
-                  <div style={{ display:"flex", gap:5, marginBottom:5, flexWrap:"wrap", alignItems:"center" }}>
-                    <span style={{ ...S.badge("blue"), fontSize:9 }}>{n.publication}</span>
-                    {n.category&&<span style={{ ...S.badge("gray"), fontSize:9 }}>{n.category}</span>}
-                    <span style={{ fontSize:9, color:"#6A6A5A", marginLeft:"auto" }}>{n.date}</span>
-                  </div>
-                  <a href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+                <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+                  <div style={{ paddingBottom:10, borderBottom:"1px solid #D8D0C4", cursor:"pointer" }}>
+                    <div style={{ display:"flex", gap:5, marginBottom:5, flexWrap:"wrap", alignItems:"center" }}>
+                      <span style={{ ...S.badge("blue"), fontSize:9 }}>{n.publication||n.source}</span>
+                      {n.category&&<span style={{ ...S.badge("gray"), fontSize:9 }}>{n.category}</span>}
+                      <span style={{ fontSize:9, color:"#6A6A5A", marginLeft:"auto" }}>{n.date}</span>
+                    </div>
                     <div style={{ fontSize:12, color:"#1A1A14", fontWeight:600, lineHeight:1.4, marginBottom:4 }}>{n.headline}</div>
-                  </a>
-                  <div style={{ fontSize:11, color:"#6A6A5A", lineHeight:1.4 }}>{(n.summary||"").substring(0,90)}{(n.summary||"").length>90?"\u2026":""}</div>
-                </div>
+                    <div style={{ fontSize:11, color:"#6A6A5A", lineHeight:1.4, marginBottom:6 }}>{(n.summary||"").substring(0,90)}{(n.summary||"").length>90?"\u2026":""}</div>
+                    <div style={{ fontSize:10, color:"#B07A08", fontWeight:600 }}>Read article →</div>
+                  </div>
+                </a>
               ))}
             </div>
           </div>
