@@ -632,14 +632,10 @@ export default function App() {
   const fetchVideoData = useCallback(async () => {
     setVideosLoading(true);
     try {
-      const channels = INFLUENCERS.map(inf=>`"${inf.name}" (${inf.handle})`).join(', ');
-      const raw = await aiSearch(
-        `Find the most recent YouTube video uploaded in 2026 from each of these uranium and mining investment channels: ${channels}. For each channel find the latest video's title, upload date, full YouTube URL (youtube.com/watch?v=...), and extract the video ID from the URL. Return ONLY a JSON array with no markdown: [{"channel":"Justin Huhn","videoTitle":"...","date":"Jun 10, 2026","videoUrl":"https://www.youtube.com/watch?v=XXXXX","videoId":"XXXXX"}]`,
-        "Return ONLY a valid JSON array. The videoId must be the 11-character ID from the YouTube URL. No markdown."
-      );
-      const a = JSON.parse(raw.replace(/```json|```/g,"").trim());
-      if (Array.isArray(a)) setVideoData(a);
-    } catch(e) { console.error('Video fetch failed', e); }
+      const response = await fetch("/.netlify/functions/videos");
+      const data = await response.json();
+      if (Array.isArray(data)) setVideoData(data);
+    } catch(e) { console.error("Video fetch failed", e); }
     setVideosLoading(false);
   }, []);
 
