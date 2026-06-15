@@ -1008,7 +1008,7 @@ export default function App() {
         <div style={{ marginBottom:20 }}>
           <div style={RuleH}>
             <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Market Performance</div>
-            <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Year-to-date returns \u2014 Athabasca Basin uranium equities</div>
+            <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Year-to-date returns: Athabasca Basin uranium equities</div>
           </div>
           <div style={{ ...S.card, padding:12 }}>
             <ResponsiveContainer width="100%" height={showAllYTD?480:140}>
