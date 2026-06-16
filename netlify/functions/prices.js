@@ -35,9 +35,10 @@ exports.handler = async (event) => {
 
     (data?.quoteResponse?.result || []).forEach(q => {
       results[q.symbol] = {
-        price:     Math.round((q.regularMarketPrice        || 0) * 100) / 100,
-        changePct: Math.round((q.regularMarketChangePercent || 0) * 100) / 100,
-      };
+  price:     Math.round((q.regularMarketPrice        || 0) * 100) / 100,
+  changePct: Math.round((q.regularMarketChangePercent || 0) * 100) / 100,
+  volume:    q.regularMarketVolume || 0,
+};
     });
 
     return {
