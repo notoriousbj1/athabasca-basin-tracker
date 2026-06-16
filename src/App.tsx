@@ -950,21 +950,25 @@ export default function App() {
                 .slice(5)
                 .map((c,i)=>{
                   const p=gP(c), ch=gCh(c);
+                  const chAmt=(p*Math.abs(ch)/100).toFixed(3);
+                  const up=ch>=0;
                   return (
                     <div key={c.id} onClick={()=>{setTab("companies");setExpanded(c.id);}}
-                      style={{ display:"flex", gap:10, alignItems:"center", padding:"10px 0", borderBottom:"1px solid #D8D0C4", cursor:"pointer" }}>
-                      <span style={{ ...MONO, fontSize:11, color:"#6A6A5A", width:14, flexShrink:0 }}>{i+6}</span>
-                      <div style={{ width:7, height:7, borderRadius:"50%", background:c.color, flexShrink:0 }}/>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-                          <span style={{ ...MONO, fontWeight:700, color:c.color, fontSize:12 }}>{c.ticker}</span>
-                          <span style={{ fontSize:10, color:"#6A6A5A" }}>{c.exchange}</span>
+                      style={{ padding:"10px 0", borderBottom:"1px solid #D8D0C4", cursor:"pointer" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                        <span style={{ fontSize:11, color:"#9A9A8A", width:16, flexShrink:0, textAlign:"center" }}>{i+6}</span>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
+                            <span style={{ fontSize:15, fontWeight:700, color:"#1A1A14" }}>{c.name}</span>
+                            <span style={{ ...MONO, fontWeight:700, color:c.color, fontSize:12 }}>{c.ticker}</span>
+                          </div>
                         </div>
-                        <div style={{ fontSize:12, fontWeight:600, color:"#1A1A14" }}>{c.name}</div>
-                      </div>
-                      <div style={{ textAlign:"right", flexShrink:0 }}>
-                        <div style={{ ...MONO, fontWeight:700, fontSize:13 }}>{fmtP(p)}</div>
-                        <span style={S.badge(ch>=0?"green":"red")}>{fmtPct(ch)}</span>
+                        <span style={{ ...MONO, fontWeight:700, fontSize:15, color:"#1A1A14", flexShrink:0 }}>{fmtP(p)}</span>
+                        <div style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
+                          <span style={{ fontSize:13, color:up?"#1A7A44":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
+                          <span style={{ ...MONO, fontSize:11, fontWeight:700, color:up?"#1A7A44":"#C01818" }}>{chAmt}</span>
+                          <span style={{ ...S.badge(up?"green":"red"), fontSize:10 }}>{fmtPct(ch)}</span>
+                        </div>
                       </div>
                     </div>
                   );
