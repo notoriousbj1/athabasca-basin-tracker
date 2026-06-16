@@ -863,6 +863,7 @@ export default function App() {
               {[
                   ["Active Drills",  null,         DRILLING.filter(d=>d.status==="Active"||d.status==="Drilling").length],
                   ["Pending Assays", null,         DRILLING.reduce((s,d)=>s+(d.pending||0),0)],
+                  ["Active Projects",null,         COMPANIES.reduce((s,c)=>s+(c.projects?.length||0),0)],
                   ["Total Resources","Estimate · ~10% of global uranium resources (est.)", "~900 Mlb"],
                   ["Open Raises",    null,         FINANCINGS.filter(f=>f.status==="Open").length],
                 ].map(([k,note,v])=>(
