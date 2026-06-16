@@ -832,6 +832,12 @@ export default function App() {
               ) : (
                 <a href={featuredStory.url||"#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
                   <div>
+                    {featuredStory.image && (
+                      <img src={featuredStory.image} alt={featuredStory.headline}
+                        style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:160 }}
+                        onError={e=>{ e.target.style.display="none"; }}
+                      />
+                    )}
                     <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center", flexWrap:"wrap" }}>
                       {featuredStory.source && <span style={{ ...S.badge("blue"), fontSize:10 }}>{featuredStory.source}</span>}
                       {(featuredStory.category||featuredStory.type) && <span style={{ ...S.badge("gray"), fontSize:10 }}>{featuredStory.category||featuredStory.type}</span>}
