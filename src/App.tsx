@@ -575,6 +575,7 @@ export default function App() {
   const [coStageFilter, setCoStageFilter] = useState("All");
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
+  const [basinTopStory, setBasinTopStory] = useState(null);
   const [showSubModal, setShowSubModal] = useState(false);
   const [subscribed, setSubscribed]     = useState(false);
   const [subEmail, setSubEmail]         = useState("");
@@ -626,6 +627,14 @@ export default function App() {
     setGNL(false);
   }, []);
 
+  const fetchBasinTopStory = useCallback(async () => {
+    try {
+      const res = await fetch("/.netlify/functions/basin-editorial");
+      const data = await res.json();
+      if (data?.headline) setBasinTopStory(data);
+    } catch(e) { console.error("Basin top story fetch failed", e); }
+  }, []);
+
   const fetchVideoData = useCallback(async () => {
     setVideosLoading(true);
     try {
@@ -669,7 +678,7 @@ export default function App() {
     setRefresh(false);
   }, []);
 
-  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); },[]);
+  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); },[]);
 
   const gP  = (c) => prices[c.id]?.price ?? c.price;
   const gCh = (c) => prices[c.id]?.changePct ?? c.changePct;
@@ -700,11 +709,11 @@ export default function App() {
       79.8,79.5,79.2,79.5,79.0, spot.price||79.50,
     ].map((price,i)=>({ i, price }));
 
-    const featuredStory = globalNews[0] || {
-      source:"World Nuclear News", category:"Market", date:"Jun 16, 2026",
-      headline:"Uranium Market Tightening as Utility Contracting Accelerates Ahead of New Reactor Buildout",
-      summary:"Global uranium utilities are accelerating long-term contracting at volumes not seen since the pre-Fukushima era, driven by reactor life extensions and new build programs across the US, UK, France and emerging markets. Spot prices remain supported above $80/lb as the structural supply deficit widens.",
-      url:"https://www.world-nuclear-news.org",
+    const featuredStory = basinTopStory || {
+      source:"Mining.com", category:"Market", date:"Jun 16, 2026",
+      headline:"Athabasca Basin Uranium Explorers Advance Summer Drill Programs as Spot Price Holds Above $80/lb",
+      summary:"Junior uranium explorers across Saskatchewan's Athabasca Basin are mobilising for summer drill campaigns with renewed confidence as uranium spot prices hold above $80/lb and utility contracting accelerates. The basin remains home to the world's highest-grade uranium deposits and accounts for an estimated 10% of global uranium resources.",
+      url:"https://www.mining.com/category/uranium/",
     };
 
     const topCos = [...COMPANIES].filter(c=>c.id!=="canu").sort((a,b)=>gCh(b)-gCh(a)).slice(0,5);
@@ -774,7 +783,7 @@ export default function App() {
 
             {/* Left — top basin story */}
             <div>
-              <div style={{ ...S.lbl, marginBottom:8 }}>TOP STORY — GLOBAL URANIUM COVERAGE</div>
+              <div style={{ ...S.lbl, marginBottom:8 }}>TOP BASIN STORY</div>
               {newsLoading && news.length===0 ? (
                 <div>
                   <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.45}}`}</style>
