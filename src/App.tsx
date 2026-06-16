@@ -664,11 +664,9 @@ export default function App() {
   const fetchSpot = useCallback(async () => {
     setSL(true);
     try {
-      const raw = await aiSearch(
-        `Search for today's uranium U₃O₈ spot price in USD per pound. Find the UxC or TradeTech spot price. Provide week-over-week change and 52-week high/low. Respond ONLY as JSON (no markdown): {"price":79.50,"weekChange":-0.50,"weekChangePct":-0.6,"high52":106,"low52":73,"trend":"bearish","source":"UxC","date":"Jun 2025"}`,
-        "Return ONLY valid JSON with no markdown, no explanation."
-      );
-      try { setSpot(JSON.parse(raw.replace(/```json|```/g,"").trim())); } catch {}
+      const res = await fetch("/.netlify/functions/uranium-price");
+      const data = await res.json();
+      if (data?.price && data.price > 20) setSpot(data);
     } catch {}
     setSL(false);
   }, []);
@@ -838,7 +836,15 @@ export default function App() {
               )}
               <button onClick={fetchSpot} style={{ ...S.btn("s"), padding:"3px 10px", fontSize:10, marginLeft:"auto" }} disabled={spotLoading}>↻</button>
             </div>
-            <div style={{ ...S.lbl, marginBottom:6 }}>U₃O₈ SPOT — 6-MONTH PRICE TREND</div>
+            <div style={{ ...S.lbl, marginBottom:6, display:"flex", alignItems:"center", gap:8 }}>
+              U₃O₈ SPOT — 6-MONTH PRICE TREND
+              {spot.sourceUrl && (
+                <a href={spot.sourceUrl} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize:9, color:"#9A9A8A", fontWeight:500, textDecoration:"none", letterSpacing:"0.04em" }}>
+                  {spot.source || "Trading Economics"} ↗
+                </a>
+              )}
+            </div>
             <ResponsiveContainer width="100%" height={130}>
               <AreaChart data={sparkData} margin={{ top:2, right:4, bottom:0, left:0 }}>
                 <defs>
