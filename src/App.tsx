@@ -1978,7 +1978,7 @@ export default function App() {
                 Unlock All 20 Companies
               </div>
               <div style={{ fontSize:13, color:"#6A6A5A", lineHeight:1.5 }}>
-                Enter your email for free access to the full Athabasca Basin tracker — including every company, live quotes, and weekly intelligence updates.
+                Subscribe to <strong style={{ color:"#1A1A14" }}>Juniorstocks.com</strong> for free access to the full Athabasca Basin tracker — all 20 companies, live quotes, and weekly uranium intelligence delivered to your inbox.
               </div>
             </div>
 
@@ -2012,7 +2012,7 @@ export default function App() {
 
             {/* Disclaimer */}
             <div style={{ fontSize:10, color:"#9A9A8A", textAlign:"center", marginTop:12, lineHeight:1.5 }}>
-              No spam. Uranium intelligence only. Unsubscribe anytime.
+              By subscribing you agree to receive emails from Juniorstocks.com. No spam. Unsubscribe anytime.
             </div>
           </div>
         </div>
