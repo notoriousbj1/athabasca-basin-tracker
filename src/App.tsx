@@ -783,10 +783,14 @@ export default function App() {
   // ── OVERVIEW ──
   const renderOverview = () => {
     const sparkData = [
-      82.5,81.8,82.0,81.5,80.8,80.2,79.8,80.0,79.5,80.3,80.1,79.8,
-      79.2,79.8,80.2,80.5,80.8,80.0,79.5,79.2,78.8,79.0,79.2,79.5,
-      79.8,79.5,79.2,79.5,79.0, spot.price||79.50,
-    ].map((price,i)=>({ i, price }));
+      { m:"Dec", price:73.25 },{ m:"",    price:73.50 },{ m:"",    price:73.75 },{ m:"",    price:74.00 },
+      { m:"Jan", price:74.50 },{ m:"",    price:75.25 },{ m:"",    price:75.75 },{ m:"",    price:76.00 },
+      { m:"Feb", price:76.50 },{ m:"",    price:77.00 },{ m:"",    price:77.50 },{ m:"",    price:78.00 },
+      { m:"Mar", price:79.00 },{ m:"",    price:80.50 },{ m:"",    price:82.00 },{ m:"",    price:83.50 },
+      { m:"Apr", price:84.00 },{ m:"",    price:84.50 },{ m:"",    price:83.00 },{ m:"",    price:82.00 },
+      { m:"May", price:81.00 },{ m:"",    price:80.50 },{ m:"",    price:80.00 },{ m:"",    price:79.50 },
+      { m:"Jun", price:79.00 },{ m:"",    price:79.25 },{ m:"Live", price:spot.price||79.50 },
+    ];
 
     const featuredStory = basinTopStory || {
       source:"Mining.com", category:"Market", date:"Jun 16, 2026",
@@ -824,17 +828,26 @@ export default function App() {
               <span style={{ ...S.badge(spot.weekChange>=0?"green":"red"), fontSize:11 }}>
                 {spot.weekChange>=0?"+":""}{spot.weekChange?.toFixed(2)} ({spot.weekChangePct?.toFixed(1)}% WoW)
               </span>
+              {!spotLoading && (
+                <>
+                  <style>{`@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.85)}}`}</style>
+                  <span style={{ ...S.badge("amber"), fontSize:10, display:"flex", alignItems:"center", gap:4 }}>
+                    <span style={{ display:"inline-block", animation:"livePulse 1.6s ease-in-out infinite" }}>●</span> Live
+                  </span>
+                </>
+              )}
               <button onClick={fetchSpot} style={{ ...S.btn("s"), padding:"3px 10px", fontSize:10, marginLeft:"auto" }} disabled={spotLoading}>↻</button>
             </div>
-            <div style={{ ...S.lbl, marginBottom:6 }}>U₃O₈ SPOT — 30-DAY PRICE TREND</div>
-            <ResponsiveContainer width="100%" height={100}>
-              <AreaChart data={sparkData} margin={{ top:2, right:4, bottom:2, left:0 }}>
+            <div style={{ ...S.lbl, marginBottom:6 }}>U₃O₈ SPOT — 6-MONTH PRICE TREND</div>
+            <ResponsiveContainer width="100%" height={130}>
+              <AreaChart data={sparkData} margin={{ top:2, right:4, bottom:0, left:0 }}>
                 <defs>
                   <linearGradient id="spotGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor="#B07A08" stopOpacity={0.6}/>
                     <stop offset="100%" stopColor="#B07A08" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
+                <XAxis dataKey="m" tick={{ fontSize:9, fill:"#9A9A8A" }} interval={0} height={16}/>
                 <Area type="monotone" dataKey="price" stroke="#B07A08" strokeWidth={1.5} fill="url(#spotGradient)" dot={false}/>
                 <YAxis domain={["auto","auto"]} hide/>
                 <Tooltip formatter={(v)=>[`$${v.toFixed(2)}`,"U₃O₈/lb"]} contentStyle={{ background:"#FFFFFF", border:"1px solid #D8D0C4", fontSize:11, borderRadius:4 }}/>
@@ -1089,16 +1102,41 @@ export default function App() {
                   );
                 })
             ) : (
-              <div style={{ position:"relative", height:54, overflow:"hidden", marginTop:2 }}>
-                <div style={{ filter:"blur(3px)", opacity:0.32, padding:"10px 0" }}>
-                  <div style={{ display:"flex", gap:10, alignItems:"center" }}>
-                    <span style={{ ...MONO, fontSize:11, color:"#6A6A5A", width:14 }}>6</span>
-                    <div style={{ flex:1 }}>
-                      <span style={{ ...MONO, fontWeight:700, color:"#6A6A5A" }}>STND.V</span>
-                      <span style={{ marginLeft:8, fontSize:12, color:"#6A6A5A" }}>Standard Uranium</span>
-                    </div>
-                    <span style={{ ...MONO, fontSize:12, color:"#6A6A5A" }}>$0.11  +2.1%</span>
-                  </div>
+              <div style={{ position:"relative", overflow:"hidden", marginTop:2 }}>
+                <div style={{ filter:"blur(3px)", opacity:0.32, pointerEvents:"none" }}>
+                  {[...COMPANIES].filter(c=>c.id!=="canu")
+                    .sort((a,b)=>coSort==="ytd"?getYTD(b)-getYTD(a):gCh(b)-gCh(a))
+                    .slice(5,8)
+                    .map((c,i)=>{
+                      const p=gP(c), ch=gCh(c), ytd=getYTD(c);
+                      const up=ch>=0, ytdUp=ytd>=0;
+                      const barW=Math.min(100,Math.abs(ytd)*1.5);
+                      return (
+                        <div key={c.id} style={{ padding:"10px 0", borderBottom:"1px solid #D8D0C4" }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                            <span style={{ fontSize:11, color:"#9A9A8A", width:16, flexShrink:0, textAlign:"center" }}>{i+6}</span>
+                            <div style={{ flex:1, minWidth:0 }}>
+                              <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
+                                <span style={{ fontSize:15, fontWeight:700, color:"#1A1A14" }}>{c.name}</span>
+                                <span style={{ ...MONO, fontWeight:700, color:c.color, fontSize:12 }}>{c.ticker}</span>
+                              </div>
+                              <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:4 }}>
+                                <div style={{ width:60, height:4, background:"#EDE8E0", borderRadius:2, overflow:"hidden" }}>
+                                  <div style={{ width:`${barW}%`, height:"100%", background:ytdUp?"#1A7A44":"#C01818", borderRadius:2 }}/>
+                                </div>
+                                <span style={{ ...MONO, fontSize:10, fontWeight:700, color:ytdUp?"#1A7A44":"#C01818" }}>YTD {ytdUp?"+":""}{ytd.toFixed(1)}%</span>
+                              </div>
+                            </div>
+                            <span style={{ ...MONO, fontWeight:700, fontSize:15, color:"#1A1A14", flexShrink:0 }}>{fmtP(p)}</span>
+                            <div style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
+                              <span style={{ fontSize:13, color:up?"#1A7A44":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
+                              <span style={{ ...MONO, fontSize:11, fontWeight:700, color:up?"#1A7A44":"#C01818" }}>{(p*Math.abs(ch)/100).toFixed(3)}</span>
+                              <span style={{ ...S.badge(up?"green":"red"), fontSize:10 }}>{fmtPct(ch)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
                 <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
                   <button onClick={()=>setShowSubModal(true)} style={{ ...S.btn(), fontSize:11, padding:"6px 16px" }}>
