@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LineChart, Line, AreaChart, Area } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LineChart, Line, AreaChart, Area, ComposedChart, Legend, ScatterChart, Scatter, ZAxis } from "recharts";
 import { Atom, Hammer, Timer, DollarSign, Building2, Zap, Globe, TrendingUp, BarChart3, Newspaper, Landmark, Play, Map, Activity, Flag, Scale, Users, Tag, Radio, Linkedin, Star } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -406,6 +406,39 @@ const BASIN_BOUNDARY = [
   [-111.5,57.5],[-112.0,58.0],[-111.8,58.5],[-111.5,59.0],
 ];
 
+const SMART_MONEY_EVENTS = [
+  { company:"NexGen",      ticker:"NXE",    type:"Insider Buy",  amount:2.1,  amountLabel:"C$2.1M",  date:"May 2026", momentum:98, regionY:2, region:"Western Basin",  headline:"CEO & Directors add $2.1M in open market purchases post-permitting update", proximity:"Arrow Deposit"            },
+  { company:"Denison",     ticker:"DML.TO", type:"Joint Venture", amount:25,  amountLabel:"C$25M",   date:"Jun 2026", momentum:90, regionY:2, region:"Western Basin",  headline:"Denison expands Russell Lake JV with Skyharbour — 3 new targets adjacent to Arrow", proximity:"4.2km from Arrow" },
+  { company:"Fission",     ticker:"FCU",    type:"Bought Deal",  amount:30,   amountLabel:"C$30M",   date:"Apr 2026", momentum:70, regionY:2, region:"Western Basin",  headline:"Fission closes $30M bought deal to fund Triple R feasibility study",            proximity:"Patterson Lake South" },
+  { company:"F3 Uranium",  ticker:"FUU.V",  type:"Bought Deal",  amount:12,   amountLabel:"C$12M",   date:"Mar 2026", momentum:83, regionY:2, region:"Western Basin",  headline:"$12M financing to fund 2026 summer PLN exploration program",                    proximity:"Patterson Lake North" },
+  { company:"Skyharbour",  ticker:"SYH.V",  type:"Joint Venture", amount:8,   amountLabel:"C$8M",    date:"May 2026", momentum:80, regionY:2, region:"Western Basin",  headline:"Orano Canada JV expanded — $8M earn-in at Preston Project",                     proximity:"12km from McArthur"   },
+  { company:"CanAlaska",   ticker:"CVV.V",  type:"Joint Venture", amount:5,   amountLabel:"C$5M",    date:"Apr 2026", momentum:72, regionY:1, region:"Eastern Basin",  headline:"Cameco JV active at West McArthur — partner-funded $5M program",               proximity:"West McArthur"        },
+  { company:"Atha Energy", ticker:"SASK.V", type:"Bought Deal",  amount:15,   amountLabel:"C$15M",   date:"Mar 2026", momentum:65, regionY:1, region:"Eastern Basin",  headline:"$15M financing to fund multi-platform basin-wide geophysics",                   proximity:"CMB Land Package"     },
+  { company:"IsoEnergy",   ticker:"ISO.V",  type:"Bought Deal",  amount:10,   amountLabel:"C$10M",   date:"Feb 2026", momentum:68, regionY:1, region:"Eastern Basin",  headline:"$10M raise to advance Hurricane deposit delineation program",                   proximity:"Hurricane Deposit"    },
+  { company:"Std Uranium", ticker:"STND.V", type:"Bought Deal",  amount:6,    amountLabel:"C$6M",    date:"May 2026", momentum:58, regionY:0, region:"Basin Margins",  headline:"Davidson River drill program financed via $6M bought deal",                     proximity:"Davidson River"       },
+  { company:"CANU",        ticker:"CANU.V", type:"Insider Buy",  amount:0.38, amountLabel:"C$380K",  date:"Jun 2026", momentum:55, regionY:0, region:"Basin Margins",  headline:"Management adds $380K ahead of summer drill program at Key Lake",              proximity:"Adjacent to Key Lake" },
+  { company:"Baselode",    ticker:"FIND.V", type:"Insider Buy",  amount:0.5,  amountLabel:"C$500K",  date:"May 2026", momentum:52, regionY:0, region:"Basin Margins",  headline:"Management buying post-Forum merger on Hook project potential",                  proximity:"Hook Lake"            },
+  { company:"Purepoint",   ticker:"PTU.V",  type:"Joint Venture", amount:3,   amountLabel:"C$3M",    date:"Mar 2026", momentum:60, regionY:1, region:"Eastern Basin",  headline:"Cameco & UEC JV funds $3M Hook Lake exploration",                               proximity:"Hook Lake JV"         },
+];
+
+const SUPPLY_DEFICIT_DATA = [
+  { year:"2018", supply:162, demand:178, price:21 },
+  { year:"2019", supply:155, demand:185, price:25 },
+  { year:"2020", supply:122, demand:163, price:30 },
+  { year:"2021", supply:130, demand:177, price:33 },
+  { year:"2022", supply:140, demand:190, price:51 },
+  { year:"2023", supply:148, demand:198, price:59 },
+  { year:"2024", supply:150, demand:210, price:87 },
+  { year:"2025", supply:147, demand:220, price:73 },
+  { year:"2026", supply:143, demand:230, price:82 },
+  { year:"2027", supply:140, demand:244, price:null },
+  { year:"2028", supply:137, demand:257, price:null },
+  { year:"2029", supply:133, demand:268, price:null },
+  { year:"2030", supply:130, demand:280, price:null },
+  { year:"2032", supply:126, demand:300, price:null },
+  { year:"2034", supply:122, demand:318, price:null },
+];
+
 const STAGE_GROUPS = [
   { key:"Producer",  label:"Producers",  color:"#B07A08", test:(s)=>s==="Producer" },
   { key:"Developer", label:"Developers", color:"#1A5AA8", test:(s)=>s.includes("Developer")||s==="Producer / Developer" },
@@ -573,6 +606,10 @@ export default function App() {
   const [sortCol, setSortCol]         = useState("chg");
   const [sortDir, setSortDir]         = useState("desc");
   const [coStageFilter, setCoStageFilter] = useState("All");
+  const [sdEndYear,     setSdEndYear]     = useState(2030);
+  const [sdHighlight,   setSdHighlight]   = useState("Global Reactor Buildout");
+  const [bcmType,       setBcmType]       = useState("All");
+  const [bcmRegion,     setBcmRegion]     = useState("All");
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
   const [basinTopStory, setBasinTopStory] = useState(null);
@@ -671,7 +708,7 @@ export default function App() {
       const upd = {};
       COMPANIES.forEach(c => {
         const hit = data[c.ticker] || data[c.altTicker];
-        if (hit?.price) upd[c.id] = { price: hit.price, changePct: hit.changePct };
+        if (hit?.price) upd[c.id] = { price: hit.price, changePct: hit.changePct, volume: hit.volume || 0 };
       });
       if (Object.keys(upd).length > 0) setPrices(upd);
     } catch(e) { console.error("Price fetch failed", e); }
@@ -680,8 +717,9 @@ export default function App() {
 
   useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); },[]);
 
-  const gP  = (c) => prices[c.id]?.price ?? c.price;
-  const gCh = (c) => prices[c.id]?.changePct ?? c.changePct;
+  const gP   = (c) => prices[c.id]?.price ?? c.price;
+  const gCh  = (c) => prices[c.id]?.changePct ?? c.changePct;
+  const gVol = (c) => prices[c.id]?.volume || 0;
   const calcMktCap = (c) => {
     const p = gP(c);
     if (!p || !c.sharesBasic) return c.marketCap;
@@ -861,12 +899,20 @@ export default function App() {
             {/* Basin at a Glance — vertical */}
             <div style={{ ...S.card, marginBottom:0, background:"linear-gradient(145deg, #FFFDF5 0%, #FFF5DC 100%)", border:"1px solid #E8D890" }}>
               <div style={{ ...S.lbl, marginBottom:12, fontSize:11, letterSpacing:"0.12em" }}>BASIN AT A GLANCE</div>
-              {[
-                  ["Active Drills",  null,         DRILLING.filter(d=>d.status==="Active"||d.status==="Drilling").length],
-                  ["Pending Assays", null,         DRILLING.reduce((s,d)=>s+(d.pending||0),0)],
-                  ["Active Projects",null,         COMPANIES.reduce((s,c)=>s+(c.projects?.length||0),0)],
-                  ["Total Resources","Estimate · ~10% of global uranium resources (est.)", "~900 Mlb"],
-                  ["Open Raises",    null,         FINANCINGS.filter(f=>f.status==="Open").length],
+              {(()=>{
+                const parseShares = s => { const n=parseFloat(s||"0"); if(!s)return 0; if(s.includes("B"))return n*1e9; if(s.includes("M"))return n*1e6; if(s.includes("K"))return n*1e3; return n; };
+                const totalMktCap = COMPANIES.reduce((s,c)=>s+gP(c)*parseShares(c.sharesBasic),0);
+                const mktCapStr   = totalMktCap>=1e9?`$${(totalMktCap/1e9).toFixed(1)}B`:`$${(totalMktCap/1e6).toFixed(0)}M`;
+                const totalVol    = COMPANIES.reduce((s,c)=>s+gVol(c),0);
+                const volStr      = totalVol>0?totalVol>=1e6?`${(totalVol/1e6).toFixed(1)}M`:`${(totalVol/1e3).toFixed(0)}K`:"—";
+                return [
+                  ["Active Drills",    null,                                             DRILLING.filter(d=>d.status==="Active"||d.status==="Drilling").length],
+                  ["Pending Assays",   null,                                             DRILLING.reduce((s,d)=>s+(d.pending||0),0)],
+                  ["Active Projects",  null,                                             COMPANIES.reduce((s,c)=>s+(c.projects?.length||0),0)],
+                  ["Total Resources",  "Estimate · ~10% of global uranium resources",   "~900 Mlb"],
+                  ["Total Market Cap", "Live · all 21 basin companies",                  mktCapStr],
+                  ["Daily Volume",     totalVol>0?"Combined shares traded today":"Refreshes with quotes", volStr],
+                  ["Open Raises",      null,                                             FINANCINGS.filter(f=>f.status==="Open").length],
                 ].map(([k,note,v])=>(
                   <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #EDE8E0" }}>
                     <div>
@@ -875,7 +921,8 @@ export default function App() {
                     </div>
                     <span style={{ fontWeight:800, color:"#B07A08", fontSize:16 }}>{v}</span>
                   </div>
-                ))}
+                ));
+              })()}
             </div>
 
           </div>
@@ -1051,6 +1098,225 @@ export default function App() {
           <a href="mailto:advertise@juniorstocks.com" style={{ textDecoration:"none", flexShrink:0 }}>
             <button style={{ ...S.btn(), padding:"10px 22px", fontSize:12 }}>Advertise</button>
           </a>
+        </div>
+
+        {/* Basin Capital Monitor */}
+        <div style={{ marginBottom:24 }}>
+          <div style={{ ...RuleH }}>
+            <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Basin Capital Monitor</div>
+            <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Investment heatmap — where capital is being deployed across the Athabasca Basin</div>
+          </div>
+          <div style={{ ...S.card, padding:20 }}>
+            {(()=>{
+              const TYPE_COLORS = { "Bought Deal":"#1A5AA8", "Joint Venture":"#1A7A44", "Insider Buy":"#B07A08" };
+              const filtered = SMART_MONEY_EVENTS.filter(e =>
+                (bcmType==="All"   || e.type===bcmType) &&
+                (bcmRegion==="All" || e.region===bcmRegion)
+              );
+              const byType = {
+                "Bought Deal":  filtered.filter(e=>e.type==="Bought Deal"),
+                "Joint Venture":filtered.filter(e=>e.type==="Joint Venture"),
+                "Insider Buy":  filtered.filter(e=>e.type==="Insider Buy"),
+              };
+              const totalDeployed = filtered.reduce((s,e)=>s+e.amount,0);
+              const momentum = filtered.length===0?"—":filtered.reduce((s,e)=>s+e.momentum,0)/filtered.length>80?"High":filtered.reduce((s,e)=>s+e.momentum,0)/filtered.length>65?"Moderate":"Developing";
+
+              const BubbleShape = (props) => {
+                const { cx, cy, payload } = props;
+                const r = Math.max(14, Math.min(46, Math.sqrt(payload.amount) * 10));
+                const col = TYPE_COLORS[payload.type] || "#B07A08";
+                return (
+                  <g style={{ cursor:"pointer" }}>
+                    <circle cx={cx} cy={cy} r={r} fill={col} fillOpacity={0.75} stroke={col} strokeWidth={1.5}/>
+                    <text x={cx} y={cy+4} textAnchor="middle" fontSize={9} fontWeight={700} fill="#FFFFFF">{payload.company}</text>
+                  </g>
+                );
+              };
+
+              const CustomTooltip = ({ active, payload }) => {
+                if (!active||!payload?.length) return null;
+                const d = payload[0]?.payload;
+                if (!d) return null;
+                return (
+                  <div style={{ background:"#FFFFFF", border:"1px solid #D8D0C4", borderRadius:8, padding:"10px 14px", fontSize:11, maxWidth:240, boxShadow:"0 2px 8px rgba(0,0,0,0.1)" }}>
+                    <div style={{ fontWeight:700, color:"#1A1A14", marginBottom:4 }}>{d.company} <span style={{ color:TYPE_COLORS[d.type], fontWeight:600 }}>({d.type})</span></div>
+                    <div style={{ color:"#6A6A5A", marginBottom:2 }}>{d.headline}</div>
+                    <div style={{ display:"flex", gap:12, marginTop:6 }}>
+                      <span style={{ fontWeight:700, color:"#1A7A44" }}>{d.amountLabel}</span>
+                      <span style={{ color:"#B07A08" }}>📍 {d.proximity}</span>
+                    </div>
+                    <div style={{ color:"#9A9A8A", marginTop:4 }}>{d.date} · Momentum {d.momentum}%</div>
+                  </div>
+                );
+              };
+
+              return (
+                <>
+                  {/* Legend */}
+                  <div style={{ display:"flex", gap:12, marginBottom:12, flexWrap:"wrap" }}>
+                    {Object.entries(TYPE_COLORS).map(([label,color])=>(
+                      <div key={label} style={{ display:"flex", alignItems:"center", gap:5 }}>
+                        <div style={{ width:10, height:10, borderRadius:"50%", background:color }}/>
+                        <span style={{ fontSize:11, color:"#6A6A5A" }}>{label}</span>
+                      </div>
+                    ))}
+                    <span style={{ fontSize:10, color:"#9A9A8A", marginLeft:"auto" }}>Bubble size = investment amount</span>
+                  </div>
+
+                  {/* Chart */}
+                  <ResponsiveContainer width="100%" height={280}>
+                    <ScatterChart margin={{ top:16, right:16, bottom:20, left:8 }}>
+                      <XAxis type="number" dataKey="momentum" domain={[40,100]} tickFormatter={v=>`${v}%`} tick={{ fontSize:10, fill:"#6A6A5A" }}
+                        label={{ value:"Relative Market Momentum →", position:"insideBottom", offset:-8, fontSize:9, fill:"#9A9A8A" }}/>
+                      <YAxis type="number" dataKey="regionY" domain={[-0.5,2.5]} ticks={[0,1,2]} width={90}
+                        tickFormatter={v=>["Basin Margins","Eastern Basin","Western Basin"][v]||""} tick={{ fontSize:10, fill:"#6A6A5A" }}/>
+                      <ZAxis dataKey="amount" range={[300,3000]}/>
+                      <Tooltip content={<CustomTooltip/>}/>
+                      {Object.entries(byType).map(([type,data])=>(
+                        <Scatter key={type} data={data} fill={TYPE_COLORS[type]} shape={<BubbleShape/>}/>
+                      ))}
+                    </ScatterChart>
+                  </ResponsiveContainer>
+
+                  {/* Stats + Filters */}
+                  <div style={{ borderTop:"1px solid #D8D0C4", paddingTop:14, marginTop:4 }}>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:0, marginBottom:14, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
+                      {[
+                        ["Active Transactions", filtered.length],
+                        ["Capital Deployed", `C$${totalDeployed.toFixed(0)}M`],
+                        ["Momentum", momentum],
+                      ].map(([label,val])=>(
+                        <div key={label} style={{ padding:"10px 14px", borderRight:"1px solid #D8D0C4", textAlign:"center" }}>
+                          <div style={{ fontSize:11, color:"#9A9A8A", letterSpacing:"0.06em", marginBottom:4 }}>{label}</div>
+                          <div style={{ fontSize:15, fontWeight:800, color:"#1A1A14" }}>{val}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                        <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600 }}>Transaction Type</span>
+                        <select value={bcmType} onChange={e=>setBcmType(e.target.value)}
+                          style={{ padding:"5px 10px", fontSize:11, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14", cursor:"pointer" }}>
+                          {["All","Bought Deal","Joint Venture","Insider Buy"].map(t=><option key={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                        <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600 }}>Basin Region</span>
+                        <select value={bcmRegion} onChange={e=>setBcmRegion(e.target.value)}
+                          style={{ padding:"5px 10px", fontSize:11, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14", cursor:"pointer" }}>
+                          {["All","Western Basin","Eastern Basin","Basin Margins"].map(r=><option key={r}>{r}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Supply Deficit & Price Visualizer */}
+        <div style={{ marginBottom:24 }}>
+          <div style={{ ...RuleH }}>
+            <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Uranium Supply & Demand Tracker</div>
+            <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>The structural case for Athabasca exploration — global supply vs. reactor demand</div>
+          </div>
+          <div style={{ ...S.card, padding:20 }}>
+            {(()=>{
+              const HIGHLIGHTS = {
+                "Global Reactor Buildout": { color:"#C01818", note:"~60 new reactors are under construction globally by 2030. Each 1GWe reactor requires ~400,000 lbs U₃O₈ per year. This demand growth is structural and contractual — utilities have already committed to fuel cycles decades out. The demand curve is not speculative; it is locked in by engineering timelines." },
+                "Supply Constraints":      { color:"#1A7A44", note:"Primary mine supply peaked in 2016 at ~165 Mlb and has not recovered. Kazatomprom's sulphuric acid shortages, Cigar Lake production fatigue, and a decade of underinvestment in new mine development are structural headwinds. No significant new primary supply can come online in under 10 years from a standing start." },
+                "Athabasca Focus":         { color:"#B07A08", note:"The Athabasca Basin holds ~10% of global uranium resources at grades 10–100× the world average — the highest-grade uranium district on Earth. As the structural deficit widens and utilities scramble for long-term supply, explorers and developers in the Basin face the most compelling risk/reward in the junior resource sector." },
+                "Price Outlook":           { color:"#7C3AED", note:"Uranium spot prices recovered from $18/lb (2016) to $87/lb (2024) — a 5× move driven entirely by supply/demand fundamentals. Long-term contract prices remain below the marginal cost of new mine supply, suggesting the price must rise further to incentivise the capital investment needed to close the deficit by 2030." },
+              };
+              const hl = HIGHLIGHTS[sdHighlight];
+              const chartData = SUPPLY_DEFICIT_DATA.filter(d => parseInt(d.year) <= sdEndYear);
+
+              const CustomTooltip = ({ active, payload, label }) => {
+                if (!active||!payload?.length) return null;
+                return (
+                  <div style={{ background:"#FFFFFF", border:"1px solid #D8D0C4", borderRadius:6, padding:"8px 12px", fontSize:11 }}>
+                    <div style={{ fontWeight:700, marginBottom:4 }}>{label}</div>
+                    {payload.map(p=>(
+                      <div key={p.name} style={{ color:p.color, marginBottom:2 }}>
+                        {p.name}: {p.name==="Spot Price ($)"&&p.value?`$${p.value}/lb`:p.value!=null?`${p.value} Mlb`:"Projected"}
+                      </div>
+                    ))}
+                  </div>
+                );
+              };
+
+              return (
+                <>
+                  {/* Stats row */}
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:0, marginBottom:16, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
+                    {[["Supply Trend","Declining","#C01818"],["Demand Trend","Rising","#1A7A44"],["Structural Deficit","Widening","#B07A08"]].map(([label,val,color])=>(
+                      <div key={label} style={{ padding:"10px 14px", borderRight:"1px solid #D8D0C4", textAlign:"center" }}>
+                        <div style={{ fontSize:11, color:"#9A9A8A", letterSpacing:"0.08em", marginBottom:3 }}>{label}</div>
+                        <div style={{ fontSize:15, fontWeight:800, color }}>{val}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Chart — always starts 2018, extends to sdEndYear */}
+                  <ResponsiveContainer width="100%" height={240}>
+                    <ComposedChart data={chartData} margin={{ top:8, right:20, left:0, bottom:0 }}>
+                      <defs>
+                        <linearGradient id="sdDemandGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor="#1A5AA8" stopOpacity={0.35}/>
+                          <stop offset="95%" stopColor="#1A5AA8" stopOpacity={0.05}/>
+                        </linearGradient>
+                        <linearGradient id="sdSupplyGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor="#1A7A44" stopOpacity={0.5}/>
+                          <stop offset="95%" stopColor="#1A7A44" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="year" tick={{ fontSize:10, fill:"#6A6A5A" }}/>
+                      <YAxis yAxisId="vol" width={42} tick={{ fontSize:10, fill:"#6A6A5A" }} tickFormatter={v=>`${v}M`} domain={[100,320]}/>
+                      <YAxis yAxisId="price" width={36} orientation="right" tick={{ fontSize:10, fill:"#B07A08" }} tickFormatter={v=>`$${v}`} domain={[0,120]}/>
+                      <Tooltip content={<CustomTooltip/>}/>
+                      <Legend wrapperStyle={{ fontSize:10, paddingTop:6 }}/>
+                      <ReferenceLine yAxisId="vol" x="2026" stroke="#B07A08" strokeDasharray="4 3" label={{ value:"Today", position:"insideTopLeft", fontSize:9, fill:"#B07A08" }}/>
+                      <Area yAxisId="vol" type="monotone" dataKey="demand" name="Reactor Demand" stroke="#1A5AA8" strokeWidth={2} fill="url(#sdDemandGrad)" dot={false}/>
+                      <Area yAxisId="vol" type="monotone" dataKey="supply" name="Primary Supply"  stroke="#1A7A44" strokeWidth={2} fill="url(#sdSupplyGrad)"  dot={false}/>
+                      <Line  yAxisId="price" type="monotone" dataKey="price"  name="Spot Price ($)"  stroke="#B07A08" strokeWidth={2} dot={{ fill:"#B07A08", r:3 }} connectNulls={false}/>
+                    </ComposedChart>
+                  </ResponsiveContainer>
+
+                  {/* Timeframe slider — extends chart rightward */}
+                  <div style={{ marginTop:16, padding:"0 4px" }}>
+                    <style>{`input[type=range].sd-slider{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:linear-gradient(to right,#1A1A14 0%,#1A1A14 ${((sdEndYear-2026)/(2034-2026))*100}%,#D8D0C4 ${((sdEndYear-2026)/(2034-2026))*100}%,#D8D0C4 100%);outline:none;}input[type=range].sd-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#1A1A14;cursor:pointer;border:2px solid #FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,0.3);}input[type=range].sd-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#1A1A14;cursor:pointer;border:2px solid #FFFFFF;}`}</style>
+                    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                      <span style={{ fontSize:10, color:"#9A9A8A" }}>2018 ← History</span>
+                      <span style={{ fontSize:10, color:"#B07A08", fontWeight:700 }}>Extended to: {sdEndYear}</span>
+                      <span style={{ fontSize:10, color:"#9A9A8A" }}>Projections → 2034</span>
+                    </div>
+                    <input type="range" className="sd-slider" min={2026} max={2034} step={1} value={sdEndYear} onChange={e=>setSdEndYear(parseInt(e.target.value))}/>
+                    <div style={{ display:"flex", justifyContent:"space-between", marginTop:5 }}>
+                      {[2026,2027,2028,2029,2030,2031,2032,2033,2034].map(y=>(
+                        <span key={y} style={{ fontSize:9, color:y===sdEndYear?"#1A1A14":"#9A9A8A", fontWeight:y===sdEndYear?700:400 }}>{y}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Highlight factor cards — below slider, full info text, no emojis */}
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginTop:20 }}>
+                    {Object.entries(HIGHLIGHTS).map(([key,h])=>(
+                      <div key={key} onClick={()=>setSdHighlight(key)} style={{
+                        padding:"12px 14px", borderRadius:8, cursor:"pointer",
+                        border:`1px solid ${sdHighlight===key?h.color:"#D8D0C4"}`,
+                        borderLeft:`3px solid ${h.color}`,
+                        background:sdHighlight===key?`${h.color}08`:"#FAFAF7",
+                      }}>
+                        <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:7, textTransform:"uppercase", letterSpacing:"0.08em", lineHeight:1.3 }}>{key}</div>
+                        <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.55 }}>{h.note}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
         </div>
 
         {/* YTD Performance */}
