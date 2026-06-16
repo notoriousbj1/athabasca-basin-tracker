@@ -643,7 +643,7 @@ export default function App() {
   const [stageFilter, setStageFilter] = useState({ Producer:true, Developer:true, Explorer:true, Royalty:true });
   const [sortCol, setSortCol]         = useState("chg");
   const [sortDir, setSortDir]         = useState("desc");
-  const [coSort,  setCoSort]          = useState("ytd");
+  const [coSort,  setCoSort]          = useState("today");
   const [coStageFilter, setCoStageFilter] = useState("All");
   const [sdEndYear,     setSdEndYear]     = useState(2030);
   const [sdHighlight,   setSdHighlight]   = useState("Global Reactor Buildout");
