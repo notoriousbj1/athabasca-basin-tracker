@@ -643,6 +643,7 @@ export default function App() {
   const [stageFilter, setStageFilter] = useState({ Producer:true, Developer:true, Explorer:true, Royalty:true });
   const [sortCol, setSortCol]         = useState("chg");
   const [sortDir, setSortDir]         = useState("desc");
+  const [coSort,  setCoSort]          = useState("ytd");
   const [coStageFilter, setCoStageFilter] = useState("All");
   const [sdEndYear,     setSdEndYear]     = useState(2030);
   const [sdHighlight,   setSdHighlight]   = useState("Global Reactor Buildout");
@@ -794,7 +795,8 @@ export default function App() {
       url:"https://www.mining.com/category/uranium/",
     };
 
-    const topCos = [...COMPANIES].filter(c=>c.id!=="canu").sort((a,b)=>gCh(b)-gCh(a)).slice(0,5);
+    const getYTD = (c) => { const cad=cadTk(c); return ytdLive[c.id]?.ytd ?? (YTD_PERF.find(y=>y.ticker===cad||y.ticker===c.ticker||y.ticker===c.altTicker)?.ytd||0); };
+    const topCos = [...COMPANIES].filter(c=>c.id!=="canu").sort((a,b)=>coSort==="ytd"?getYTD(b)-getYTD(a):gCh(b)-gCh(a)).slice(0,5);
     const canu   = COMPANIES.find(c=>c.id==="canu");
     const RuleH  = { borderBottom:"2px solid #D8D0C4", paddingBottom:8, marginBottom:14 };
     const RuleHG = { borderBottom:"2px solid #E8A020", paddingBottom:8, marginBottom:14 };
@@ -979,7 +981,13 @@ export default function App() {
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1px 284px", gap:"0 18px", marginBottom:20 }}>
           {/* Left: Companies */}
           <div>
-            <div style={{ ...S.lbl, marginBottom:10, letterSpacing:"0.15em" }}>TOP PERFORMING COMPANIES</div>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+              <div style={{ ...S.lbl, letterSpacing:"0.15em" }}>TOP PERFORMING COMPANIES</div>
+              <div style={{ display:"flex", border:"1px solid #D8D0C4", borderRadius:6, overflow:"hidden" }}>
+                <button onClick={()=>setCoSort("today")} style={{ padding:"3px 10px", fontSize:10, fontWeight:600, border:"none", cursor:"pointer", background:coSort==="today"?"#1A1A14":"transparent", color:coSort==="today"?"#FFFFFF":"#6A6A5A" }}>Today</button>
+                <button onClick={()=>setCoSort("ytd")}   style={{ padding:"3px 10px", fontSize:10, fontWeight:600, border:"none", cursor:"pointer", background:coSort==="ytd"  ?"#1A1A14":"transparent", color:coSort==="ytd"  ?"#FFFFFF":"#6A6A5A", borderLeft:"1px solid #D8D0C4" }}>YTD</button>
+              </div>
+            </div>
             {/* Featured CANU */}
             {canu && (()=>{
               const p=gP(canu), ch=gCh(canu);
@@ -1011,19 +1019,26 @@ export default function App() {
             })()}
             {/* Top 5 */}
             {topCos.map((c,i)=>{
-              const p=gP(c), ch=gCh(c);
+              const p=gP(c), ch=gCh(c), ytd=getYTD(c);
               const chAmt = (p * Math.abs(ch) / 100).toFixed(3);
               const up = ch >= 0;
+              const ytdUp = ytd >= 0;
+              const barW = Math.min(100, Math.abs(ytd) * 1.5);
               return (
                 <div key={c.id} onClick={()=>{setTab("companies");setExpanded(c.id);}}
                   style={{ padding:"10px 0", borderBottom:"1px solid #D8D0C4", cursor:"pointer" }}>
-                  {/* Main row */}
                   <div style={{ display:"flex", alignItems:"center", gap:12 }}>
                     <span style={{ fontSize:11, color:"#9A9A8A", width:16, flexShrink:0, textAlign:"center" }}>{i+1}</span>
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
                         <span style={{ fontSize:15, fontWeight:700, color:"#1A1A14" }}>{c.name}</span>
                         <span style={{ ...MONO, fontWeight:700, color:c.color, fontSize:12 }}>{c.ticker}</span>
+                      </div>
+                      <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:4 }}>
+                        <div style={{ width:60, height:4, background:"#EDE8E0", borderRadius:2, overflow:"hidden" }}>
+                          <div style={{ width:`${barW}%`, height:"100%", background:ytdUp?"#1A7A44":"#C01818", borderRadius:2 }}/>
+                        </div>
+                        <span style={{ ...MONO, fontSize:10, fontWeight:700, color:ytdUp?"#1A7A44":"#C01818" }}>YTD {ytdUp?"+":""}{ytd.toFixed(1)}%</span>
                       </div>
                     </div>
                     <span style={{ ...MONO, fontWeight:700, fontSize:15, color:"#1A1A14", flexShrink:0 }}>{fmtP(p)}</span>
@@ -1033,19 +1048,19 @@ export default function App() {
                       <span style={{ ...S.badge(up?"green":"red"), fontSize:10 }}>{fmtPct(ch)}</span>
                     </div>
                   </div>
-
                 </div>
               );
             })}
             {/* Subscribe CTA or unlocked companies */}
             {subscribed ? (
               [...COMPANIES].filter(c=>c.id!=="canu")
-                .sort((a,b)=>gCh(b)-gCh(a))
+                .sort((a,b)=>coSort==="ytd"?getYTD(b)-getYTD(a):gCh(b)-gCh(a))
                 .slice(5)
                 .map((c,i)=>{
-                  const p=gP(c), ch=gCh(c);
+                  const p=gP(c), ch=gCh(c), ytd=getYTD(c);
                   const chAmt=(p*Math.abs(ch)/100).toFixed(3);
-                  const up=ch>=0;
+                  const up=ch>=0, ytdUp=ytd>=0;
+                  const barW=Math.min(100,Math.abs(ytd)*1.5);
                   return (
                     <div key={c.id} onClick={()=>{setTab("companies");setExpanded(c.id);}}
                       style={{ padding:"10px 0", borderBottom:"1px solid #D8D0C4", cursor:"pointer" }}>
@@ -1055,6 +1070,12 @@ export default function App() {
                           <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
                             <span style={{ fontSize:15, fontWeight:700, color:"#1A1A14" }}>{c.name}</span>
                             <span style={{ ...MONO, fontWeight:700, color:c.color, fontSize:12 }}>{c.ticker}</span>
+                          </div>
+                          <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:4 }}>
+                            <div style={{ width:60, height:4, background:"#EDE8E0", borderRadius:2, overflow:"hidden" }}>
+                              <div style={{ width:`${barW}%`, height:"100%", background:ytdUp?"#1A7A44":"#C01818", borderRadius:2 }}/>
+                            </div>
+                            <span style={{ ...MONO, fontSize:10, fontWeight:700, color:ytdUp?"#1A7A44":"#C01818" }}>YTD {ytdUp?"+":""}{ytd.toFixed(1)}%</span>
                           </div>
                         </div>
                         <span style={{ ...MONO, fontWeight:700, fontSize:15, color:"#1A1A14", flexShrink:0 }}>{fmtP(p)}</span>
@@ -1174,7 +1195,7 @@ export default function App() {
                 return (
                   <g style={{ cursor:"pointer" }}>
                     <circle cx={cx} cy={cy} r={r} fill={col} fillOpacity={0.75} stroke={col} strokeWidth={1.5}/>
-                    <text x={cx} y={cy+4} textAnchor="middle" fontSize={9} fontWeight={700} fill="#FFFFFF">{payload.company}</text>
+                    <text x={cx} y={cy+4} textAnchor="middle" fontSize={9} fontWeight={700} fill="#FFFFFF">{payload.ticker}</text>
                   </g>
                 );
               };
@@ -1501,43 +1522,6 @@ export default function App() {
               );
             })()}
           </div>
-        </div>
-
-        {/* YTD Performance */}
-        <div style={{ marginBottom:20 }}>
-          <div style={RuleH}>
-            <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Market Performance</div>
-            <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Year-to-date returns: Athabasca Basin uranium equities</div>
-          </div>
-          <div style={{ ...S.card, padding:12 }}>
-            {(()=>{
-              const chartData = [...COMPANIES]
-                .map(c => {
-                  const cad = cadTk(c);
-                  const ytdVal = ytdLive[c.id]?.ytd ?? (YTD_PERF.find(y=>y.ticker===cad||y.ticker===c.ticker||y.ticker===c.altTicker)?.ytd || 0);
-                  return { label:`${c.name}  ${cad}`, ticker:cad, ytd:ytdVal };
-                })
-                .sort((a,b)=>b.ytd-a.ytd);
-              const display = showAllYTD ? chartData : chartData.slice(0,5);
-              return (
-                <ResponsiveContainer width="100%" height={showAllYTD ? 560 : 160}>
-                  <BarChart data={display} layout="vertical" margin={{ left:0, right:40, top:4, bottom:0 }}>
-                    <XAxis type="number" tick={{ fill:"#6A6A5A", fontSize:10 }} tickFormatter={v=>`${v}%`}/>
-                    <YAxis type="category" dataKey="label" width={200} tick={{ fill:"#1A1A14", fontSize:10 }}/>
-                    <Tooltip formatter={(v)=>[`${v.toFixed(1)}%`,"YTD"]} contentStyle={{ background:"#FFFFFF", border:"1px solid #D8D0C4", borderRadius:6, fontSize:11 }}/>
-                    <ReferenceLine x={0} stroke="#D8D0C4" strokeWidth={1.5}/>
-                    <Bar dataKey="ytd" radius={[0,3,3,0]} maxBarSize={16}>
-                      {display.map(d=><Cell key={d.ticker} fill={d.ytd>=0?"#1A7A44":"#C01818"}/>)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              );
-            })()}
-          </div>
-          <button onClick={()=>setShowAllYTD(v=>!v)}
-            style={{ width:"100%", padding:"8px", background:"#F0EDE8", border:"1px solid #D8D0C4", borderTop:"none", borderRadius:"0 0 8px 8px", color:"#6A6A5A", fontSize:11, fontWeight:600, cursor:"pointer" }}>
-            {showAllYTD?`▲ Top 5 only`:`▼ All ${YTD_PERF.length} companies`}
-          </button>
         </div>
 
         {/* Video / Interviews */}
