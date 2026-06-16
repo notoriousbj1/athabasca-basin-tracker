@@ -1,7 +1,3 @@
-// basin-editorial.js
-// Pulls the most recent editorial/publication coverage of the Athabasca Basin
-// from Mining.com, World Nuclear News, GlobeNewswire — NOT company press releases
-
 const BASIN_KEYWORDS = ["athabasca","saskatchewan","athabasca basin"];
 
 const FEEDS = [
@@ -12,7 +8,6 @@ const FEEDS = [
   { url:"https://www.mining.com/category/uranium-2/feed/",                    source:"Mining.com"        },
 ];
 
-// Company names to exclude — we want editorial, not company PRs
 const COMPANY_NAMES = ["nexgen","denison","fission","skyharbour","isoenergy","cameco",
   "baselode","canadian uranium","atha energy","purepoint","standard uranium","forum energy",
   "azincourt","fortune bay","canalaska","alx resources","appia","uranium royalty","f3 uranium",
@@ -36,6 +31,32 @@ function extractUrl(item) {
   return null;
 }
 
+function extractImage(item) {
+  // 1. media:content with image
+  const mediaContent = item.match(/<media:content[^>]+url="([^"]+)"[^>]*>/i)?.[1];
+  if (mediaContent && /\.(jpg|jpeg|png|webp|gif)/i.test(mediaContent)) return mediaContent;
+
+  // 2. media:thumbnail
+  const mediaThumbnail = item.match(/<media:thumbnail[^>]+url="([^"]+)"/i)?.[1];
+  if (mediaThumbnail) return mediaThumbnail;
+
+  // 3. enclosure tag with image type
+  const enclosure = item.match(/<enclosure[^>]+url="([^"]+)"[^>]+type="image\/[^"]+"/i)?.[1]
+                 || item.match(/<enclosure[^>]+type="image\/[^"]+"[^>]+url="([^"]+)"/i)?.[1];
+  if (enclosure) return enclosure;
+
+  // 4. image src inside description
+  const desc = item.match(/<description[^>]*>([\s\S]*?)<\/description>/i)?.[1] || "";
+  const imgInDesc = desc.match(/<img[^>]+src="([^"]+)"/i)?.[1];
+  if (imgInDesc?.startsWith("http")) return imgInDesc;
+
+  // 5. og:image in content
+  const ogImage = item.match(/og:image.*?content="([^"]+)"/i)?.[1];
+  if (ogImage?.startsWith("http")) return ogImage;
+
+  return null;
+}
+
 function parseDate(str) {
   if (!str) return null;
   let d = new Date((str||"").trim());
@@ -51,13 +72,7 @@ function getField(item, tag) {
 }
 
 function isBasinRelated(text) {
-  const lower = text.toLowerCase();
-  return BASIN_KEYWORDS.some(k => lower.includes(k));
-}
-
-function isCompanyPR(text) {
-  const lower = text.toLowerCase();
-  return COMPANY_NAMES.some(n => lower.includes(n));
+  return BASIN_KEYWORDS.some(k => text.toLowerCase().includes(k));
 }
 
 exports.handler = async () => {
@@ -78,6 +93,7 @@ exports.handler = async () => {
         for (const item of items) {
           const headline = decodeHtml(getField(item,"title"));
           const url      = extractUrl(item);
+          const image    = extractImage(item);
           const pubDate  = getField(item,"pubDate")||getField(item,"published")||getField(item,"updated");
           const rawDesc  = getField(item,"description")||getField(item,"summary")||getField(item,"content")||"";
           const summary  = decodeHtml(rawDesc.replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim().substring(0,300));
@@ -87,18 +103,16 @@ exports.handler = async () => {
           if (!pd || pd < CUTOFF) continue;
 
           const combined = headline + " " + summary;
-
-          // Must be about the Athabasca Basin / Saskatchewan uranium
           if (!isBasinRelated(combined)) continue;
 
-          // Prefer editorial — skip obvious single-company PRs
-          // (allow articles that mention companies alongside editorial context)
+          // Prefer editorial (allow multi-company mentions)
           const companyCount = COMPANY_NAMES.filter(n => combined.toLowerCase().includes(n)).length;
-          if (companyCount > 1 || !isCompanyPR(headline)) {
-            // Multi-company or headline isn't a company name = editorial
+          const headlineLower = headline.toLowerCase();
+          const isSingleCompanyPR = COMPANY_NAMES.some(n => headlineLower.startsWith(n));
+          if (companyCount > 1 || !isSingleCompanyPR) {
             const date = pd.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
             candidates.push({
-              headline, url, date, dateMs:pd.getTime(), summary, source,
+              headline, url, date, dateMs:pd.getTime(), summary, source, image,
               category:"Athabasca Basin",
             });
           }
@@ -106,7 +120,6 @@ exports.handler = async () => {
       } catch(e) {}
     }));
 
-    // Return the most recent editorial story
     const best = candidates.sort((a,b) => b.dateMs - a.dateMs)[0];
     const result = best ? (({ dateMs,...rest }) => rest)(best) : null;
 
