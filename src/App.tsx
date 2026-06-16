@@ -861,17 +861,23 @@ export default function App() {
             </ResponsiveContainer>
           </div>
           <div style={{ display:"grid", gridTemplateRows:"1fr 1fr 1fr", gridTemplateColumns:"1fr" }}>
-            {[
-              ["52-Wk High", `$${spot.high52||106}`, "green",  false],
-              ["52-Wk Low",  `$${spot.low52||73}`,   "red",    false],
-              ["Trend",      spot.trend||"Bearish",  (spot.trend==="bullish")?"green":"red", false],
-            ].map(([label,val,color,big])=>(
-              <div key={label} style={{ padding:"12px 14px", borderLeft:"1px solid #D8D0C4", borderBottom:"1px solid #D8D0C4" }}>
-                <div style={S.lbl}>{label}</div>
-                <div style={{ ...SERIF, fontSize:big?26:18, fontWeight:700, lineHeight:1.2,
-                  color:color==="green"?"#1A7A44":color==="red"?"#C01818":"#1A5AA8" }}>{val}</div>
-              </div>
-            ))}
+            {(()=>{
+              const currentPrice = spot.price || sparkData[sparkData.length-1]?.price || 79.5;
+              const threeMonthPrice = sparkData[Math.floor(sparkData.length/2)]?.price || currentPrice;
+              const trendUp = currentPrice >= threeMonthPrice;
+              const trendLabel = trendUp ? "Bullish" : "Bearish";
+              return [
+                ["52-Wk High", `$${spot.high52||106}`, "green"],
+                ["52-Wk Low",  `$${spot.low52||73}`,   "red"  ],
+                ["Trend",      trendLabel,              trendUp?"green":"red"],
+              ].map(([label,val,color])=>(
+                <div key={label} style={{ padding:"12px 14px", borderLeft:"1px solid #D8D0C4", borderBottom:"1px solid #D8D0C4" }}>
+                  <div style={S.lbl}>{label}</div>
+                  <div style={{ ...SERIF, fontSize:18, fontWeight:700, lineHeight:1.2,
+                    color:color==="green"?"#1A7A44":"#C01818" }}>{val}</div>
+                </div>
+              ));
+            })()}
           </div>
         </div>
 
