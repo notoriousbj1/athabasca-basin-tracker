@@ -1215,21 +1215,21 @@ export default function App() {
               <span style={{ fontWeight:800, fontSize:13, letterSpacing:"0.1em", textTransform:"uppercase" }}>{cat.label}</span>
               <span style={{ fontSize:11, color:"#9A9A8A", marginLeft:6 }}>{cats.length} {cats.length===1?"company":"companies"}</span>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
             {cats.map(c=>{
               const p=gP(c), ch=gCh(c), isE=expanded===c.id;
               return (
-                <div key={c.id} style={{ ...S.card, borderLeft:`3px solid ${c.color}`, marginBottom:0, gridColumn:isE?"span 2":"span 1" }}>
-            <div onClick={()=>setExpanded(isE?null:c.id)} style={{ cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
+                <div key={c.id} style={{ ...S.card, borderLeft:`3px solid ${c.color}`, marginBottom:0, padding:20, gridColumn:isE?"span 2":"span 1" }}>
+            <div onClick={()=>setExpanded(isE?null:c.id)} style={{ cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:16 }}>
               <div style={{ flex:1, minWidth:200 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4, flexWrap:"wrap" }}>
-                  <span style={{ ...MONO, fontWeight:900, fontSize:15, color:c.color }}>{c.ticker}</span>
-                  {c.altTicker!==c.ticker && <span style={{ fontSize:11, color:"#6A6A5A" }}>/ {c.altTicker}</span>}
+                <div style={{ fontWeight:800, fontSize:18, color:"#1A1A14", marginBottom:8 }}>{c.fullName}</div>
+                <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:8 }}>
+                  <span style={{ ...S.badge("amber"), fontSize:11, fontWeight:700 }}>{cadTk(c)}</span>
+                  {usTk(c) && usTk(c)!=="—" && usTk(c)!==cadTk(c) && <span style={{ ...S.badge("gray"), fontSize:11 }}>{usTk(c)}</span>}
                   <span style={S.badge("blue")}>{c.exchange}</span>
                   <span style={S.badge(c.stage==="Producer"?"green":c.stage.includes("Advanced")?"blue":c.stage==="Developer"?"amber":"gray")}>{c.stage}</span>
                 </div>
-                <div style={{ fontWeight:700, fontSize:14 }}>{c.fullName}</div>
-                <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2, maxWidth:520 }}>{c.description}</div>
+                <div style={{ fontSize:12, color:"#6A6A5A", lineHeight:1.6, maxWidth:520 }}>{c.description}</div>
               </div>
               <div style={{ display:"flex", gap:20, alignItems:"center", flexShrink:0 }}>
                 <div style={{ textAlign:"right" }}>
