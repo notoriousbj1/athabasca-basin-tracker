@@ -1,25 +1,25 @@
 const COMPANIES = [
-  { name:"Cameco",           ticker:"CCO",  search:"Cameco+Corporation"          },
-  { name:"NexGen Energy",    ticker:"NXE",  search:"NexGen+Energy"               },
-  { name:"Denison Mines",    ticker:"DML",  search:"Denison+Mines"               },
-  { name:"Fission Uranium",  ticker:"FCU",  search:"Fission+Uranium"             },
-  { name:"IsoEnergy",        ticker:"ISO",  search:"IsoEnergy"                   },
-  { name:"Skyharbour",       ticker:"SYH",  search:"Skyharbour+Resources"        },
-  { name:"F3 Uranium",       ticker:"FUU",  search:"F3+Uranium"                  },
-  { name:"Uranium Energy",   ticker:"UEC",  search:"Uranium+Energy+Corp"         },
-  { name:"Baselode Energy",  ticker:"FIND", search:"Baselode+Energy"             },
-  { name:"Canadian Uranium", ticker:"CANU", search:"Canadian+Uranium"            },
-  { name:"Atha Energy",      ticker:"SASK", search:"Atha+Energy"                 },
-  { name:"Purepoint Uranium",ticker:"PTU",  search:"Purepoint+Uranium"           },
-  { name:"Standard Uranium", ticker:"STND", search:"Standard+Uranium"            },
-  { name:"Forum Energy",     ticker:"FMC",  search:"Forum+Energy+Metals"         },
-  { name:"Azincourt Energy", ticker:"AAZ",  search:"Azincourt+Energy"            },
-  { name:"Fortune Bay",      ticker:"FOR",  search:"Fortune+Bay+Corp"            },
-  { name:"CanAlaska Uranium",ticker:"CVV",  search:"CanAlaska+Uranium"           },
-  { name:"ALX Resources",    ticker:"AL",   search:"ALX+Resources"               },
-  { name:"Appia",            ticker:"API",  search:"Appia+Rare+Earths"           },
-  { name:"Uranium Royalty",  ticker:"URC",  search:"Uranium+Royalty+Corp"        },
-  { name:"Fission 3.0",      ticker:"FIS",  search:"Fission+3"                   },
+  { name:"Cameco",           ticker:"CCO",  feed:"https://www.cameco.com/feed/"                              },
+  { name:"NexGen Energy",    ticker:"NXE",  feed:"https://nexgenenergy.ca/feed/"                             },
+  { name:"Denison Mines",    ticker:"DML",  feed:"https://denisonmines.com/feed/"                            },
+  { name:"Fission Uranium",  ticker:"FCU",  feed:"https://fissionuranium.com/feed/"                          },
+  { name:"IsoEnergy",        ticker:"ISO",  feed:"https://isoenergy.ca/feed/"                                },
+  { name:"Skyharbour",       ticker:"SYH",  feed:"https://skyharbourltd.com/feed/"                           },
+  { name:"F3 Uranium",       ticker:"FUU",  feed:"https://f3uranium.ca/feed/"                                },
+  { name:"Uranium Energy",   ticker:"UEC",  feed:"https://uraniumenergy.com/feed/"                           },
+  { name:"Baselode Energy",  ticker:"FIND", feed:"https://baselodeenergy.com/feed/"                          },
+  { name:"Canadian Uranium", ticker:"CANU", feed:"https://canadianuranium.ca/feed/"                          },
+  { name:"Atha Energy",      ticker:"SASK", feed:"https://athaenergy.ca/feed/"                               },
+  { name:"Purepoint Uranium",ticker:"PTU",  feed:"https://www.purepoint.ca/feed/"                            },
+  { name:"Standard Uranium", ticker:"STND", feed:"https://standarduranium.ca/feed/"                          },
+  { name:"Forum Energy",     ticker:"FMC",  feed:"https://forumenergymetals.com/feed/"                       },
+  { name:"Azincourt Energy", ticker:"AAZ",  feed:"https://azincourtenergy.com/feed/"                         },
+  { name:"Fortune Bay",      ticker:"FOR",  feed:"https://fortunebaycorp.com/feed/"                          },
+  { name:"CanAlaska Uranium",ticker:"CVV",  feed:"https://canalaska.com/feed/"                               },
+  { name:"ALX Resources",    ticker:"AL",   feed:"https://alxresources.ca/feed/"                             },
+  { name:"Appia",            ticker:"API",  feed:"https://appiaenergy.ca/feed/"                              },
+  { name:"Uranium Royalty",  ticker:"URC",  feed:"https://uraniumroyaltycorp.com/feed/"                      },
+  { name:"Fission 3.0",      ticker:"FIS",  feed:"https://fission3.com/feed/"                                },
 ];
 
 const CUTOFF = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
@@ -56,15 +56,15 @@ function getLatest(xml, company) {
     };
     const headline = get("title").replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'");
     const url      = extractUrl(item);
-    const pubDate  = get("pubDate") || get("published") || get("updated");
-    const rawDesc  = get("description") || get("summary") || "";
+    const pubDate  = get("pubDate") || get("published") || get("updated") || get("dc:date");
+    const rawDesc  = get("description") || get("summary") || get("content") || "";
     const summary  = rawDesc.replace(/<[^>]+>/g,"").replace(/&[^;]+;/g," ").replace(/\s+/g," ").trim().substring(0,220);
     if (!headline || !url) continue;
     const parsedDate = parseDate(pubDate);
     if (!parsedDate || parsedDate < CUTOFF) continue;
     const date = parsedDate.toLocaleDateString("en-US",{ month:"short", day:"numeric", year:"numeric" });
     return { headline, url, date, dateMs:parsedDate.getTime(), summary,
-             company:company.name, ticker:company.ticker, source:"GlobeNewswire", type:"Press Release" };
+             company:company.name, ticker:company.ticker, source:"Company IR", type:"Press Release" };
   }
   return null;
 }
@@ -73,8 +73,7 @@ exports.handler = async () => {
   try {
     const results = await Promise.all(COMPANIES.map(async (co) => {
       try {
-        const url = `https://www.globenewswire.com/RssFeed/keyword/${co.search}`;
-        const res = await fetch(url, {
+        const res = await fetch(co.feed, {
           headers:{ "User-Agent":"Mozilla/5.0 (compatible; news aggregator)" },
           signal: AbortSignal.timeout(8000),
         });
