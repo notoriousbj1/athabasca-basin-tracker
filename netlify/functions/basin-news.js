@@ -1,42 +1,35 @@
 const COMPANIES = [
-  { name:"Cameco",           ticker:"CCO",  feeds:["https://www.cameco.com/media/news/feed/","https://www.cameco.com/feed/"] },
-  { name:"NexGen Energy",    ticker:"NXE",  feeds:["https://nexgenenergy.ca/news/feed/","https://nexgenenergy.ca/feed/"] },
-  { name:"Denison Mines",    ticker:"DML",  feeds:["https://denisonmines.com/news/feed/","https://denisonmines.com/feed/"] },
-  { name:"Fission Uranium",  ticker:"FCU",  feeds:["https://fissionuranium.com/news/feed/","https://fissionuranium.com/feed/"] },
-  { name:"IsoEnergy",        ticker:"ISO",  feeds:["https://isoenergy.ca/news/feed/","https://isoenergy.ca/feed/"] },
-  { name:"Skyharbour",       ticker:"SYH",  feeds:["https://skyharbourltd.com/news/feed/","https://skyharbourltd.com/feed/"] },
-  { name:"F3 Uranium",       ticker:"FUU",  feeds:["https://f3uranium.ca/news/feed/","https://f3uranium.ca/feed/"] },
-  { name:"Uranium Energy",   ticker:"UEC",  feeds:["https://uraniumenergy.com/news/feed/","https://uraniumenergy.com/feed/"] },
-  { name:"Baselode Energy",  ticker:"FIND", feeds:["https://baselodeenergy.com/news/feed/","https://baselodeenergy.com/feed/"] },
-  { name:"Canadian Uranium", ticker:"CANU", feeds:["https://canadianuranium.ca/news-releases/feed/","https://canadianuranium.ca/news/feed/","https://canadianuranium.ca/feed/"] },
-  { name:"Atha Energy",      ticker:"SASK", feeds:["https://athaenergy.ca/news/feed/","https://athaenergy.ca/feed/"] },
-  { name:"Purepoint Uranium",ticker:"PTU",  feeds:["https://www.purepoint.ca/news-releases/feed/","https://www.purepoint.ca/feed/"] },
-  { name:"Standard Uranium", ticker:"STND", feeds:["https://standarduranium.ca/news-releases/feed/","https://www.standarduranium.ca/news-releases/feed/"] },
-  { name:"Forum Energy",     ticker:"FMC",  feeds:["https://forumenergymetals.com/news/feed/","https://forumenergymetals.com/feed/"] },
-  { name:"Azincourt Energy", ticker:"AAZ",  feeds:["https://azincourtenergy.com/news/feed/","https://azincourtenergy.com/feed/"] },
-  { name:"Fortune Bay",      ticker:"FOR",  feeds:["https://fortunebaycorp.com/news/feed/","https://fortunebaycorp.com/feed/"] },
-  { name:"CanAlaska Uranium",ticker:"CVV",  feeds:["https://canalaska.com/feed/","https://canalaska.com/news/feed/"] },
-  { name:"ALX Resources",    ticker:"AL",   feeds:["https://alxresources.ca/news/feed/","https://alxresources.ca/feed/"] },
-  { name:"Appia",            ticker:"API",  feeds:["https://appiaenergy.ca/news/feed/","https://appiaenergy.ca/feed/"] },
-  { name:"Uranium Royalty",  ticker:"URC",  feeds:["https://uraniumroyaltycorp.com/news/feed/","https://uraniumroyaltycorp.com/feed/"] },
-  { name:"Fission 3.0",      ticker:"FIS",  feeds:["https://fission3.com/news/feed/","https://fission3.com/feed/"] },
-];
-
-const FALLBACK_FEEDS = [
-  { url:"https://www.globenewswire.com/RssFeed/keyword/athabasca+uranium",    source:"GlobeNewswire" },
-  { url:"https://www.globenewswire.com/RssFeed/keyword/uranium+Saskatchewan", source:"GlobeNewswire" },
-  { url:"https://www.globenewswire.com/RssFeed/keyword/uranium+exploration",  source:"GlobeNewswire" },
+  { name:"Cameco",           ticker:"CCO",  feeds:["https://www.cameco.com/media/news/feed/","https://www.cameco.com/feed/"], newsfile:null },
+  { name:"NexGen Energy",    ticker:"NXE",  feeds:["https://nexgenenergy.ca/news/feed/","https://nexgenenergy.ca/feed/"], newsfile:null },
+  { name:"Denison Mines",    ticker:"DML",  feeds:["https://denisonmines.com/news/feed/","https://denisonmines.com/feed/"], newsfile:null },
+  { name:"Fission Uranium",  ticker:"FCU",  feeds:["https://fissionuranium.com/news/feed/","https://fissionuranium.com/feed/"], newsfile:null },
+  { name:"IsoEnergy",        ticker:"ISO",  feeds:["https://isoenergy.ca/news/feed/","https://isoenergy.ca/feed/"], newsfile:null },
+  { name:"Skyharbour",       ticker:"SYH",  feeds:["https://skyharbourltd.com/news/feed/","https://skyharbourltd.com/feed/"], newsfile:null },
+  { name:"F3 Uranium",       ticker:"FUU",  feeds:["https://f3uranium.ca/news/feed/","https://f3uranium.ca/feed/"], newsfile:null },
+  { name:"Uranium Energy",   ticker:"UEC",  feeds:["https://uraniumenergy.com/news/feed/","https://uraniumenergy.com/feed/"], newsfile:null },
+  { name:"Baselode Energy",  ticker:"FIND", feeds:["https://baselodeenergy.com/news/feed/","https://baselodeenergy.com/feed/"], newsfile:null },
+  { name:"Canadian Uranium", ticker:"CANU", feeds:["https://canadianuranium.ca/news-releases/feed/","https://canadianuranium.ca/feed/"], newsfile:null },
+  { name:"Atha Energy",      ticker:"SASK", feeds:["https://athaenergy.ca/news/feed/","https://athaenergy.ca/feed/"], newsfile:null },
+  { name:"Purepoint Uranium",ticker:"PTU",  feeds:["https://www.purepoint.ca/news-releases/feed/","https://www.purepoint.ca/feed/"], newsfile:null },
+  { name:"Standard Uranium", ticker:"STND", feeds:["https://standarduranium.ca/news-releases/feed/","https://standarduranium.ca/feed/"],
+    newsfile:"https://www.newsfilecorp.com/company/10633/Standard-Uranium-Ltd." },
+  { name:"Forum Energy",     ticker:"FMC",  feeds:["https://forumenergymetals.com/news/feed/","https://forumenergymetals.com/feed/"], newsfile:null },
+  { name:"Azincourt Energy", ticker:"AAZ",  feeds:["https://azincourtenergy.com/news/feed/","https://azincourtenergy.com/feed/"], newsfile:null },
+  { name:"Fortune Bay",      ticker:"FOR",  feeds:["https://fortunebaycorp.com/news/feed/","https://fortunebaycorp.com/feed/"], newsfile:null },
+  { name:"CanAlaska Uranium",ticker:"CVV",  feeds:["https://canalaska.com/feed/","https://canalaska.com/news/feed/"], newsfile:null },
+  { name:"ALX Resources",    ticker:"AL",   feeds:["https://alxresources.ca/news/feed/","https://alxresources.ca/feed/"], newsfile:null },
+  { name:"Appia",            ticker:"API",  feeds:["https://appiaenergy.ca/news/feed/","https://appiaenergy.ca/feed/"], newsfile:null },
+  { name:"Uranium Royalty",  ticker:"URC",  feeds:["https://uraniumroyaltycorp.com/news/feed/","https://uraniumroyaltycorp.com/feed/"], newsfile:null },
+  { name:"Fission 3.0",      ticker:"FIS",  feeds:["https://fission3.com/news/feed/","https://fission3.com/feed/"], newsfile:null },
 ];
 
 const CUTOFF = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
 
-function decodeHtml(str) {
-  return str
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n))
+function decodeHtml(s) {
+  return (s||"").replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(+n))
     .replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'")
     .replace(/&rsquo;/g,"'").replace(/&lsquo;/g,"'").replace(/&mdash;/g,"—")
-    .replace(/&ndash;/g,"–").replace(/&nbsp;/g," ").replace(/&lt;/g,"<").replace(/&gt;/g,">")
-    .trim();
+    .replace(/&ndash;/g,"–").replace(/&nbsp;/g," ").trim();
 }
 
 function extractUrl(item) {
@@ -51,109 +44,98 @@ function extractUrl(item) {
 
 function parseDate(str) {
   if (!str) return null;
-  let d = new Date(str.trim());
+  let d = new Date((str||"").trim());
   if (!isNaN(d.getTime())) return d;
-  d = new Date(str.replace(/\s+[A-Z]{2,4}$/, "").trim());
-  if (!isNaN(d.getTime())) return d;
-  return null;
+  d = new Date((str||"").replace(/\s+[A-Z]{2,4}$/,"").trim());
+  return isNaN(d.getTime()) ? null : d;
 }
 
-function parseItems(xml) {
-  return [
-    ...(xml.match(/<item[\s\S]*?<\/item>/g)   || []),
-    ...(xml.match(/<entry[\s\S]*?<\/entry>/g) || []),
-  ];
+function getField(item,tag) {
+  const cd = item.match(new RegExp(`<${tag}[^>]*>\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>\\s*<\\/${tag}>`));
+  const pl = item.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`));
+  return (cd?.[1]||pl?.[1]||"").trim();
 }
 
-function extractItem(item) {
-  const get = (tag) => {
-    const cd = item.match(new RegExp(`<${tag}[^>]*>\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>\\s*<\\/${tag}>`));
-    const pl = item.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`));
-    return (cd?.[1] || pl?.[1] || "").trim();
-  };
-  return {
-    headline: decodeHtml(get("title")),
-    url:      extractUrl(item),
-    pubDate:  get("pubDate") || get("published") || get("updated") || get("dc:date"),
-    summary:  decodeHtml((get("description") || get("summary") || get("content") || "")
-                .replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim().substring(0,220)),
-  };
-}
-
-async function tryCompanyFeeds(co) {
+async function tryRSS(co) {
   for (const feedUrl of co.feeds) {
     try {
-      const res = await fetch(feedUrl, {
-        headers:{ "User-Agent":"Mozilla/5.0 (compatible; news aggregator)" },
-        signal: AbortSignal.timeout(7000),
+      const res = await fetch(feedUrl,{
+        headers:{"User-Agent":"Mozilla/5.0 (compatible; news aggregator)"},
+        signal:AbortSignal.timeout(6000),
       });
       if (!res.ok) continue;
       const xml = await res.text();
-      for (const item of parseItems(xml)) {
-        const { headline, url, pubDate, summary } = extractItem(item);
-        if (!headline || !url) continue;
-        const parsedDate = parseDate(pubDate);
-        if (!parsedDate || parsedDate < CUTOFF) continue;
-        const date = parsedDate.toLocaleDateString("en-US",{ month:"short", day:"numeric", year:"numeric" });
-        return { headline, url, date, dateMs:parsedDate.getTime(), summary,
-                 company:co.name, ticker:co.ticker, source:"Company IR", type:"Press Release" };
+      const items = [...(xml.match(/<item[\s\S]*?<\/item>/g)||[]),
+                     ...(xml.match(/<entry[\s\S]*?<\/entry>/g)||[])];
+      for (const item of items) {
+        const headline = decodeHtml(getField(item,"title"));
+        const url = extractUrl(item);
+        if (!headline||!url) continue;
+        const pd = parseDate(getField(item,"pubDate")||getField(item,"published")||getField(item,"updated"));
+        if (!pd||pd<CUTOFF) continue;
+        const summary = decodeHtml((getField(item,"description")||getField(item,"summary")||"")
+          .replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim().substring(0,220));
+        return {headline,url,date:pd.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
+                dateMs:pd.getTime(),summary,company:co.name,ticker:co.ticker,source:"Company IR",type:"Press Release"};
       }
-    } catch(e) { continue; }
+    } catch(e) {continue;}
   }
   return null;
 }
 
+async function tryNewsfile(co) {
+  if (!co.newsfile) return null;
+  try {
+    const res = await fetch(co.newsfile,{
+      headers:{"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
+      signal:AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    // Look for release links: href="/release/12345/..."
+    const releaseLinks = [...html.matchAll(/href="(\/release\/(\d+)\/([^"]+))"/g)];
+    if (!releaseLinks.length) return null;
+
+    // Get the first (most recent) release
+    const [,path,,slug] = releaseLinks[0];
+    const url = `https://www.newsfilecorp.com${path}`;
+
+    // Extract title from slug
+    const headline = decodeHtml(slug.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()));
+
+    // Try to find date near the link
+    const dateMatch = html.match(/(\w+ \d{1,2},\s*\d{4})/);
+    const pd = dateMatch ? parseDate(dateMatch[1]) : null;
+    const date = pd
+      ? pd.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})
+      : new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+
+    return {headline,url,date,dateMs:pd?.getTime()||Date.now(),
+            summary:"",company:co.name,ticker:co.ticker,source:"Newsfile Corp",type:"Press Release"};
+  } catch(e) { return null; }
+}
+
+async function fetchCompany(co) {
+  const rss = await tryRSS(co);
+  if (rss) return rss;
+  return tryNewsfile(co);
+}
+
 exports.handler = async () => {
   try {
-    // Fetch all company feeds in parallel
-    const companyResults = (await Promise.all(COMPANIES.map(tryCompanyFeeds))).filter(Boolean);
-    const seen = new Set(companyResults.map(r => r.url));
-    const valid = [...companyResults];
-
-    // If under 5, top up from GlobeNewswire
-    if (valid.length < 5) {
-      for (const { url: feedUrl, source } of FALLBACK_FEEDS) {
-        if (valid.length >= 5) break;
-        try {
-          const res = await fetch(feedUrl, {
-            headers:{ "User-Agent":"Mozilla/5.0 (compatible; news aggregator)" },
-            signal: AbortSignal.timeout(8000),
-          });
-          if (!res.ok) continue;
-          const xml = await res.text();
-          for (const item of parseItems(xml)) {
-            if (valid.length >= 5) break;
-            const { headline, url, pubDate, summary } = extractItem(item);
-            if (!headline || !url || seen.has(url)) continue;
-            const parsedDate = parseDate(pubDate);
-            if (!parsedDate || parsedDate < CUTOFF) continue;
-            // Match to a company or just include as general basin news
-            const lower = (headline + " " + summary).toLowerCase();
-            const matchedCo = COMPANIES.find(c => lower.includes(c.name.split(" ")[0].toLowerCase()));
-            const date = parsedDate.toLocaleDateString("en-US",{ month:"short", day:"numeric", year:"numeric" });
-            valid.push({
-              headline, url, date, dateMs:parsedDate.getTime(), summary, source,
-              company: matchedCo?.name || "Basin News",
-              ticker:  matchedCo?.ticker || "",
-              type:    "Press Release",
-            });
-            seen.add(url);
-          }
-        } catch(e) {}
-      }
-    }
-
-    const results = valid
+    const results = (await Promise.all(COMPANIES.map(fetchCompany)))
+      .filter(Boolean)
       .sort((a,b) => b.dateMs - a.dateMs)
       .slice(0, 5)
-      .map(({ dateMs, ...rest }) => rest);
+      .map(({dateMs,...rest}) => rest);
 
     return {
       statusCode:200,
-      headers:{ "Access-Control-Allow-Origin":"*" },
-      body: JSON.stringify(results),
+      headers:{"Access-Control-Allow-Origin":"*"},
+      body:JSON.stringify(results),
     };
   } catch(e) {
-    return { statusCode:500, body: JSON.stringify({ error:e.message }) };
+    return {statusCode:500,body:JSON.stringify({error:e.message})};
   }
 };
