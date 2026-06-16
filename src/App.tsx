@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LineChart, Line, AreaChart, Area, ComposedChart, Legend, ScatterChart, Scatter, ZAxis } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LineChart, Line, AreaChart, Area, ComposedChart, Legend, ScatterChart, Scatter, ZAxis, ReferenceArea, CartesianGrid } from "recharts";
 import { Atom, Hammer, Timer, DollarSign, Building2, Zap, Globe, TrendingUp, BarChart3, Newspaper, Landmark, Play, Map, Activity, Flag, Scale, Users, Tag, Radio, Linkedin, Star } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -439,6 +439,44 @@ const SUPPLY_DEFICIT_DATA = [
   { year:"2034", supply:122, demand:318, price:null },
 ];
 
+const EXPLORATION_RUNWAY = [
+  { company:"NexGen",      ticker:"NXE",   stage:"Resource",   runway:36, budget:8.0, mktCap:5000 },
+  { company:"Denison",     ticker:"DML",   stage:"Resource",   runway:24, budget:6.5, mktCap:1800 },
+  { company:"Fission",     ticker:"FCU",   stage:"Resource",   runway:18, budget:6.0, mktCap:600  },
+  { company:"IsoEnergy",   ticker:"ISO",   stage:"Resource",   runway:14, budget:7.5, mktCap:350  },
+  { company:"Cameco",      ticker:"CCO",   stage:"Resource",   runway:24, budget:8.5, mktCap:28000},
+  { company:"UEC",         ticker:"UEC",   stage:"Resource",   runway:14, budget:5.0, mktCap:2500 },
+  { company:"U Royalty",   ticker:"URC",   stage:"Resource",   runway:20, budget:1.5, mktCap:200  },
+  { company:"Skyharbour",  ticker:"SYH",   stage:"Advanced",   runway:8,  budget:4.5, mktCap:120  },
+  { company:"F3 Uranium",  ticker:"FUU",   stage:"Advanced",   runway:10, budget:6.2, mktCap:140  },
+  { company:"Atha Energy", ticker:"SASK",  stage:"Advanced",   runway:12, budget:4.0, mktCap:200  },
+  { company:"CanAlaska",   ticker:"CVV",   stage:"Advanced",   runway:14, budget:3.5, mktCap:90   },
+  { company:"Appia",       ticker:"API",   stage:"Advanced",   runway:7,  budget:2.5, mktCap:45   },
+  { company:"Purepoint",   ticker:"PTU",   stage:"Advanced",   runway:9,  budget:2.0, mktCap:25   },
+  { company:"Baselode",    ticker:"FIND",  stage:"Grassroots", runway:10, budget:2.5, mktCap:40   },
+  { company:"CANU",        ticker:"CANU",  stage:"Grassroots", runway:8,  budget:2.0, mktCap:30   },
+  { company:"Std Uranium", ticker:"STND",  stage:"Grassroots", runway:7,  budget:2.5, mktCap:20   },
+  { company:"Forum",       ticker:"FMC",   stage:"Grassroots", runway:5,  budget:1.5, mktCap:15   },
+  { company:"Azincourt",   ticker:"AAZ",   stage:"Grassroots", runway:6,  budget:1.0, mktCap:8    },
+  { company:"Fortune Bay", ticker:"FOR",   stage:"Grassroots", runway:9,  budget:2.0, mktCap:22   },
+  { company:"ALX",         ticker:"AL",    stage:"Grassroots", runway:5,  budget:1.0, mktCap:12   },
+  { company:"Fission 3.0", ticker:"FIS",   stage:"Grassroots", runway:6,  budget:1.5, mktCap:18   },
+];
+
+const INSIDER_BUYS_UPDATED = "Jun 16, 2026";
+const INSIDER_BUYS = [
+  { company:"NexGen Energy",    ticker:"NXE",   buyer:"Leigh Curyer (CEO)",        amount:"C$2,100,000", date:"May 2026", shares:"248,520" },
+  { company:"Cameco",           ticker:"CCO",   buyer:"Timothy Gitzel (CEO)",      amount:"C$1,240,000", date:"Apr 2026", shares:"21,380"  },
+  { company:"Denison Mines",    ticker:"DML",   buyer:"David Cates (CEO)",         amount:"C$852,000",   date:"May 2026", shares:"480,000" },
+  { company:"Fission Uranium",  ticker:"FCU",   buyer:"Ross McElroy (CEO)",        amount:"C$540,000",   date:"Apr 2026", shares:"540,000" },
+  { company:"Canadian Uranium", ticker:"CANU",  buyer:"Multiple Directors",        amount:"C$380,000",   date:"Jun 2026", shares:"320,000" },
+  { company:"IsoEnergy",        ticker:"ISO",   buyer:"Tim Gauthier (CEO)",        amount:"C$320,000",   date:"Apr 2026", shares:"145,000" },
+  { company:"Skyharbour",       ticker:"SYH",   buyer:"Jordan Trimble (CEO)",      amount:"C$285,000",   date:"May 2026", shares:"475,000" },
+  { company:"Baselode Energy",  ticker:"FIND",  buyer:"Rebecca Hunter (CEO)",      amount:"C$200,000",   date:"May 2026", shares:"1,666,000"},
+  { company:"Atha Energy",      ticker:"SASK",  buyer:"Board of Directors",        amount:"C$180,000",   date:"Mar 2026", shares:"225,000" },
+  { company:"F3 Uranium",       ticker:"FUU",   buyer:"Dev Randhawa (Chair)",      amount:"C$165,000",   date:"Mar 2026", shares:"550,000" },
+];
+
 const STAGE_GROUPS = [
   { key:"Producer",  label:"Producers",  color:"#B07A08", test:(s)=>s==="Producer" },
   { key:"Developer", label:"Developers", color:"#1A5AA8", test:(s)=>s.includes("Developer")||s==="Producer / Developer" },
@@ -610,6 +648,8 @@ export default function App() {
   const [sdHighlight,   setSdHighlight]   = useState("Global Reactor Buildout");
   const [bcmType,       setBcmType]       = useState("All");
   const [bcmRegion,     setBcmRegion]     = useState("All");
+  const [erMinMktCap,   setErMinMktCap]   = useState(0);
+  const [erStage,       setErStage]       = useState("All");
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
   const [basinTopStory, setBasinTopStory] = useState(null);
@@ -1149,7 +1189,7 @@ export default function App() {
                     <div style={{ color:"#6A6A5A", marginBottom:2 }}>{d.headline}</div>
                     <div style={{ display:"flex", gap:12, marginTop:6 }}>
                       <span style={{ fontWeight:700, color:"#1A7A44" }}>{d.amountLabel}</span>
-                      <span style={{ color:"#B07A08" }}>📍 {d.proximity}</span>
+                      <span style={{ color:"#B07A08" }}>{d.proximity}</span>
                     </div>
                     <div style={{ color:"#9A9A8A", marginTop:4 }}>{d.date} · Momentum {d.momentum}%</div>
                   </div>
@@ -1157,65 +1197,88 @@ export default function App() {
               };
 
               return (
-                <>
-                  {/* Legend */}
-                  <div style={{ display:"flex", gap:12, marginBottom:12, flexWrap:"wrap" }}>
-                    {Object.entries(TYPE_COLORS).map(([label,color])=>(
-                      <div key={label} style={{ display:"flex", alignItems:"center", gap:5 }}>
-                        <div style={{ width:10, height:10, borderRadius:"50%", background:color }}/>
-                        <span style={{ fontSize:11, color:"#6A6A5A" }}>{label}</span>
-                      </div>
-                    ))}
-                    <span style={{ fontSize:10, color:"#9A9A8A", marginLeft:"auto" }}>Bubble size = investment amount</span>
-                  </div>
+                <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:20 }}>
 
-                  {/* Chart */}
-                  <ResponsiveContainer width="100%" height={280}>
-                    <ScatterChart margin={{ top:16, right:16, bottom:20, left:8 }}>
-                      <XAxis type="number" dataKey="momentum" domain={[40,100]} tickFormatter={v=>`${v}%`} tick={{ fontSize:10, fill:"#6A6A5A" }}
-                        label={{ value:"Relative Market Momentum →", position:"insideBottom", offset:-8, fontSize:9, fill:"#9A9A8A" }}/>
-                      <YAxis type="number" dataKey="regionY" domain={[-0.5,2.5]} ticks={[0,1,2]} width={90}
-                        tickFormatter={v=>["Basin Margins","Eastern Basin","Western Basin"][v]||""} tick={{ fontSize:10, fill:"#6A6A5A" }}/>
-                      <ZAxis dataKey="amount" range={[300,3000]}/>
-                      <Tooltip content={<CustomTooltip/>}/>
-                      {Object.entries(byType).map(([type,data])=>(
-                        <Scatter key={type} data={data} fill={TYPE_COLORS[type]} shape={<BubbleShape/>}/>
+                  {/* LEFT — Chart 2/3, flex column so chart fills space */}
+                  <div style={{ display:"flex", flexDirection:"column" }}>
+                    <div style={{ display:"flex", gap:12, marginBottom:10, flexWrap:"wrap" }}>
+                      {Object.entries(TYPE_COLORS).map(([label,color])=>(
+                        <div key={label} style={{ display:"flex", alignItems:"center", gap:5 }}>
+                          <div style={{ width:10, height:10, borderRadius:"50%", background:color }}/>
+                          <span style={{ fontSize:11, color:"#6A6A5A" }}>{label}</span>
+                        </div>
                       ))}
-                    </ScatterChart>
-                  </ResponsiveContainer>
-
-                  {/* Stats + Filters */}
-                  <div style={{ borderTop:"1px solid #D8D0C4", paddingTop:14, marginTop:4 }}>
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:0, marginBottom:14, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
-                      {[
-                        ["Active Transactions", filtered.length],
-                        ["Capital Deployed", `C$${totalDeployed.toFixed(0)}M`],
-                        ["Momentum", momentum],
-                      ].map(([label,val])=>(
-                        <div key={label} style={{ padding:"10px 14px", borderRight:"1px solid #D8D0C4", textAlign:"center" }}>
-                          <div style={{ fontSize:11, color:"#9A9A8A", letterSpacing:"0.06em", marginBottom:4 }}>{label}</div>
-                          <div style={{ fontSize:15, fontWeight:800, color:"#1A1A14" }}>{val}</div>
+                      <span style={{ fontSize:10, color:"#9A9A8A", marginLeft:"auto" }}>Bubble size = amount</span>
+                    </div>
+                    <div style={{ flex:1, minHeight:300, background:"#F8F6F1", borderRadius:8, padding:"4px", border:"1px solid #E8E4DE", display:"flex", flexDirection:"column" }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ScatterChart margin={{ top:16, right:12, bottom:20, left:8 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#E0DAD0" strokeOpacity={0.8}/>
+                          <XAxis type="number" dataKey="momentum" domain={[40,100]} tickFormatter={v=>`${v}%`} tick={{ fontSize:10, fill:"#6A6A5A" }}
+                            label={{ value:"Relative Market Momentum →", position:"insideBottom", offset:-8, fontSize:9, fill:"#9A9A8A" }}/>
+                          <YAxis type="number" dataKey="regionY" domain={[-0.8,2.8]} ticks={[0,1,2]} width={90}
+                            tickFormatter={v=>["Basin Margins","Eastern Basin","Western Basin"][v]||""} tick={{ fontSize:10, fill:"#6A6A5A" }}/>
+                          <ZAxis dataKey="amount" range={[300,3000]}/>
+                          <Tooltip content={<CustomTooltip/>}/>
+                          {Object.entries(byType).map(([type,data])=>(
+                            <Scatter key={type} data={data} fill={TYPE_COLORS[type]} shape={<BubbleShape/>}/>
+                          ))}
+                        </ScatterChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:0, margin:"12px 0", border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
+                      {[["Transactions",filtered.length],[`Deployed`,`C$${totalDeployed.toFixed(0)}M`],["Momentum",momentum]].map(([label,val])=>(
+                        <div key={label} style={{ padding:"8px 10px", borderRight:"1px solid #D8D0C4", textAlign:"center" }}>
+                          <div style={{ fontSize:10, color:"#9A9A8A", marginBottom:2 }}>{label}</div>
+                          <div style={{ fontSize:13, fontWeight:800, color:"#1A1A14" }}>{val}</div>
                         </div>
                       ))}
                     </div>
-                    <div style={{ display:"flex", gap:12, flexWrap:"wrap" }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                        <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600 }}>Transaction Type</span>
+                    <div style={{ display:"flex", gap:10 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                        <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600 }}>Type</span>
                         <select value={bcmType} onChange={e=>setBcmType(e.target.value)}
-                          style={{ padding:"5px 10px", fontSize:11, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14", cursor:"pointer" }}>
+                          style={{ padding:"4px 8px", fontSize:11, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14" }}>
                           {["All","Bought Deal","Joint Venture","Insider Buy"].map(t=><option key={t}>{t}</option>)}
                         </select>
                       </div>
-                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                        <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600 }}>Basin Region</span>
+                      <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                        <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600 }}>Region</span>
                         <select value={bcmRegion} onChange={e=>setBcmRegion(e.target.value)}
-                          style={{ padding:"5px 10px", fontSize:11, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14", cursor:"pointer" }}>
+                          style={{ padding:"4px 8px", fontSize:11, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14" }}>
                           {["All","Western Basin","Eastern Basin","Basin Margins"].map(r=><option key={r}>{r}</option>)}
                         </select>
                       </div>
                     </div>
                   </div>
-                </>
+
+                  {/* RIGHT — Top 10 Insider Buys 1/3 */}
+                  <div style={{ borderLeft:"1px solid #D8D0C4", paddingLeft:18 }}>
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
+                      <div style={{ ...S.lbl, letterSpacing:"0.1em" }}>TOP INSIDER BUYS</div>
+                      <span style={{ ...S.badge("gray"), fontSize:9, fontWeight:600 }}>Source: SEDI</span>
+                    </div>
+                    <div style={{ fontSize:10, color:"#9A9A8A", marginBottom:12 }}>Last updated: {INSIDER_BUYS_UPDATED}</div>
+                    {INSIDER_BUYS.map((buy,i)=>{
+                      const co = COMPANIES.find(c=>c.ticker===buy.ticker||c.altTicker===buy.ticker||c.name.toLowerCase().includes(buy.company.split(" ")[0].toLowerCase()));
+                      return (
+                        <div key={i} style={{ paddingBottom:9, marginBottom:9, borderBottom:"1px solid #EDE8E0" }}>
+                          <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:2 }}>
+                            <span style={{ fontSize:10, color:"#9A9A8A", width:14, flexShrink:0 }}>{i+1}</span>
+                            <span style={{ fontSize:12, fontWeight:700, color:"#1A1A14" }}>{buy.company}</span>
+                            <span style={{ ...MONO, fontSize:10, color:co?.color||"#B07A08", fontWeight:700 }}>{buy.ticker}</span>
+                          </div>
+                          <div style={{ fontSize:10, color:"#6A6A5A", marginBottom:3, paddingLeft:20 }}>{buy.buyer}</div>
+                          <div style={{ display:"flex", justifyContent:"space-between", paddingLeft:20 }}>
+                            <span style={{ fontSize:12, fontWeight:800, color:"#1A7A44" }}>{buy.amount}</span>
+                            <span style={{ fontSize:10, color:"#9A9A8A" }}>{buy.date}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                </div>
               );
             })()}
           </div>
@@ -1318,6 +1381,121 @@ export default function App() {
                         <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.55 }}>{h.note}</div>
                       </div>
                     ))}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Athabasca Exploration Runway */}
+        <div style={{ marginBottom:24 }}>
+          <div style={{ ...RuleH }}>
+            <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Athabasca Exploration Runway</div>
+            <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Cash runway vs. exploration intensity — where each company sits on the risk spectrum</div>
+          </div>
+          <div style={{ ...S.card, padding:20 }}>
+            {(()=>{
+              const STAGE_COLORS = { "Grassroots":"#1A7A44", "Advanced":"#B07A08", "Resource":"#1A5AA8" };
+              const filtered = EXPLORATION_RUNWAY.filter(e =>
+                e.mktCap >= erMinMktCap &&
+                (erStage==="All" || e.stage===erStage)
+              );
+              const byStage = {
+                "Resource":   filtered.filter(e=>e.stage==="Resource"),
+                "Advanced":   filtered.filter(e=>e.stage==="Advanced"),
+                "Grassroots": filtered.filter(e=>e.stage==="Grassroots"),
+              };
+              const avgRunway = filtered.length ? (filtered.reduce((s,e)=>s+e.runway,0)/filtered.length).toFixed(1) : "—";
+
+              const BubbleShape = (props) => {
+                const { cx, cy, payload } = props;
+                const col = STAGE_COLORS[payload.stage] || "#B07A08";
+                return (
+                  <g style={{ cursor:"default" }}>
+                    <circle cx={cx} cy={cy} r={15} fill={col} fillOpacity={0.82} stroke="#FFFFFF" strokeWidth={1.5}/>
+                    <text x={cx} y={cy+3} textAnchor="middle" fontSize={7.5} fontWeight={700} fill="#FFFFFF">{payload.ticker}</text>
+                  </g>
+                );
+              };
+
+              const CustomTooltip = ({ active, payload }) => {
+                if (!active||!payload?.length) return null;
+                const d = payload[0]?.payload;
+                if (!d) return null;
+                const col = STAGE_COLORS[d.stage];
+                const quadrant = d.runway<12&&d.budget>=5?"Dilution Risk":d.runway>=12&&d.budget>=5?"Aggressive":d.runway<12&&d.budget<5?"Maintenance":"Fully Funded";
+                return (
+                  <div style={{ background:"#FFFFFF", border:"1px solid #D8D0C4", borderRadius:8, padding:"10px 14px", fontSize:11, maxWidth:220, boxShadow:"0 2px 8px rgba(0,0,0,0.1)" }}>
+                    <div style={{ fontWeight:800, color:"#1A1A14", marginBottom:4 }}>{d.company} <span style={{ color:col }}>({d.stage})</span></div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:4, marginBottom:4 }}>
+                      <div><span style={{ color:"#9A9A8A" }}>Runway: </span><strong>{d.runway}mo</strong></div>
+                      <div><span style={{ color:"#9A9A8A" }}>Budget: </span><strong>C${d.budget}M/yr</strong></div>
+                      <div><span style={{ color:"#9A9A8A" }}>Mkt Cap: </span><strong>C${d.mktCap}M</strong></div>
+                      <div><span style={{ color:"#9A9A8A" }}>Zone: </span><strong style={{ color:col }}>{quadrant}</strong></div>
+                    </div>
+                  </div>
+                );
+              };
+
+              return (
+                <>
+                  {/* Legend */}
+                  <div style={{ display:"flex", gap:14, marginBottom:12, flexWrap:"wrap" }}>
+                    {Object.entries(STAGE_COLORS).map(([stage,color])=>(
+                      <div key={stage} style={{ display:"flex", alignItems:"center", gap:5 }}>
+                        <div style={{ width:10, height:10, borderRadius:"50%", background:color }}/>
+                        <span style={{ fontSize:11, color:"#6A6A5A" }}>{stage}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Chart */}
+                  <ResponsiveContainer width="100%" height={300}>
+                    <ScatterChart margin={{ top:16, right:20, bottom:20, left:8 }}>
+                      {/* Quadrant backgrounds */}
+                      <ReferenceArea x1={0}  x2={12} y1={5}  y2={11} fill="#C01818" fillOpacity={0.04} label={{ value:"DILUTION RISK", position:"insideTopLeft", fontSize:9, fill:"#C01818", fontWeight:700, letterSpacing:1 }}/>
+                      <ReferenceArea x1={12} x2={30} y1={5}  y2={11} fill="#B07A08" fillOpacity={0.04} label={{ value:"AGGRESSIVE",    position:"insideTopLeft", fontSize:9, fill:"#B07A08", fontWeight:700, letterSpacing:1 }}/>
+                      <ReferenceArea x1={0}  x2={12} y1={0}  y2={5}  fill="#6A6A5A" fillOpacity={0.04} label={{ value:"MAINTENANCE",   position:"insideTopLeft", fontSize:9, fill:"#9A9A8A", fontWeight:700, letterSpacing:1 }}/>
+                      <ReferenceArea x1={12} x2={30} y1={0}  y2={5}  fill="#1A7A44" fillOpacity={0.04} label={{ value:"FULLY FUNDED",  position:"insideTopLeft", fontSize:9, fill:"#1A7A44", fontWeight:700, letterSpacing:1 }}/>
+                      <XAxis type="number" dataKey="runway" domain={[0,30]} tick={{ fontSize:10, fill:"#6A6A5A" }}
+                        label={{ value:"Cash Runway (months) →", position:"insideBottom", offset:-8, fontSize:9, fill:"#9A9A8A" }}/>
+                      <YAxis type="number" dataKey="budget" domain={[0,11]} width={46} tick={{ fontSize:10, fill:"#6A6A5A" }}
+                        tickFormatter={v=>`$${v}M`} label={{ value:"Annual Budget (CAD M)", angle:-90, position:"insideLeft", offset:10, fontSize:9, fill:"#9A9A8A" }}/>
+                      <ReferenceLine x={12} stroke="#D8D0C4" strokeDasharray="4 3" strokeWidth={1.5}/>
+                      <ReferenceLine y={5}  stroke="#D8D0C4" strokeDasharray="4 3" strokeWidth={1.5}/>
+                      <Tooltip content={<CustomTooltip/>}/>
+                      {Object.entries(byStage).map(([stage,data])=>(
+                        <Scatter key={stage} data={data} fill={STAGE_COLORS[stage]} shape={<BubbleShape/>}/>
+                      ))}
+                    </ScatterChart>
+                  </ResponsiveContainer>
+
+                  {/* Stats */}
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:0, margin:"12px 0", border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
+                    {[["Companies Shown", filtered.length],["Avg Runway",`${avgRunway}mo`]].map(([label,val])=>(
+                      <div key={label} style={{ padding:"10px 16px", borderRight:"1px solid #D8D0C4", textAlign:"center" }}>
+                        <div style={{ fontSize:11, color:"#9A9A8A", marginBottom:3 }}>{label}</div>
+                        <div style={{ fontSize:16, fontWeight:800, color:"#1A1A14" }}>{val}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Filters */}
+                  <div style={{ display:"flex", gap:16, alignItems:"center", flexWrap:"wrap" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8, flex:1, minWidth:200 }}>
+                      <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600, whiteSpace:"nowrap" }}>Market Cap (CAD M)</span>
+                      <style>{`input[type=range].er-slider{-webkit-appearance:none;flex:1;height:4px;border-radius:2px;background:linear-gradient(to right,#1A1A14 0%,#1A1A14 ${(erMinMktCap/500)*100}%,#D8D0C4 ${(erMinMktCap/500)*100}%,#D8D0C4 100%);outline:none;}input[type=range].er-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#1A1A14;cursor:pointer;border:2px solid #FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,0.2);}input[type=range].er-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#1A1A14;cursor:pointer;border:2px solid #FFFFFF;}`}</style>
+                      <input type="range" className="er-slider" min={0} max={500} step={10} value={erMinMktCap} onChange={e=>setErMinMktCap(parseInt(e.target.value))} style={{ flex:1 }}/>
+                      <span style={{ fontSize:11, fontWeight:700, color:"#1A1A14", minWidth:36 }}>{erMinMktCap||"All"}</span>
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600 }}>Development Stage</span>
+                      <select value={erStage} onChange={e=>setErStage(e.target.value)}
+                        style={{ padding:"5px 10px", fontSize:11, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14", cursor:"pointer" }}>
+                        {["All","Grassroots","Advanced","Resource"].map(s=><option key={s}>{s}</option>)}
+                      </select>
+                    </div>
                   </div>
                 </>
               );
