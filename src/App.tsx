@@ -700,10 +700,11 @@ export default function App() {
       79.8,79.5,79.2,79.5,79.0, spot.price||79.50,
     ].map((price,i)=>({ i, price }));
 
-    const featuredStory = news[0] || {
-      ticker:"NXE", company:"NexGen Energy", type:"Regulatory", date:"Jun 10, 2026",
-      headline:"Arrow CNSC Environmental Assessment Approaching Final Decision — NexGen Positions for World's Largest Uranium Mine",
-      summary:"NexGen Energy's Arrow deposit at Rook I Project is advancing through the final stages of the Canadian Nuclear Safety Commission's environmental assessment, with analysts expecting a licensing decision before year-end 2026. The Arrow deposit holds 257.7 million pounds of U₃O₈ and would become the world's largest uranium mine, positioning Canada as a dominant force in global nuclear fuel supply at a time of surging reactor demand.",
+    const featuredStory = globalNews[0] || {
+      source:"World Nuclear News", category:"Market", date:"Jun 16, 2026",
+      headline:"Uranium Market Tightening as Utility Contracting Accelerates Ahead of New Reactor Buildout",
+      summary:"Global uranium utilities are accelerating long-term contracting at volumes not seen since the pre-Fukushima era, driven by reactor life extensions and new build programs across the US, UK, France and emerging markets. Spot prices remain supported above $80/lb as the structural supply deficit widens.",
+      url:"https://www.world-nuclear-news.org",
     };
 
     const topCos = [...COMPANIES].filter(c=>c.id!=="canu").sort((a,b)=>gCh(b)-gCh(a)).slice(0,5);
@@ -773,7 +774,7 @@ export default function App() {
 
             {/* Left — top basin story */}
             <div>
-              <div style={{ ...S.lbl, marginBottom:8 }}>TOP BASIN STORY</div>
+              <div style={{ ...S.lbl, marginBottom:8 }}>TOP STORY — GLOBAL URANIUM COVERAGE</div>
               {newsLoading && news.length===0 ? (
                 <div>
                   <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.45}}`}</style>
@@ -784,28 +785,19 @@ export default function App() {
               ) : (
                 <a href={featuredStory.url||"#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
                   <div>
-                    {featuredStory.ticker && (()=>{
-                      const co = COMPANIES.find(c=>c.ticker===featuredStory.ticker||c.altTicker===featuredStory.ticker);
-                      const ch = co ? gCh(co) : null;
-                      const up = ch !== null && ch >= 0;
-                      return (
-                        <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center" }}>
-                          <span style={{ ...S.badge(ch!==null?(up?"green":"red"):"amber"), fontSize:10 }}>
-                            {featuredStory.ticker} {ch!==null ? `${up?"▲":"▼"} ${Math.abs(ch).toFixed(2)}%` : ""}
-                          </span>
-                          <span style={{ ...S.badge("gray"), fontSize:10 }}>{featuredStory.type||"News"}</span>
-                        </div>
-                      );
-                    })()}
-                    <h2 style={{ ...SERIF, fontSize:22, fontWeight:700, color:"#1A1A14", lineHeight:1.35, margin:"8px 0 10px", letterSpacing:"-0.01em" }}>
+                    <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center", flexWrap:"wrap" }}>
+                      {featuredStory.source && <span style={{ ...S.badge("blue"), fontSize:10 }}>{featuredStory.source}</span>}
+                      {(featuredStory.category||featuredStory.type) && <span style={{ ...S.badge("gray"), fontSize:10 }}>{featuredStory.category||featuredStory.type}</span>}
+                      <span style={{ fontSize:11, color:"#9A9A8A", marginLeft:"auto" }}>{featuredStory.date}</span>
+                    </div>
+                    <h2 style={{ ...SERIF, fontSize:22, fontWeight:700, color:"#1A1A14", lineHeight:1.35, margin:"0 0 10px", letterSpacing:"-0.01em" }}>
                       {featuredStory.headline}
                     </h2>
                     <p style={{ fontSize:13, color:"#6A6A5A", lineHeight:1.7, margin:"0 0 10px" }}>
                       {featuredStory.summary}
                     </p>
                     <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                      <span style={{ fontSize:11, color:"#9A9A8A" }}>{featuredStory.date}</span>
-                      <span style={{ fontSize:11, color:"#B07A08", fontWeight:600 }}>Read full release →</span>
+                      <span style={{ fontSize:11, color:"#B07A08", fontWeight:600 }}>Read full article →</span>
                     </div>
                   </div>
                 </a>
