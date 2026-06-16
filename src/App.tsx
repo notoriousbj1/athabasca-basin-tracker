@@ -1004,23 +1004,31 @@ export default function App() {
             <div style={{ fontSize:11, color:"#9A9A8A", padding:"12px 0" }}>Searching for latest releases…</div>
           )}
             {(news.length>0 ? news.slice(0,5) : [
-              { company:"NexGen Energy",  ticker:"NXE",    date:"Jun 9",  headline:"Arrow CNSC Environmental Assessment Advancing — Q4 Decision Expected",  type:"Regulatory"  },
-              { company:"IsoEnergy",      ticker:"ISO.V",  date:"Jun 7",  headline:"Hurricane Delineation Complete — Resource Update Due Q3 2025",           type:"Drilling"    },
-              { company:"Denison Mines",  ticker:"DML.TO", date:"Jun 5",  headline:"Wheeler River Phoenix ISR Pilot Approval Received",                            type:"Regulatory"  },
-              { company:"Atha Energy",    ticker:"SASK.V", date:"Jun 4",  headline:"CMB 5,000m Summer Campaign Underway",                                          type:"Exploration"  },
-              { company:"Skyharbour",     ticker:"SYH.V",  date:"Jun 2",  headline:"Moore Lake Best Hole: 0.62% U₃O₈ / 4.2m at 563m",                  type:"Drilling"    },
+              { company:"NexGen Energy",  ticker:"NXE",    date:"Jun 9",  headline:"Arrow CNSC Environmental Assessment Advancing — Q4 Decision Expected",  type:"Regulatory",  url:"#" },
+              { company:"IsoEnergy",      ticker:"ISO.V",  date:"Jun 7",  headline:"Hurricane Delineation Complete — Resource Update Due Q3 2025",           type:"Drilling",    url:"#" },
+              { company:"Denison Mines",  ticker:"DML.TO", date:"Jun 5",  headline:"Wheeler River Phoenix ISR Pilot Approval Received",                      type:"Regulatory",  url:"#" },
+              { company:"Atha Energy",    ticker:"SASK.V", date:"Jun 4",  headline:"CMB 5,000m Summer Campaign Underway",                                    type:"Exploration",  url:"#" },
+              { company:"Skyharbour",     ticker:"SYH.V",  date:"Jun 2",  headline:"Moore Lake Best Hole: 0.62% U₃O₈ / 4.2m at 563m",                      type:"Drilling",    url:"#" },
             ]).map((n,i)=>{
               const co=COMPANIES.find(c=>c.ticker===n.ticker||c.altTicker===n.ticker||c.name.toLowerCase().includes((n.company||"").split(" ")[0]?.toLowerCase()));
               const ch=co?gCh(co):0, up=ch>=0;
               return (
                 <div key={i} style={{ paddingBottom:10, marginBottom:10, borderBottom:"1px solid #D8D0C4" }}>
-                  <div style={{ display:"flex", gap:5, alignItems:"center", marginBottom:4 }}>
+                  <div style={{ display:"flex", gap:5, alignItems:"center", marginBottom:5, flexWrap:"wrap" }}>
                     <span style={{ fontSize:12, color:up?"#1A7A44":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
-                    <span style={{ ...MONO, fontSize:10, fontWeight:700, color:co?.color||"#B07A08" }}>{n.ticker}</span>
+                    <span style={{ fontSize:12, fontWeight:700, color:"#1A1A14" }}>{n.company}</span>
+                    <span style={{ ...MONO, fontSize:10, fontWeight:600, color:co?.color||"#B07A08" }}>{n.ticker}</span>
                     <span style={{ ...S.badge("gray"), fontSize:9 }}>{n.type}</span>
                     <span style={{ fontSize:9, color:"#6A6A5A", marginLeft:"auto" }}>{n.date}</span>
                   </div>
-                  <div style={{ fontSize:12, color:"#2A2A20", lineHeight:1.4 }}>{n.headline}</div>
+                  {n.url && n.url !== "#" ? (
+                    <a href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+                      <div style={{ fontSize:12, color:"#1A1A14", lineHeight:1.4, fontWeight:500 }}>{n.headline}</div>
+                      <div style={{ fontSize:10, color:"#B07A08", marginTop:3, fontWeight:600 }}>Read release →</div>
+                    </a>
+                  ) : (
+                    <div style={{ fontSize:12, color:"#1A1A14", lineHeight:1.4 }}>{n.headline}</div>
+                  )}
                 </div>
               );
             })}
