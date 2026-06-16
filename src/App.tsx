@@ -1603,7 +1603,8 @@ export default function App() {
           <a key={i} href={n.url||"#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
             <div style={{ ...S.card, borderLeft:`3px solid ${co?.color||"#B07A08"}`, marginBottom:8, cursor:"pointer" }}>
               <div style={{ display:"flex", gap:8, marginBottom:6, alignItems:"center", flexWrap:"wrap" }}>
-                <span style={{ ...MONO, fontWeight:700, color:co?.color||"#B07A08" }}>{n.ticker||n.company}</span>
+                <span style={{ fontSize:13, fontWeight:700, color:"#1A1A14" }}>{n.company}</span>
+                <span style={{ ...MONO, fontWeight:700, color:co?.color||"#B07A08", fontSize:11 }}>{n.ticker}</span>
                 {n.type  && <span style={S.badge("blue")}>{n.type}</span>}
                 {n.source && <span style={S.badge("gray")}>{n.source}</span>}
                 <span style={{ fontSize:11, color:"#6A6A5A", marginLeft:"auto" }}>{n.date}</span>
