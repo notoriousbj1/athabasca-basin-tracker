@@ -130,7 +130,7 @@ exports.handler = async () => {
     const results = (await Promise.all(COMPANIES.map(fetchCompany)))
       .filter(Boolean)
       .sort((a,b) => b.dateMs - a.dateMs)
-      .slice(0, 5)
+      .slice(0, 12)
       .map(({dateMs,...rest}) => rest);
 
     return {
