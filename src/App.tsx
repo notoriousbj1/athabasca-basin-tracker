@@ -845,41 +845,35 @@ function SupplyChainFlow() {
 // ─────────────────────────────────────────────
 // ATHABASCA FOCUS — stylized basin mini-map
 // ─────────────────────────────────────────────
-function AthabascaFocusMap() {
-  // Simplified basin outline + deposit markers on a 300x190 canvas
-  const basinPath = "M40,70 C60,48 110,40 160,46 C210,52 250,60 268,86 C278,104 264,128 234,142 C196,158 150,160 110,150 C72,140 44,120 38,98 C35,86 34,78 40,70 Z";
+function AthabascaFocusMap({ satImage }) {
+  // Deposit markers positioned as % of the frame (matches the satellite bbox)
   const deposits = [
-    { x:150, y:70,  label:"Highest-grade deposit", color:"#C01818", big:true },
-    { x:205, y:92,  label:"Eastern deposits",      color:"#C01818", big:true },
-    { x:120, y:108, label:"Western corridor",      color:"#B07A08", big:false },
-    { x:175, y:128, label:"Core explorers",        color:"#1A5AA8", big:false },
+    { left:"52%", top:"30%", label:"Highest-grade deposit", color:"#E83838", big:true },
+    { left:"70%", top:"42%", label:"Eastern deposits",      color:"#E83838", big:true },
+    { left:"34%", top:"54%", label:"Western corridor",      color:"#F0A030", big:false },
+    { left:"56%", top:"64%", label:"Core explorers",        color:"#4BA3F0", big:false },
   ];
   return (
-    <svg viewBox="0 0 300 190" width="100%" height="100%" style={{ display:"block", maxHeight:200 }}>
-      <defs>
-        <radialGradient id="afTerrain" cx="45%" cy="40%" r="70%">
-          <stop offset="0%"  stopColor="#EFE7D6"/>
-          <stop offset="100%" stopColor="#DCCFB4"/>
-        </radialGradient>
-      </defs>
-      {/* terrain backdrop */}
-      <rect x={0} y={0} width={300} height={190} fill="#E8EEE6"/>
-      {/* faint surrounding lakes/forest texture */}
-      {[[30,30,14,8],[260,40,18,10],[40,160,16,7],[250,150,20,9],[150,30,10,5]].map(([cx,cy,rx,ry],i)=>(
-        <ellipse key={i} cx={cx} cy={cy} rx={rx} ry={ry} fill="#C4D6C0" opacity={0.6}/>
+    <div style={{ position:"relative", width:"100%", aspectRatio:"800/440", borderRadius:8, overflow:"hidden", background:"#2E4A34" }}>
+      {satImage ? (
+        <img src={satImage} alt="Athabasca Basin satellite view" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
+      ) : (
+        <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", color:"#9FBFA4", fontSize:11, background:"linear-gradient(135deg,#2E4A34,#22382A)" }}>
+          Loading satellite imagery…
+        </div>
+      )}
+      {/* subtle dark gradient for label legibility */}
+      <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom,rgba(0,0,0,0.05),rgba(0,0,0,0.18))", pointerEvents:"none" }}/>
+      {/* Deposit markers */}
+      {satImage && deposits.map((d,i)=>(
+        <div key={i} style={{ position:"absolute", left:d.left, top:d.top, transform:"translate(-50%,-50%)", display:"flex", alignItems:"center", gap:5, pointerEvents:"none" }}>
+          <span style={{ width:d.big?12:10, height:d.big?12:10, borderRadius:"50%", background:d.color, boxShadow:`0 0 0 4px ${d.color}33, 0 0 8px ${d.color}`, border:"1.5px solid #FFFFFF", flexShrink:0 }}/>
+          <span style={{ fontSize:9, fontWeight:700, color:"#FFFFFF", whiteSpace:"nowrap", textShadow:"0 1px 3px rgba(0,0,0,0.9)" }}>{d.label}</span>
+        </div>
       ))}
-      {/* basin sandstone body */}
-      <path d={basinPath} fill="url(#afTerrain)" stroke="#B07A08" strokeWidth={1.5} strokeOpacity={0.7}/>
-      <text x={150} y={112} textAnchor="middle" fontSize={9} fontWeight={700} fill="#B07A08" opacity={0.4} letterSpacing="1">ATHABASCA BASIN</text>
-      {/* deposits */}
-      {deposits.map((d,i)=>(
-        <g key={i}>
-          <circle cx={d.x} cy={d.y} r={d.big?5:4} fill={d.color} fillOpacity={0.2} stroke={d.color} strokeWidth={1}/>
-          <circle cx={d.x} cy={d.y} r={d.big?2.4:2} fill={d.color}/>
-          <text x={d.x+7} y={d.y+3} fontSize={7.5} fontWeight={600} fill="#4A4A3A">{d.label}</text>
-        </g>
-      ))}
-    </svg>
+      {/* Attribution */}
+      <div style={{ position:"absolute", bottom:3, right:6, fontSize:7, color:"rgba(255,255,255,0.6)", textShadow:"0 1px 2px rgba(0,0,0,0.8)", pointerEvents:"none" }}>Esri World Imagery</div>
+    </div>
   );
 }
 
@@ -947,6 +941,7 @@ export default function App() {
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
   const [basinTopStory, setBasinTopStory] = useState(null);
+  const [basinSat, setBasinSat] = useState(null);
   const [showSubModal, setShowSubModal] = useState(false);
   const [subscribed, setSubscribed]     = useState(false);
   const [subEmail, setSubEmail]         = useState("");
@@ -1004,6 +999,14 @@ export default function App() {
     } catch(e) { console.error("Basin top story fetch failed", e); }
   }, []);
 
+  const fetchBasinSat = useCallback(async () => {
+    try {
+      const res = await fetch("/.netlify/functions/basin-satellite");
+      const data = await res.json();
+      if (data?.image) setBasinSat(data.image);
+    } catch(e) { console.error("Basin satellite fetch failed", e); }
+  }, []);
+
   const fetchVideoData = useCallback(async () => {
     setVideosLoading(true);
     try {
@@ -1047,7 +1050,7 @@ export default function App() {
     setRefresh(false);
   }, []);
 
-  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); },[]);
+  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); },[]);
 
   const gP   = (c) => prices[c.id]?.price ?? c.price;
   const gCh  = (c) => prices[c.id]?.changePct ?? c.changePct;
@@ -1828,8 +1831,8 @@ export default function App() {
                       return (
                         <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"16px 18px" }}>
                           <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.12em" }}>Athabasca Focus</div>
-                          <div style={{ borderRadius:8, overflow:"hidden", border:"1px solid #E8E4DE", marginBottom:10 }}>
-                            <AthabascaFocusMap/>
+                          <div style={{ marginBottom:10 }}>
+                            <AthabascaFocusMap satImage={basinSat}/>
                           </div>
                           <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
                             <span style={{ ...SERIF, fontSize:26, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>~10%</span>
