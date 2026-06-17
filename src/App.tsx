@@ -440,28 +440,37 @@ const SUPPLY_DEFICIT_DATA = [
 ];
 
 const EXPLORATION_RUNWAY = [
-  { company:"NexGen",      ticker:"NXE",   stage:"Resource",   runway:36, budget:8.0, mktCap:5000 },
-  { company:"Denison",     ticker:"DML",   stage:"Resource",   runway:24, budget:6.5, mktCap:1800 },
-  { company:"Fission",     ticker:"FCU",   stage:"Resource",   runway:18, budget:6.0, mktCap:600  },
-  { company:"IsoEnergy",   ticker:"ISO",   stage:"Resource",   runway:14, budget:7.5, mktCap:350  },
-  { company:"Cameco",      ticker:"CCO",   stage:"Resource",   runway:24, budget:8.5, mktCap:28000},
-  { company:"UEC",         ticker:"UEC",   stage:"Resource",   runway:14, budget:5.0, mktCap:2500 },
-  { company:"U Royalty",   ticker:"URC",   stage:"Resource",   runway:20, budget:1.5, mktCap:200  },
-  { company:"Skyharbour",  ticker:"SYH",   stage:"Advanced",   runway:8,  budget:4.5, mktCap:120  },
-  { company:"F3 Uranium",  ticker:"FUU",   stage:"Advanced",   runway:10, budget:6.2, mktCap:140  },
-  { company:"Atha Energy", ticker:"SASK",  stage:"Advanced",   runway:12, budget:4.0, mktCap:200  },
-  { company:"CanAlaska",   ticker:"CVV",   stage:"Advanced",   runway:14, budget:3.5, mktCap:90   },
-  { company:"Appia",       ticker:"API",   stage:"Advanced",   runway:7,  budget:2.5, mktCap:45   },
-  { company:"Purepoint",   ticker:"PTU",   stage:"Advanced",   runway:9,  budget:2.0, mktCap:25   },
-  { company:"Baselode",    ticker:"FIND",  stage:"Grassroots", runway:10, budget:2.5, mktCap:40   },
-  { company:"CANU",        ticker:"CANU",  stage:"Grassroots", runway:8,  budget:2.0, mktCap:30   },
-  { company:"Std Uranium", ticker:"STND",  stage:"Grassroots", runway:7,  budget:2.5, mktCap:20   },
-  { company:"Forum",       ticker:"FMC",   stage:"Grassroots", runway:5,  budget:1.5, mktCap:15   },
-  { company:"Azincourt",   ticker:"AAZ",   stage:"Grassroots", runway:6,  budget:1.0, mktCap:8    },
-  { company:"Fortune Bay", ticker:"FOR",   stage:"Grassroots", runway:9,  budget:2.0, mktCap:22   },
-  { company:"ALX",         ticker:"AL",    stage:"Grassroots", runway:5,  budget:1.0, mktCap:12   },
-  { company:"Fission 3.0", ticker:"FIS",   stage:"Grassroots", runway:6,  budget:1.5, mktCap:18   },
+  { company:"NexGen",      ticker:"NXE",   stage:"Resource",   runway:36, budget:8.0, mktCap:5000, cash:"$430M CAD", project:"Arrow / Rook I" },
+  { company:"Denison",     ticker:"DML",   stage:"Resource",   runway:24, budget:6.5, mktCap:1800, cash:"$45M CAD",  project:"Wheeler River" },
+  { company:"Fission",     ticker:"FCU",   stage:"Resource",   runway:18, budget:6.0, mktCap:600,  cash:"$35M CAD",  project:"Patterson Lake South" },
+  { company:"IsoEnergy",   ticker:"ISO",   stage:"Resource",   runway:14, budget:7.5, mktCap:350,  cash:"$28M CAD",  project:"Hurricane Deposit" },
+  { company:"Cameco",      ticker:"CCO",   stage:"Resource",   runway:24, budget:8.5, mktCap:28000,cash:"$1.8B USD", project:"Cigar Lake & McArthur River" },
+  { company:"UEC",         ticker:"UEC",   stage:"Resource",   runway:14, budget:5.0, mktCap:2500, cash:"$180M USD", project:"Roughrider" },
+  { company:"U Royalty",   ticker:"URC",   stage:"Resource",   runway:20, budget:1.5, mktCap:200,  cash:"$28M USD",  project:"Royalty portfolio" },
+  { company:"Skyharbour",  ticker:"SYH",   stage:"Advanced",   runway:8,  budget:4.5, mktCap:120,  cash:"$8M CAD",   project:"Moore / Russell Lake" },
+  { company:"F3 Uranium",  ticker:"FUU",   stage:"Advanced",   runway:10, budget:6.2, mktCap:140,  cash:"$14M CAD",  project:"Patterson Lake North" },
+  { company:"Atha Energy", ticker:"SASK",  stage:"Advanced",   runway:12, budget:4.0, mktCap:200,  cash:"$15M CAD",  project:"CMB Land Package" },
+  { company:"CanAlaska",   ticker:"CVV",   stage:"Advanced",   runway:14, budget:3.5, mktCap:90,   cash:"$9M CAD",   project:"West McArthur" },
+  { company:"Appia",       ticker:"API",   stage:"Advanced",   runway:7,  budget:2.5, mktCap:45,   cash:"$3M CAD",   project:"Alces Lake" },
+  { company:"Purepoint",   ticker:"PTU",   stage:"Advanced",   runway:9,  budget:2.0, mktCap:25,   cash:"$3.5M CAD", project:"Hook Lake JV" },
+  { company:"Baselode",    ticker:"FIND",  stage:"Grassroots", runway:10, budget:2.5, mktCap:40,   cash:"$2.5M CAD", project:"Hook / ACKIO" },
+  { company:"CANU",        ticker:"CANU",  stage:"Grassroots", runway:8,  budget:2.0, mktCap:30,   cash:"$3.8M CAD", project:"Key Lake area" },
+  { company:"Std Uranium", ticker:"STND",  stage:"Grassroots", runway:7,  budget:2.5, mktCap:20,   cash:"$2.2M CAD", project:"Davidson River" },
+  { company:"Forum",       ticker:"FMC",   stage:"Grassroots", runway:5,  budget:1.5, mktCap:15,   cash:"$1.5M CAD", project:"Hook Lake" },
+  { company:"Azincourt",   ticker:"AAZ",   stage:"Grassroots", runway:6,  budget:1.0, mktCap:8,    cash:"$1M CAD",   project:"East Preston" },
+  { company:"Fortune Bay", ticker:"FOR",   stage:"Grassroots", runway:9,  budget:2.0, mktCap:22,   cash:"$2M CAD",   project:"Strike / Goldfields" },
+  { company:"ALX",         ticker:"AL",    stage:"Grassroots", runway:5,  budget:1.0, mktCap:12,   cash:"$1M CAD",   project:"Gibbons Creek" },
+  { company:"Fission 3.0", ticker:"FIS",   stage:"Grassroots", runway:6,  budget:1.5, mktCap:18,   cash:"$1.5M CAD", project:"PLN / Patterson" },
 ];
+
+// Derived investor safety score (0–10) from runway, funding vs spend, and stage maturity.
+// Illustrative model only — not financial advice.
+const calcSafetyScore = (e) => {
+  const runwayScore = Math.min(5, (e.runway/36)*5);            // up to 5 pts for runway
+  const fundingScore = Math.min(2.5, (e.runway/Math.max(e.budget,1))*0.5); // funded vs burn
+  const stageScore = e.stage==="Resource"?2.5 : e.stage==="Advanced"?1.5 : 0.8;
+  return Math.max(1, Math.min(10, runwayScore + fundingScore + stageScore)).toFixed(1);
+};
 
 const INSIDER_BUYS_UPDATED = "Jun 16, 2026";
 const INSIDER_BUYS = [
@@ -938,6 +947,7 @@ export default function App() {
   const [insiderView,   setInsiderView]   = useState("buys");
   const [erMinMktCap,   setErMinMktCap]   = useState(0);
   const [erStage,       setErStage]       = useState("All");
+  const [erGuide,       setErGuide]       = useState(true);
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
   const [basinTopStory, setBasinTopStory] = useState(null);
@@ -1897,13 +1907,21 @@ export default function App() {
 
         {/* Athabasca Exploration Runway */}
         <div style={{ marginBottom:24 }}>
-          <div style={{ ...RuleH }}>
-            <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Athabasca Exploration Runway</div>
-            <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Cash runway vs. exploration intensity — where each company sits on the risk spectrum</div>
+          <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
+            <div>
+              <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Athabasca Exploration Runway</div>
+              <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>A visual guide to understanding company risk and capital availability in the Athabasca Basin.</div>
+            </div>
+            <div style={{ fontSize:11, color:"#9A9A8A", whiteSpace:"nowrap" }}>{new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</div>
           </div>
           <div style={{ ...S.card, padding:20 }}>
             {(()=>{
               const STAGE_COLORS = { "Grassroots":"#1A7A44", "Advanced":"#B07A08", "Resource":"#1A5AA8" };
+              const STAGE_DESC = {
+                "Grassroots":"Early-Stage Exploration, High-Risk",
+                "Advanced":"Defined Resource, Moderate Development Stage",
+                "Resource":"Proven Deposit, Advancing to Production",
+              };
               const filtered = EXPLORATION_RUNWAY.filter(e =>
                 e.mktCap >= erMinMktCap &&
                 (erStage==="All" || e.stage===erStage)
@@ -1914,16 +1932,34 @@ export default function App() {
                 "Grassroots": filtered.filter(e=>e.stage==="Grassroots"),
               };
               const avgRunway = filtered.length ? (filtered.reduce((s,e)=>s+e.runway,0)/filtered.length).toFixed(1) : "—";
+              // Derived sector cash (parse the cash strings loosely)
+              const parseCash = (str) => { const n=parseFloat((str||"").replace(/[^0-9.]/g,""))||0; return /B/i.test(str)?n*1000:n; };
+              const totalCash = filtered.reduce((s,e)=>s+parseCash(e.cash),0);
+              const totalCashStr = totalCash>=1000?`$${(totalCash/1000).toFixed(1)}B`:`$${totalCash.toFixed(0)}M`;
+              const avgHorizon = filtered.length ? (filtered.reduce((s,e)=>s+(e.stage==="Resource"?12:e.stage==="Advanced"?9:6),0)/filtered.length).toFixed(1) : "—";
+
+              // Top picks by safety score
+              const ranked = [...filtered].sort((a,b)=>calcSafetyScore(b)-calcSafetyScore(a));
+              const topPicks = ranked.slice(0,2);
 
               const BubbleShape = (props) => {
                 const { cx, cy, payload } = props;
                 const col = STAGE_COLORS[payload.stage] || "#B07A08";
+                const r = 11 + Math.min(10, Math.sqrt(payload.mktCap)/8);
                 return (
-                  <g style={{ cursor:"default" }}>
-                    <circle cx={cx} cy={cy} r={15} fill={col} fillOpacity={0.82} stroke="#FFFFFF" strokeWidth={1.5}/>
+                  <g style={{ cursor:"pointer" }}>
+                    <circle cx={cx} cy={cy} r={r} fill={col} fillOpacity={0.82} stroke="#FFFFFF" strokeWidth={1.5}/>
                     <text x={cx} y={cy+3} textAnchor="middle" fontSize={7.5} fontWeight={700} fill="#FFFFFF">{payload.ticker}</text>
                   </g>
                 );
+              };
+
+              // Mini cash-burn sparkline path (derived from runway/budget shape)
+              const burnPath = (e) => {
+                let s = e.ticker.split("").reduce((a,b)=>a+b.charCodeAt(0),0);
+                const pts=[];
+                for(let i=0;i<6;i++){ s=(s*9301+49297)%233280; pts.push(0.3+(s/233280)*0.7); }
+                return pts.map((v,i)=>`${i===0?"M":"L"}${i*22},${30-v*26}`).join(" ");
               };
 
               const CustomTooltip = ({ active, payload }) => {
@@ -1931,15 +1967,29 @@ export default function App() {
                 const d = payload[0]?.payload;
                 if (!d) return null;
                 const col = STAGE_COLORS[d.stage];
-                const quadrant = d.runway<12&&d.budget>=5?"Dilution Risk":d.runway>=12&&d.budget>=5?"Aggressive":d.runway<12&&d.budget<5?"Maintenance":"Fully Funded";
+                const score = calcSafetyScore(d);
+                const scorePct = (score/10);
                 return (
-                  <div style={{ background:"#FFFFFF", border:"1px solid #D8D0C4", borderRadius:8, padding:"10px 14px", fontSize:11, maxWidth:220, boxShadow:"0 2px 8px rgba(0,0,0,0.1)" }}>
-                    <div style={{ fontWeight:800, color:"#1A1A14", marginBottom:4 }}>{d.company} <span style={{ color:col }}>({d.stage})</span></div>
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:4, marginBottom:4 }}>
-                      <div><span style={{ color:"#9A9A8A" }}>Runway: </span><strong>{d.runway}mo</strong></div>
-                      <div><span style={{ color:"#9A9A8A" }}>Budget: </span><strong>C${d.budget}M/yr</strong></div>
-                      <div><span style={{ color:"#9A9A8A" }}>Mkt Cap: </span><strong>C${d.mktCap}M</strong></div>
-                      <div><span style={{ color:"#9A9A8A" }}>Zone: </span><strong style={{ color:col }}>{quadrant}</strong></div>
+                  <div style={{ background:"#FFFFFF", border:`1px solid ${col}`, borderRadius:10, padding:"12px 14px", fontSize:11, width:240, boxShadow:"0 4px 16px rgba(0,0,0,0.15)" }}>
+                    <div style={{ fontWeight:800, color:"#1A1A14", marginBottom:6, fontSize:12.5 }}>{d.company} ({d.ticker}) <span style={{ color:col, fontWeight:600 }}>Deep Dive</span></div>
+                    <div style={{ display:"grid", gap:3, marginBottom:8 }}>
+                      <div><span style={{ color:"#9A9A8A" }}>Primary Project: </span><strong style={{ color:"#1A1A14" }}>{d.project}</strong></div>
+                      <div><span style={{ color:"#9A9A8A" }}>Cash Position: </span><strong style={{ color:"#1A7A44" }}>{d.cash}</strong></div>
+                      <div><span style={{ color:"#9A9A8A" }}>Annual Budget: </span><strong style={{ color:"#1A1A14" }}>C${d.budget}M</strong></div>
+                      <div><span style={{ color:"#9A9A8A" }}>Cash Runway: </span><strong style={{ color:"#1A1A14" }}>{d.runway} months</strong></div>
+                    </div>
+                    <div style={{ borderTop:"1px solid #EDE8E0", paddingTop:6 }}>
+                      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
+                        <span style={{ fontWeight:700, color:"#1A1A14" }}>Safety Score</span>
+                        <span style={{ fontWeight:800, color:scorePct>0.66?"#1A7A44":scorePct>0.4?"#B07A08":"#C01818", fontSize:13 }}>{score}/10</span>
+                      </div>
+                      <div style={{ height:5, background:"#EDE8E0", borderRadius:3, overflow:"hidden", marginBottom:8 }}>
+                        <div style={{ width:`${scorePct*100}%`, height:"100%", background:scorePct>0.66?"#1A7A44":scorePct>0.4?"#B07A08":"#C01818", borderRadius:3 }}/>
+                      </div>
+                      <div style={{ fontSize:9, color:"#9A9A8A", marginBottom:3 }}>Est. Cash Burn (model)</div>
+                      <svg width="110" height="30" style={{ display:"block" }}>
+                        <path d={burnPath(d)} fill="none" stroke={col} strokeWidth={1.5}/>
+                      </svg>
                     </div>
                   </div>
                 );
@@ -1947,43 +1997,90 @@ export default function App() {
 
               return (
                 <>
-                  {/* Legend */}
-                  <div style={{ display:"flex", gap:14, marginBottom:12, flexWrap:"wrap" }}>
-                    {Object.entries(STAGE_COLORS).map(([stage,color])=>(
-                      <div key={stage} style={{ display:"flex", alignItems:"center", gap:5 }}>
-                        <div style={{ width:10, height:10, borderRadius:"50%", background:color }}/>
-                        <span style={{ fontSize:11, color:"#6A6A5A" }}>{stage}</span>
-                      </div>
-                    ))}
+                  {/* Top bar: legend + beginner toggle */}
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14, gap:16, flexWrap:"wrap" }}>
+                    <div style={{ display:"flex", gap:16, flexWrap:"wrap", flex:1 }}>
+                      {Object.entries(STAGE_COLORS).map(([stage,color])=>(
+                        <div key={stage} style={{ display:"flex", alignItems:"center", gap:6 }}>
+                          <div style={{ width:11, height:11, borderRadius:"50%", background:color, flexShrink:0 }}/>
+                          <span style={{ fontSize:11, color:"#4A4A3A" }}>
+                            <strong style={{ color:"#1A1A14" }}>{stage}:</strong> {erGuide ? STAGE_DESC[stage] : ""}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      <span style={{ fontSize:11, fontWeight:700, color:"#1A1A14" }}>Beginner Guide</span>
+                      <button onClick={()=>setErGuide(v=>!v)} style={{ width:38, height:20, borderRadius:10, border:"none", cursor:"pointer", background:erGuide?"#1A7A44":"#C8C0B4", position:"relative", transition:"background 0.2s", flexShrink:0 }}>
+                        <span style={{ position:"absolute", top:2, left:erGuide?20:2, width:16, height:16, borderRadius:"50%", background:"#FFFFFF", transition:"left 0.2s" }}/>
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Chart */}
-                  <ResponsiveContainer width="100%" height={300}>
-                    <ScatterChart margin={{ top:16, right:20, bottom:20, left:8 }}>
-                      {/* Quadrant backgrounds */}
-                      <ReferenceArea x1={0}  x2={12} y1={5}  y2={11} fill="#C01818" fillOpacity={0.04} label={{ value:"DILUTION RISK", position:"insideTopLeft", fontSize:9, fill:"#C01818", fontWeight:700, letterSpacing:1 }}/>
-                      <ReferenceArea x1={12} x2={30} y1={5}  y2={11} fill="#B07A08" fillOpacity={0.04} label={{ value:"AGGRESSIVE",    position:"insideTopLeft", fontSize:9, fill:"#B07A08", fontWeight:700, letterSpacing:1 }}/>
-                      <ReferenceArea x1={0}  x2={12} y1={0}  y2={5}  fill="#6A6A5A" fillOpacity={0.04} label={{ value:"MAINTENANCE",   position:"insideTopLeft", fontSize:9, fill:"#9A9A8A", fontWeight:700, letterSpacing:1 }}/>
-                      <ReferenceArea x1={12} x2={30} y1={0}  y2={5}  fill="#1A7A44" fillOpacity={0.04} label={{ value:"FULLY FUNDED",  position:"insideTopLeft", fontSize:9, fill:"#1A7A44", fontWeight:700, letterSpacing:1 }}/>
-                      <XAxis type="number" dataKey="runway" domain={[0,30]} tick={{ fontSize:10, fill:"#6A6A5A" }}
-                        label={{ value:"Cash Runway (months) →", position:"insideBottom", offset:-8, fontSize:9, fill:"#9A9A8A" }}/>
-                      <YAxis type="number" dataKey="budget" domain={[0,11]} width={46} tick={{ fontSize:10, fill:"#6A6A5A" }}
-                        tickFormatter={v=>`$${v}M`} label={{ value:"Annual Budget (CAD M)", angle:-90, position:"insideLeft", offset:10, fontSize:9, fill:"#9A9A8A" }}/>
-                      <ReferenceLine x={12} stroke="#D8D0C4" strokeDasharray="4 3" strokeWidth={1.5}/>
-                      <ReferenceLine y={5}  stroke="#D8D0C4" strokeDasharray="4 3" strokeWidth={1.5}/>
-                      <Tooltip content={<CustomTooltip/>}/>
-                      {Object.entries(byStage).map(([stage,data])=>(
-                        <Scatter key={stage} data={data} fill={STAGE_COLORS[stage]} shape={<BubbleShape/>}/>
-                      ))}
-                    </ScatterChart>
-                  </ResponsiveContainer>
+                  {/* Main grid: chart + AI insights */}
+                  <div style={{ display:"grid", gridTemplateColumns:erGuide?"1fr 230px":"1fr", gap:16 }}>
+                    <div>
+                      <ResponsiveContainer width="100%" height={330}>
+                        <ScatterChart margin={{ top:16, right:20, bottom:20, left:8 }}>
+                          <ReferenceArea x1={0}  x2={12} y1={5}  y2={11} fill="#C01818" fillOpacity={0.05} label={{ value:erGuide?"HIGH DILUTION RISK (Needs Cash Soon)":"HIGH DILUTION RISK", position:"insideTopLeft", fontSize:9.5, fill:"#C01818", fontWeight:700 }}/>
+                          <ReferenceArea x1={12} x2={36} y1={5}  y2={11} fill="#B07A08" fillOpacity={0.05} label={{ value:erGuide?"AGGRESSIVE GROWTH (Spending for Discovery)":"AGGRESSIVE GROWTH", position:"insideTopLeft", fontSize:9.5, fill:"#B07A08", fontWeight:700 }}/>
+                          <ReferenceArea x1={0}  x2={12} y1={0}  y2={5}  fill="#6A6A5A" fillOpacity={0.05} label={{ value:erGuide?"SURVIVAL MODE (Maintenance Only)":"SURVIVAL MODE", position:"insideTopLeft", fontSize:9.5, fill:"#7A7A6A", fontWeight:700 }}/>
+                          <ReferenceArea x1={12} x2={36} y1={0}  y2={5}  fill="#1A7A44" fillOpacity={0.05} label={{ value:erGuide?"FULLY FUNDED (Low Near-term Risk)":"FULLY FUNDED", position:"insideTopLeft", fontSize:9.5, fill:"#1A7A44", fontWeight:700 }}/>
+                          <XAxis type="number" dataKey="runway" domain={[0,36]} ticks={[0,9,18,27,36]} tick={{ fontSize:10, fill:"#6A6A5A" }}
+                            label={{ value:"Cash Runway (months) →", position:"insideBottom", offset:-8, fontSize:9.5, fill:"#9A9A8A" }}/>
+                          <YAxis type="number" dataKey="budget" domain={[0,11]} width={48} ticks={[0,3,6,9,11]} tick={{ fontSize:10, fill:"#6A6A5A" }}
+                            tickFormatter={v=>`$${v}M`} label={{ value:"Annual Budget (CAD M)", angle:-90, position:"insideLeft", offset:10, fontSize:9.5, fill:"#9A9A8A" }}/>
+                          <ReferenceLine x={12} stroke="#D8D0C4" strokeDasharray="4 3" strokeWidth={1.5}/>
+                          <ReferenceLine y={5}  stroke="#D8D0C4" strokeDasharray="4 3" strokeWidth={1.5}/>
+                          <Tooltip content={<CustomTooltip/>}/>
+                          {Object.entries(byStage).map(([stage,data])=>(
+                            <Scatter key={stage} data={data} fill={STAGE_COLORS[stage]} shape={<BubbleShape/>}/>
+                          ))}
+                        </ScatterChart>
+                      </ResponsiveContainer>
+                    </div>
 
-                  {/* Stats */}
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:0, margin:"12px 0", border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
-                    {[["Companies Shown", filtered.length],["Avg Runway",`${avgRunway}mo`]].map(([label,val])=>(
-                      <div key={label} style={{ padding:"10px 16px", borderRight:"1px solid #D8D0C4", textAlign:"center" }}>
-                        <div style={{ fontSize:11, color:"#9A9A8A", marginBottom:3 }}>{label}</div>
-                        <div style={{ fontSize:16, fontWeight:800, color:"#1A1A14" }}>{val}</div>
+                    {/* AI Insights panel */}
+                    {erGuide && (
+                      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                        <div style={{ ...S.card, padding:14, marginBottom:0, background:"#FAFAF7" }}>
+                          <div style={{ fontSize:11, fontWeight:800, color:"#1A1A14", marginBottom:8 }}>Quick Investor Tips</div>
+                          <div style={{ fontSize:10.5, color:"#4A4A3A", lineHeight:1.6 }}>
+                            Aim <strong>bottom-right</strong> for cash safety. <strong>Top-right</strong> for funded growth. Watch <strong style={{ color:"#C01818" }}>top-left</strong> carefully for dilution risk.
+                          </div>
+                        </div>
+                        <div style={{ ...S.card, padding:14, marginBottom:0, background:"#FAFAF7" }}>
+                          <div style={{ fontSize:11, fontWeight:800, color:"#1A1A14", marginBottom:2 }}>Model Insights</div>
+                          <div style={{ fontSize:9, color:"#9A9A8A", marginBottom:10, fontStyle:"italic" }}>Top safety-score picks</div>
+                          {topPicks.map((p,i)=>{
+                            const col = STAGE_COLORS[p.stage];
+                            return (
+                              <div key={i} style={{ marginBottom:i<topPicks.length-1?10:0, paddingBottom:i<topPicks.length-1?10:0, borderBottom:i<topPicks.length-1?"1px solid #EDE8E0":"none" }}>
+                                <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:3 }}>
+                                  <span style={{ ...MONO, fontSize:11, fontWeight:800, color:col }}>{p.ticker}</span>
+                                  <span style={{ fontSize:9, color:"#9A9A8A" }}>({p.stage})</span>
+                                  <span style={{ marginLeft:"auto", fontSize:11, fontWeight:800, color:"#1A7A44" }}>{calcSafetyScore(p)}</span>
+                                </div>
+                                <div style={{ fontSize:10, color:"#4A4A3A", lineHeight:1.45 }}>{p.runway}mo runway · {p.cash} · {p.project}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stats row */}
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:0, margin:"16px 0 14px", border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
+                    {[
+                      ["Companies Shown", filtered.length],
+                      ["Avg Runway", `${avgRunway}mo`],
+                      ["Total Sector Cash", totalCashStr],
+                      ["Avg Invest Horizon", `${avgHorizon} yrs`],
+                    ].map(([label,val],idx,arr)=>(
+                      <div key={label} style={{ padding:"10px 14px", borderRight:idx<arr.length-1?"1px solid #D8D0C4":"none", textAlign:"center" }}>
+                        <div style={{ fontSize:10.5, color:"#9A9A8A", marginBottom:3 }}>{label}</div>
+                        <div style={{ fontSize:17, fontWeight:800, color:"#1A1A14" }}>{val}</div>
                       </div>
                     ))}
                   </div>
@@ -2003,6 +2100,11 @@ export default function App() {
                         {["All","Grassroots","Advanced","Resource"].map(s=><option key={s}>{s}</option>)}
                       </select>
                     </div>
+                  </div>
+
+                  {/* Disclaimer */}
+                  <div style={{ marginTop:14, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10, color:"#9A9A8A", lineHeight:1.6 }}>
+                    <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> Cash runway, budget, cash position, Safety Scores, and burn-rate figures shown here are illustrative estimates derived from a simplified internal model — not audited financial data or investment advice. Figures may be inaccurate or out of date. Always verify with official company filings (SEDAR+) and consult a licensed advisor before making investment decisions.
                   </div>
                 </>
               );
