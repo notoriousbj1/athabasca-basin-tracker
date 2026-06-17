@@ -1238,17 +1238,17 @@ export default function App() {
               ) : (
                 <a href={featuredStory.url||"#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
                   <div>
-                    {featuredStory.image && (
-                      <img src={featuredStory.image} alt={featuredStory.headline}
-                        style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:160 }}
-                        onError={e=>{ e.target.style.display="none"; }}
-                      />
-                    )}
                     <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center", flexWrap:"wrap" }}>
                       {featuredStory.source && <span style={{ ...S.badge("blue"), fontSize:10 }}>{featuredStory.source}</span>}
                       {(featuredStory.category||featuredStory.type) && <span style={{ ...S.badge("gray"), fontSize:10 }}>{featuredStory.category||featuredStory.type}</span>}
                       <span style={{ fontSize:11, color:"#9A9A8A", marginLeft:"auto" }}>{featuredStory.date}</span>
                     </div>
+                    {(featuredStory.image || basinSat) && (
+                      <img src={featuredStory.image || basinSat} alt={featuredStory.headline}
+                        style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:160 }}
+                        onError={e=>{ if(basinSat && e.target.src!==basinSat){ e.target.src=basinSat; } else { e.target.style.display="none"; } }}
+                      />
+                    )}
                     <h2 style={{ ...SERIF, fontSize:22, fontWeight:700, color:"#1A1A14", lineHeight:1.35, margin:"0 0 10px", letterSpacing:"-0.01em" }}>
                       {featuredStory.headline}
                     </h2>
