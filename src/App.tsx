@@ -2156,63 +2156,102 @@ export default function App() {
               {videosLoading ? "Fetching…" : "↻ Refresh"}
             </button>
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:14 }}>
-            {INFLUENCERS.map((inf,i)=>{
-              const THUMBS = [
-                "linear-gradient(150deg,#1A2A4A 0%,#0D3868 100%)",
-                "linear-gradient(150deg,#2A1808 0%,#7A4210 100%)",
-                "linear-gradient(150deg,#0A2A18 0%,#1A6038 100%)",
-                "linear-gradient(150deg,#181818 0%,#383838 100%)",
-                "linear-gradient(150deg,#1A0A2A 0%,#4A1A5A 100%)",
-                "linear-gradient(150deg,#0A1828 0%,#1A3A58 100%)",
-              ];
+          {(()=>{
+            const THUMBS = [
+              "linear-gradient(150deg,#1A2A4A 0%,#0D3868 100%)",
+              "linear-gradient(150deg,#2A1808 0%,#7A4210 100%)",
+              "linear-gradient(150deg,#0A2A18 0%,#1A6038 100%)",
+              "linear-gradient(150deg,#181818 0%,#383838 100%)",
+              "linear-gradient(150deg,#1A0A2A 0%,#4A1A5A 100%)",
+              "linear-gradient(150deg,#0A1828 0%,#1A3A58 100%)",
+            ];
+            // Build a unified list: match each influencer to its latest video
+            const items = INFLUENCERS.map((inf,i)=>{
               const vd = videoData.find(v =>
                 v.channel===inf.name ||
                 (v.channel||"").toLowerCase().includes(inf.name.split(" ")[0].toLowerCase()) ||
                 inf.name.toLowerCase().includes((v.channel||"").split(" ")[0].toLowerCase())
               );
-              const href     = vd?.videoUrl || inf.url;
-              const thumbUrl = vd?.videoId  ? `https://img.youtube.com/vi/${vd.videoId}/hqdefault.jpg` : null;
-              return (
-                <a key={inf.name} href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-                  <div style={{ ...S.card, marginBottom:0, overflow:"hidden", padding:0 }}>
-                    {/* Thumbnail */}
-                    <div style={{ position:"relative", paddingBottom:"56.25%", background:THUMBS[i]||THUMBS[0], overflow:"hidden" }}>
-                      {thumbUrl && (
-                        <img src={thumbUrl} alt={inf.name}
+              return {
+                inf, grad:THUMBS[i]||THUMBS[0],
+                href: vd?.videoUrl || inf.url,
+                thumb: vd?.videoId ? `https://img.youtube.com/vi/${vd.videoId}/hqdefault.jpg` : null,
+                maxThumb: vd?.videoId ? `https://img.youtube.com/vi/${vd.videoId}/maxresdefault.jpg` : null,
+                title: vd?.videoTitle || inf.channel,
+                date: vd?.date || null,
+                hasVideo: !!vd?.videoId,
+              };
+            });
+            // Sort: real videos first
+            const sorted = [...items].sort((a,b)=> (b.hasVideo?1:0)-(a.hasVideo?1:0));
+            const featured = sorted[0];
+            const sideList = sorted.slice(1,5);
+
+            return (
+              <div style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:16 }}>
+                {/* Featured video — left */}
+                <a href={featured.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+                  <div style={{ ...S.card, marginBottom:0, overflow:"hidden", padding:0, height:"100%", display:"flex", flexDirection:"column" }}>
+                    <div style={{ position:"relative", paddingBottom:"56.25%", background:featured.grad, overflow:"hidden" }}>
+                      {featured.thumb && (
+                        <img src={featured.maxThumb} alt={featured.inf.name}
                           style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
-                          onError={e=>{ e.target.style.display="none"; }}
+                          onError={e=>{ if(e.target.src!==featured.thumb){ e.target.src=featured.thumb; } else { e.target.style.display="none"; } }}
                         />
                       )}
-                      {videosLoading && !thumbUrl && (
-                        <div style={{ position:"absolute", inset:0, background:"#F0EDE8", animation:"pulse 1.4s ease-in-out infinite" }}/>
-                      )}
-                      <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.65) 100%)" }}/>
-                      {/* Play button */}
-                      <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-60%)", width:42, height:42, borderRadius:"50%", background:"rgba(255,255,255,0.92)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 8px rgba(0,0,0,0.25)" }}>
-                        <Play size={16} strokeWidth={2} color="#1A1A14" style={{ marginLeft:2 }}/>
+                      <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.7) 100%)" }}/>
+                      <div style={{ position:"absolute", top:10, left:10, background:"rgba(192,24,24,0.92)", color:"#FFFFFF", fontSize:9, fontWeight:800, letterSpacing:"0.08em", padding:"3px 8px", borderRadius:4 }}>● FEATURED</div>
+                      <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-60%)", width:60, height:60, borderRadius:"50%", background:"rgba(255,255,255,0.94)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 3px 12px rgba(0,0,0,0.3)" }}>
+                        <Play size={24} strokeWidth={2} color="#1A1A14" style={{ marginLeft:3 }}/>
                       </div>
-                      {/* Title + date overlay */}
-                      <div style={{ position:"absolute", bottom:8, left:10, right:10 }}>
-                        {vd?.date && (
-                          <div style={{ fontSize:9, color:"rgba(255,255,255,0.75)", marginBottom:3, fontWeight:500 }}>{vd.date}</div>
-                        )}
-                        <div style={{ color:"#FFFFFF", fontSize:11, fontWeight:700, lineHeight:1.35, textShadow:"0 1px 4px rgba(0,0,0,0.8)" }}>
-                          {vd?.videoTitle || inf.channel}
-                        </div>
+                      <div style={{ position:"absolute", bottom:14, left:16, right:16 }}>
+                        {featured.date && <div style={{ fontSize:10, color:"rgba(255,255,255,0.8)", marginBottom:5, fontWeight:600 }}>{featured.inf.name} · {featured.date}</div>}
+                        <div style={{ color:"#FFFFFF", fontSize:17, fontWeight:700, lineHeight:1.35, textShadow:"0 1px 6px rgba(0,0,0,0.9)" }}>{featured.title}</div>
                       </div>
                     </div>
-                    {/* Info below thumbnail */}
-                    <div style={{ padding:"10px 12px" }}>
-                      <div style={{ fontWeight:700, fontSize:13, color:"#1A1A14", marginBottom:2 }}>{inf.name}</div>
-                      <div style={{ fontSize:10, color:"#9A9A8A", marginBottom:6 }}>{inf.handle}</div>
-                      <div style={{ fontSize:11, color:"#6A6A5A", lineHeight:1.4 }}>{inf.focus}</div>
+                    <div style={{ padding:"12px 16px", flex:1 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+                        <span style={{ fontWeight:700, fontSize:14, color:"#1A1A14" }}>{featured.inf.name}</span>
+                        <span style={{ fontSize:10, color:"#9A9A8A" }}>{featured.inf.handle}</span>
+                      </div>
+                      <div style={{ fontSize:12, color:"#6A6A5A", lineHeight:1.45 }}>{featured.inf.focus}</div>
                     </div>
                   </div>
                 </a>
-              );
-            })}
-          </div>
+
+                {/* Vertical list of 4 — right */}
+                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                  {sideList.map((v)=>(
+                    <a key={v.inf.name} href={v.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none", flex:1 }}>
+                      <div style={{ ...S.card, marginBottom:0, overflow:"hidden", padding:0, display:"flex", height:"100%", minHeight:74 }}>
+                        {/* Thumbnail */}
+                        <div style={{ position:"relative", width:128, flexShrink:0, background:v.grad, overflow:"hidden" }}>
+                          {v.thumb && (
+                            <img src={v.thumb} alt={v.inf.name}
+                              style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
+                              onError={e=>{ e.target.style.display="none"; }}
+                            />
+                          )}
+                          <div style={{ position:"absolute", inset:0, background:"linear-gradient(to right, transparent 40%, rgba(0,0,0,0.2) 100%)" }}/>
+                          <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:30, height:30, borderRadius:"50%", background:"rgba(255,255,255,0.92)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 6px rgba(0,0,0,0.25)" }}>
+                            <Play size={12} strokeWidth={2} color="#1A1A14" style={{ marginLeft:1.5 }}/>
+                          </div>
+                        </div>
+                        {/* Info */}
+                        <div style={{ padding:"8px 12px", flex:1, display:"flex", flexDirection:"column", justifyContent:"center", minWidth:0 }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
+                            <span style={{ fontWeight:700, fontSize:12, color:"#1A1A14" }}>{v.inf.name}</span>
+                            {v.date && <span style={{ fontSize:9, color:"#9A9A8A", marginLeft:"auto", whiteSpace:"nowrap" }}>{v.date}</span>}
+                          </div>
+                          <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.35, fontWeight:600, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{v.title}</div>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Expert Perspective */}
