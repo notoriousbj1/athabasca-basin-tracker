@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LineChart, Line, AreaChart, Area, ComposedChart, Legend, ScatterChart, Scatter, ZAxis, ReferenceArea, CartesianGrid } from "recharts";
 import { Atom, Hammer, Timer, DollarSign, Building2, Zap, Globe, TrendingUp, BarChart3, Newspaper, Landmark, Play, Map, Activity, Flag, Scale, Users, Tag, Radio, Linkedin, Star } from "lucide-react";
 
@@ -672,16 +672,44 @@ const CONTINENTS = [
   [[-12,132],[-20,115],[-35,117],[-38,145],[-25,153],[-15,142],[-12,132]],
 ];
 
-function ReactorGlobe() {
+function ReactorGlobe({ targetLng=null, spinToken=0 }) {
   const [rot, setRot] = useState(0);
+  const rotRef = useRef(0);
+  const animRef = useRef(null); // {from,to,start,dur} when animating to a target
+
+  // Auto-spin loop, pausing while animating to a target
   useEffect(()=>{
     let raf, last=performance.now();
-    const tick=(now)=>{ const dt=now-last; last=now; setRot(r=>(r+dt*0.012)%360); raf=requestAnimationFrame(tick); };
+    const tick=(now)=>{
+      const dt=now-last; last=now;
+      if(animRef.current){
+        const a=animRef.current;
+        const t=Math.min(1,(now-a.start)/a.dur);
+        const ease=1-Math.pow(1-t,3); // easeOutCubic
+        const val=a.from+(a.to-a.from)*ease;
+        rotRef.current=val; setRot(val%360);
+        if(t>=1) animRef.current=null;
+      } else {
+        rotRef.current=(rotRef.current+dt*0.012)%360;
+        setRot(rotRef.current);
+      }
+      raf=requestAnimationFrame(tick);
+    };
     raf=requestAnimationFrame(tick);
     return ()=>cancelAnimationFrame(raf);
   },[]);
 
-  const R = 70, CX = 90, CY = 90;
+  // When a target nation is clicked, animate rotation so its longitude faces front (rot ≈ -lng)
+  useEffect(()=>{
+    if(targetLng===null) return;
+    const cur=rotRef.current;
+    let to=-targetLng;
+    // choose shortest direction, keep continuous
+    let diff=((to-cur)%360+540)%360-180;
+    animRef.current={ from:cur, to:cur+diff, start:performance.now(), dur:900 };
+  },[spinToken]);
+
+  const R = 92, CX = 110, CY = 110;
   const project = (lat, lng) => {
     const λ = (lng + rot) * Math.PI/180;
     const φ = lat * Math.PI/180;
@@ -706,7 +734,7 @@ function ReactorGlobe() {
   const dotColor = (r) => r>=10?"#1A7A44" : r>=4?"#1A5AA8" : "#B07A08";
 
   return (
-    <svg viewBox="0 0 180 180" width="100%" height="100%" style={{ display:"block", maxHeight:210 }}>
+    <svg viewBox="0 0 220 220" width="100%" height="100%" style={{ display:"block", maxHeight:250 }}>
       <defs>
         <radialGradient id="globeOceanLt" cx="40%" cy="35%" r="75%">
           <stop offset="0%"  stopColor="#EAF1F6"/>
@@ -719,37 +747,37 @@ function ReactorGlobe() {
           <stop offset="100%" stopColor="#B07A08" stopOpacity={0}/>
         </radialGradient>
         <filter id="dotGlow" x="-200%" y="-200%" width="500%" height="500%">
-          <feGaussianBlur stdDeviation="1.4" result="b"/>
+          <feGaussianBlur stdDeviation="1.6" result="b"/>
           <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
 
       {/* Atmosphere glow */}
-      <circle cx={CX} cy={CY} r={R+10} fill="url(#globeRimLt)"/>
+      <circle cx={CX} cy={CY} r={R+12} fill="url(#globeRimLt)"/>
       {/* Ocean sphere */}
-      <circle cx={CX} cy={CY} r={R} fill="url(#globeOceanLt)" stroke="#B8C8D6" strokeWidth={0.8}/>
+      <circle cx={CX} cy={CY} r={R} fill="url(#globeOceanLt)" stroke="#B8C8D6" strokeWidth={1}/>
 
       {/* Graticule */}
       {graticule.map((pts,i)=>(
-        <path key={i} d={projectPath(pts)} fill="none" stroke="#8AA4BC" strokeWidth={0.3} strokeOpacity={0.3}/>
+        <path key={i} d={projectPath(pts)} fill="none" stroke="#8AA4BC" strokeWidth={0.4} strokeOpacity={0.3}/>
       ))}
 
       {/* Continents */}
       {CONTINENTS.map((pts,i)=>(
-        <path key={i} d={projectPath([...pts])} fill="none" stroke="#6E9A78" strokeWidth={1.2} strokeOpacity={0.85} strokeLinejoin="round"/>
+        <path key={i} d={projectPath([...pts])} fill="none" stroke="#6E9A78" strokeWidth={1.5} strokeOpacity={0.85} strokeLinejoin="round"/>
       ))}
 
       {/* Reactor dots */}
       {REACTOR_NATIONS.map(n=>{
         const [x,y,z]=project(n.lat,n.lng);
         if(z<0) return null;
-        const sz = 1.6 + Math.sqrt(n.reactors)*0.7;
+        const sz = 2.2 + Math.sqrt(n.reactors)*0.9;
         const op = 0.5 + z*0.5;
         const col = dotColor(n.reactors);
         return (
           <g key={n.name} opacity={op}>
-            <circle cx={x} cy={y} r={sz+2.5} fill={col} fillOpacity={0.22} filter="url(#dotGlow)"/>
-            <circle cx={x} cy={y} r={sz} fill={col} stroke="#FFFFFF" strokeWidth={0.4}/>
+            <circle cx={x} cy={y} r={sz+3} fill={col} fillOpacity={0.22} filter="url(#dotGlow)"/>
+            <circle cx={x} cy={y} r={sz} fill={col} stroke="#FFFFFF" strokeWidth={0.5}/>
           </g>
         );
       })}
@@ -948,6 +976,7 @@ export default function App() {
   const [erMinMktCap,   setErMinMktCap]   = useState(0);
   const [erStage,       setErStage]       = useState("All");
   const [erGuide,       setErGuide]       = useState(true);
+  const [globeTarget,   setGlobeTarget]   = useState({ lng:null, token:0 });
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
   const [basinTopStory, setBasinTopStory] = useState(null);
@@ -1781,11 +1810,15 @@ export default function App() {
                     {/* Reactor Buildout */}
                     {(()=>{
                       const h = HIGHLIGHTS["Global Reactor Buildout"];
+                      const spinTo = (name) => {
+                        const n = REACTOR_NATIONS.find(x=>x.name===name || x.name.startsWith(name));
+                        if(n) setGlobeTarget(t=>({ lng:n.lng, token:t.token+1 }));
+                      };
                       return (
                         <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
                           <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Global Reactor Buildout</div>
-                          <div style={{ display:"flex", gap:16, alignItems:"center" }}>
-                            <div style={{ width:140, flexShrink:0 }}><ReactorGlobe/></div>
+                          <div style={{ display:"flex", gap:18, alignItems:"center" }}>
+                            <div style={{ width:185, flexShrink:0 }}><ReactorGlobe targetLng={globeTarget.lng} spinToken={globeTarget.token}/></div>
                             <div>
                               <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
                                 <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>60+</span>
@@ -1796,13 +1829,13 @@ export default function App() {
                               </div>
                             </div>
                           </div>
-                          <div style={{ fontSize:10, fontWeight:800, color:h.color, margin:"16px 0 10px", textTransform:"uppercase", letterSpacing:"0.1em" }}>Top Builders Under Construction</div>
+                          <div style={{ fontSize:10, fontWeight:800, color:h.color, margin:"16px 0 10px", textTransform:"uppercase", letterSpacing:"0.1em" }}>Top Builders Under Construction <span style={{ fontWeight:400, color:"#9A9A8A", textTransform:"none", letterSpacing:0 }}>· tap to locate</span></div>
                           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"7px 18px" }}>
                             {[
                               ["China","#1A7A44",28],["India","#1A7A44",7],["Russia","#1A5AA8",6],
                               ["Turkey","#1A5AA8",4],["Egypt","#1A5AA8",4],["S. Korea","#B07A08",3],
                             ].map(([name,col,n])=>(
-                              <div key={name} style={{ display:"flex", alignItems:"center", gap:6, fontSize:11.5, paddingBottom:6, borderBottom:"1px solid #EDE8E0" }}>
+                              <div key={name} onClick={()=>spinTo(name)} style={{ display:"flex", alignItems:"center", gap:6, fontSize:11.5, paddingBottom:6, borderBottom:"1px solid #EDE8E0", cursor:"pointer" }}>
                                 <span style={{ width:6, height:6, borderRadius:"50%", background:col, flexShrink:0 }}/>
                                 <span style={{ color:"#4A4A3A", flex:1 }}>{name}</span>
                                 <span style={{ ...MONO, color:"#1A1A14", fontWeight:700 }}>{n}</span>
