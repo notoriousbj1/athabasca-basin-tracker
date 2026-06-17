@@ -3143,10 +3143,17 @@ export default function App() {
         const p = gP(c), ch = gCh(c), ytd = getYTD(c);
         const up = ch >= 0, ytdUp = ytd >= 0;
         const vol = gVol(c);
-        const companyNews = news.filter(n=>
-          n.ticker===c.ticker || n.ticker===c.altTicker ||
-          (n.company||"").toLowerCase().includes(c.name.split(" ")[0].toLowerCase())
-        ).slice(0,3);
+        const tickerRoot = (t)=> (t||"").replace(/\.(V|TO|CN|NE)$/i,"").toUpperCase();
+        const coRoot = tickerRoot(c.ticker);
+        const coAlt  = tickerRoot(c.altTicker);
+        const firstWord = c.name.split(" ")[0].toLowerCase();
+        const companyNews = news.filter(n=>{
+          const nt = tickerRoot(n.ticker);
+          const hay = `${n.company||""} ${n.headline||""}`.toLowerCase();
+          return (nt && (nt===coRoot || nt===coAlt)) ||
+                 (firstWord.length>3 && hay.includes(firstWord)) ||
+                 hay.includes(c.name.toLowerCase());
+        }).slice(0,3);
 
         // Generate seeded 30-day price series
         const gen30Day = (price, seed) => {
