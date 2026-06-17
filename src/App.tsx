@@ -1848,11 +1848,37 @@ export default function App() {
                     {/* Price Outlook */}
                     {(()=>{
                       const h = HIGHLIGHTS["Price Outlook"];
+                      const bars = [
+                        { yr:"2016", val:18,  col:"#C01818" },
+                        { yr:"2024", val:87,  col:"#B07A08" },
+                        { yr:"2026", val:82,  col:"#B07A08" },
+                        { yr:"2030E", val:110, col:"#1A7A44" },
+                      ];
+                      const maxV = 120;
                       return (
-                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F6F2FA 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"16px 18px" }}>
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F6F2FA 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"16px 18px", display:"flex", flexDirection:"column" }}>
                           <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.12em" }}>Price Outlook <span style={{ fontWeight:400, color:"#9A9A8A", textTransform:"none", letterSpacing:0 }}>· targets & history</span></div>
                           <PriceOutlookTable/>
-                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"12px 0 6px" }}>
+
+                          {/* Spot price recovery bars */}
+                          <div style={{ marginTop:16, marginBottom:4 }}>
+                            <div style={{ fontSize:9.5, fontWeight:800, color:h.color, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.1em" }}>Spot Price Trajectory (USD / lb)</div>
+                            <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-around", gap:16, height:110, padding:"0 8px", borderBottom:"1px solid #D8D0C4" }}>
+                              {bars.map(b=>(
+                                <div key={b.yr} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-end", height:"100%" }}>
+                                  <span style={{ ...MONO, fontSize:11, fontWeight:800, color:b.col, marginBottom:4 }}>${b.val}</span>
+                                  <div style={{ width:"100%", maxWidth:42, height:`${(b.val/maxV)*100}%`, background:`linear-gradient(to top,${b.col},${b.col}CC)`, borderRadius:"4px 4px 0 0" }}/>
+                                </div>
+                              ))}
+                            </div>
+                            <div style={{ display:"flex", justifyContent:"space-around", gap:16, padding:"5px 8px 0" }}>
+                              {bars.map(b=>(
+                                <span key={b.yr} style={{ flex:1, textAlign:"center", fontSize:9.5, color:"#6A6A5A", fontWeight:600 }}>{b.yr}</span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"14px 0 6px" }}>
                             <span style={{ ...SERIF, fontSize:26, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>5×</span>
                             <span style={{ fontSize:11, color:"#6A6A5A" }}>recovery from $18 (2016) to $87/lb (2024)</span>
                           </div>
