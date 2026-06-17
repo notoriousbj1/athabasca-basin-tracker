@@ -1272,7 +1272,7 @@ export default function App() {
 
             {/* Basin at a Glance — vertical */}
             <div style={{ ...S.card, marginBottom:0, background:"linear-gradient(145deg, #FFFDF5 0%, #FFF5DC 100%)", border:"1px solid #E8D890" }}>
-              <div style={{ ...S.lbl, marginBottom:12, fontSize:11, letterSpacing:"0.12em", color:"#1A1A14" }}>BASIN AT A GLANCE</div>
+              <div style={{ ...S.lbl, marginBottom:6, fontSize:11, letterSpacing:"0.12em", color:"#1A1A14" }}>BASIN AT A GLANCE</div>
               {(()=>{
                 const parseShares = s => { const n=parseFloat(s||"0"); if(!s)return 0; if(s.includes("B"))return n*1e9; if(s.includes("M"))return n*1e6; if(s.includes("K"))return n*1e3; return n; };
                 const totalMktCap = COMPANIES.reduce((s,c)=>s+gP(c)*parseShares(c.sharesBasic),0);
@@ -1287,13 +1287,13 @@ export default function App() {
                   ["Total Market Cap", "Live · all 21 basin companies",                  mktCapStr],
                   ["Daily Volume",     totalVol>0?"Combined shares traded today":"Refreshes with quotes", volStr],
                   ["Open Raises",      null,                                             FINANCINGS.filter(f=>f.status==="Open").length],
-                ].map(([k,note,v])=>(
-                  <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #EDE8E0" }}>
-                    <div>
-                      <span style={{ fontSize:12, color:"#1A1A14", fontWeight:500 }}>{k}</span>
-                      {note && <div style={{ fontSize:9, color:"#1A1A14", fontStyle:"italic", marginTop:1 }}>{note}</div>}
+                ].map(([k,note,v],idx,arr)=>(
+                  <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, padding:"11px 0", borderBottom:idx<arr.length-1?"1px solid #EDE8E0":"none" }}>
+                    <div style={{ minWidth:0 }}>
+                      <div style={{ fontSize:12.5, color:"#1A1A14", fontWeight:600 }}>{k}</div>
+                      {note && <div style={{ fontSize:9, color:"#7A6A3A", fontStyle:"italic", marginTop:2, lineHeight:1.35 }}>{note}</div>}
                     </div>
-                    <span style={{ fontWeight:800, color:"#1A1A14", fontSize:16 }}>{v}</span>
+                    <span style={{ fontWeight:800, color:"#1A1A14", fontSize:17, whiteSpace:"nowrap", flexShrink:0 }}>{v}</span>
                   </div>
                 ));
               })()}
