@@ -644,7 +644,7 @@ export default function App() {
   const [expanded, setExpanded]   = useState(null);
   const [mapSel, setMapSel]       = useState(null);
   const [companyModal, setCompanyModal] = useState(null);
-  const [spot, setSpot]           = useState({ price:79.50, weekChange:-0.50, weekChangePct:-0.6, high52:106, low52:73, trend:"bearish", source:"UxC", date:"Jun 2025" });
+  const [spot, setSpot]           = useState({ price:79.50, high52:106, low52:73, source:"Trading Economics", date:"Jun 2026" });
   const [spotLoading, setSL]      = useState(false);
   const [news, setNews]           = useState([]);
   const [newsLoading, setNL]      = useState(false);
@@ -775,6 +775,11 @@ export default function App() {
   const gCh  = (c) => prices[c.id]?.changePct ?? c.changePct;
   const gVol = (c) => prices[c.id]?.volume || 0;
   const getYTD = (c) => { const cad=cadTk(c); return ytdLive[c.id]?.ytd ?? (YTD_PERF.find(y=>y.ticker===cad||y.ticker===c.ticker||y.ticker===c.altTicker)?.ytd||0); };
+  // WoW derived from current spot vs the prior weekly reference point ($79.25), kept consistent everywhere
+  const SPOT_PRIOR_WEEK = 79.25;
+  const spotNow   = spot.price || 79.50;
+  const spotWoW   = spotNow - SPOT_PRIOR_WEEK;
+  const spotWoWPct = SPOT_PRIOR_WEEK ? (spotWoW / SPOT_PRIOR_WEEK) * 100 : 0;
   const calcMktCap = (c) => {
     const p = gP(c);
     if (!p || !c.sharesBasic) return c.marketCap;
@@ -803,7 +808,7 @@ export default function App() {
       { m:"Mar", price:79.00 },{ m:"",    price:80.50 },{ m:"",    price:82.00 },{ m:"",    price:83.50 },
       { m:"Apr", price:84.00 },{ m:"",    price:84.50 },{ m:"",    price:83.00 },{ m:"",    price:82.00 },
       { m:"May", price:81.00 },{ m:"",    price:80.50 },{ m:"",    price:80.00 },{ m:"",    price:79.50 },
-      { m:"Jun", price:79.00 },{ m:"",    price:79.25 },{ m:"Live", price:spot.price||79.50 },
+      { m:"Jun", price:79.00 },{ m:"",    price:SPOT_PRIOR_WEEK },{ m:"Live", price:spot.price||79.50 },
     ];
 
     const featuredStory = basinTopStory || {
@@ -838,8 +843,8 @@ export default function App() {
                 {spotLoading?"—":`$${spot.price?.toFixed(2)}`}
                 <span style={{ fontSize:13, color:"#6A6A5A", fontWeight:400, marginLeft:8, fontFamily:"'Helvetica Neue',Helvetica,sans-serif" }}>USD / lb</span>
               </div>
-              <span style={{ ...S.badge(spot.weekChange>=0?"green":"red"), fontSize:11 }}>
-                {spot.weekChange>=0?"+":""}{spot.weekChange?.toFixed(2)} ({spot.weekChangePct?.toFixed(1)}% WoW)
+              <span style={{ ...S.badge(spotWoW>=0?"green":"red"), fontSize:11 }}>
+                {spotWoW>=0?"+":""}{spotWoW.toFixed(2)} ({spotWoW>=0?"+":""}{spotWoWPct.toFixed(1)}% WoW)
               </span>
               {!spotLoading && (
                 <>
@@ -1004,7 +1009,7 @@ export default function App() {
                 ].map(([k,note,v])=>(
                   <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #EDE8E0" }}>
                     <div>
-                      <span style={{ fontSize:12, color:"#6A6A5A", fontWeight:500 }}>{k}</span>
+                      <span style={{ fontSize:12, color:"#1A1A14", fontWeight:500 }}>{k}</span>
                       {note && <div style={{ fontSize:9, color:"#9A9A8A", fontStyle:"italic", marginTop:1 }}>{note}</div>}
                     </div>
                     <span style={{ fontWeight:800, color:"#B07A08", fontSize:16 }}>{v}</span>
@@ -2375,7 +2380,7 @@ export default function App() {
               {COMPANIES.map(c=>{
                 const p=gP(c),ch=gCh(c);
                 return (
-                  <span key={c.id} style={{ display:"inline-flex", gap:6, alignItems:"center", padding:"0 16px", borderLeft:"1px solid #D8D0C4" }}>
+                  <span key={c.id} style={{ display:"inline-flex", gap:6, alignItems:"center", padding:"0 26px", borderLeft:"1px solid #D8D0C4" }}>
                     <span style={{ ...MONO, fontWeight:700, fontSize:11, color:c.color }}>{c.ticker}</span>
                     <span style={{ ...MONO, fontSize:11 }}>{fmtP(p)}</span>
                     <span style={{ ...MONO, fontSize:11, color:ch>=0?"#1A7A44":"#C01818" }}>{fmtPct(ch)}</span>
@@ -2404,8 +2409,8 @@ export default function App() {
             <div style={S.lbl}>U₃O₈ Spot (USD / lb)</div>
             <div style={{ fontSize:26, fontWeight:900, color:"#B07A08", ...MONO, letterSpacing:"-1px" }}>
               {spotLoading?"—":`$${spot.price?.toFixed(2)}`}
-              <span style={{ fontSize:12, color:spot.weekChange>=0?"#1A7A44":"#C01818", marginLeft:8 }}>
-                {spot.weekChange>=0?"▲":"▼"} {Math.abs(spot.weekChange||0).toFixed(2)} WoW
+              <span style={{ fontSize:12, color:spotWoW>=0?"#1A7A44":"#C01818", marginLeft:8 }}>
+                {spotWoW>=0?"▲":"▼"} {Math.abs(spotWoW).toFixed(2)} WoW
               </span>
             </div>
           </div>
