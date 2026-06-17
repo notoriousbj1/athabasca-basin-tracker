@@ -477,6 +477,19 @@ const INSIDER_BUYS = [
   { company:"F3 Uranium",       ticker:"FUU",   buyer:"Dev Randhawa (Chair)",      amount:"C$165,000",   date:"Mar 2026", shares:"550,000" },
 ];
 
+const INSIDER_SELLS = [
+  { company:"Cameco",           ticker:"CCO",   seller:"James Sykes (EVP)",        amount:"C$3,200,000", date:"May 2026", shares:"55,000"  },
+  { company:"NexGen Energy",    ticker:"NXE",   seller:"Christopher McFadden",     amount:"C$1,800,000", date:"Apr 2026", shares:"210,000" },
+  { company:"Denison Mines",    ticker:"DML",   seller:"W. Robert Dengler (Dir.)", amount:"C$1,100,000", date:"Apr 2026", shares:"620,000" },
+  { company:"UEC",              ticker:"UEC",   seller:"Amir Adnani (CEO)",        amount:"C$980,000",   date:"Mar 2026", shares:"120,000" },
+  { company:"Fission Uranium",  ticker:"FCU",   seller:"Dev Randhawa (Dir.)",      amount:"C$720,000",   date:"Mar 2026", shares:"720,000" },
+  { company:"IsoEnergy",        ticker:"ISO",   seller:"Craig Parry (Dir.)",       amount:"C$540,000",   date:"May 2026", shares:"245,000" },
+  { company:"Skyharbour",       ticker:"SYH",   seller:"Riley Trimble (Dir.)",     amount:"C$320,000",   date:"Apr 2026", shares:"535,000" },
+  { company:"Atha Energy",      ticker:"SASK",  seller:"Nick Tintor (CEO)",        amount:"C$285,000",   date:"Mar 2026", shares:"355,000" },
+  { company:"Baselode Energy",  ticker:"FIND",  seller:"James Sykes (Dir.)",       amount:"C$180,000",   date:"Apr 2026", shares:"2,000,000"},
+  { company:"Purepoint Uranium",ticker:"PTU",   seller:"Scott Frostad (Dir.)",     amount:"C$95,000",    date:"May 2026", shares:"630,000" },
+];
+
 const STAGE_GROUPS = [
   { key:"Producer",  label:"Producers",  color:"#B07A08", test:(s)=>s==="Producer" },
   { key:"Developer", label:"Developers", color:"#1A5AA8", test:(s)=>s.includes("Developer")||s==="Producer / Developer" },
@@ -650,6 +663,7 @@ export default function App() {
   const [sdHighlight,   setSdHighlight]   = useState("Global Reactor Buildout");
   const [bcmType,       setBcmType]       = useState("All");
   const [bcmRegion,     setBcmRegion]     = useState("All");
+  const [insiderView,   setInsiderView]   = useState("buys");
   const [erMinMktCap,   setErMinMktCap]   = useState(0);
   const [erStage,       setErStage]       = useState("All");
   const [globalNews, setGlobalNews]   = useState([]);
@@ -1324,30 +1338,55 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* RIGHT — Top 10 Insider Buys 1/3 */}
+                  {/* RIGHT — Insider Activity 1/3 */}
                   <div style={{ borderLeft:"1px solid #D8D0C4", paddingLeft:18 }}>
+                    {/* Tab toggle */}
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
-                      <div style={{ ...S.lbl, letterSpacing:"0.1em" }}>TOP INSIDER BUYS</div>
+                      <div style={{ display:"flex", border:"1px solid #D8D0C4", borderRadius:6, overflow:"hidden" }}>
+                        <button onClick={()=>setInsiderView("buys")} style={{ padding:"4px 12px", fontSize:10, fontWeight:700, border:"none", cursor:"pointer", background:insiderView==="buys"?"#1A1A14":"transparent", color:insiderView==="buys"?"#FFFFFF":"#6A6A5A" }}>Top Insider Buys</button>
+                        <button onClick={()=>setInsiderView("sells")} style={{ padding:"4px 12px", fontSize:10, fontWeight:700, border:"none", cursor:"pointer", background:insiderView==="sells"?"#C01818":"transparent", color:insiderView==="sells"?"#FFFFFF":"#6A6A5A", borderLeft:"1px solid #D8D0C4" }}>Top Insider Sells</button>
+                      </div>
                       <span style={{ ...S.badge("gray"), fontSize:9, fontWeight:600 }}>Source: SEDI</span>
                     </div>
                     <div style={{ fontSize:10, color:"#9A9A8A", marginBottom:12 }}>Last updated: {INSIDER_BUYS_UPDATED}</div>
-                    {INSIDER_BUYS.map((buy,i)=>{
-                      const co = COMPANIES.find(c=>c.ticker===buy.ticker||c.altTicker===buy.ticker||c.name.toLowerCase().includes(buy.company.split(" ")[0].toLowerCase()));
-                      return (
-                        <div key={i} style={{ paddingBottom:9, marginBottom:9, borderBottom:"1px solid #EDE8E0" }}>
-                          <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:2 }}>
-                            <span style={{ fontSize:10, color:"#9A9A8A", width:14, flexShrink:0 }}>{i+1}</span>
-                            <span style={{ fontSize:12, fontWeight:700, color:"#1A1A14" }}>{buy.company}</span>
-                            <span style={{ ...MONO, fontSize:10, color:co?.color||"#B07A08", fontWeight:700 }}>{buy.ticker}</span>
+
+                    {insiderView==="buys" ? (
+                      INSIDER_BUYS.map((buy,i)=>{
+                        const co = COMPANIES.find(c=>c.ticker===buy.ticker||c.altTicker===buy.ticker||c.name.toLowerCase().includes(buy.company.split(" ")[0].toLowerCase()));
+                        return (
+                          <div key={i} style={{ paddingBottom:9, marginBottom:9, borderBottom:"1px solid #EDE8E0" }}>
+                            <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:2 }}>
+                              <span style={{ fontSize:10, color:"#9A9A8A", width:14, flexShrink:0 }}>{i+1}</span>
+                              <span style={{ fontSize:12, fontWeight:700, color:"#1A1A14" }}>{buy.company}</span>
+                              <span style={{ ...MONO, fontSize:10, color:co?.color||"#B07A08", fontWeight:700 }}>{buy.ticker}</span>
+                            </div>
+                            <div style={{ fontSize:10, color:"#6A6A5A", marginBottom:3, paddingLeft:20 }}>{buy.buyer}</div>
+                            <div style={{ display:"flex", justifyContent:"space-between", paddingLeft:20 }}>
+                              <span style={{ fontSize:12, fontWeight:800, color:"#1A7A44" }}>{buy.amount}</span>
+                              <span style={{ fontSize:10, color:"#9A9A8A" }}>{buy.date}</span>
+                            </div>
                           </div>
-                          <div style={{ fontSize:10, color:"#6A6A5A", marginBottom:3, paddingLeft:20 }}>{buy.buyer}</div>
-                          <div style={{ display:"flex", justifyContent:"space-between", paddingLeft:20 }}>
-                            <span style={{ fontSize:12, fontWeight:800, color:"#1A7A44" }}>{buy.amount}</span>
-                            <span style={{ fontSize:10, color:"#9A9A8A" }}>{buy.date}</span>
+                        );
+                      })
+                    ) : (
+                      INSIDER_SELLS.map((sell,i)=>{
+                        const co = COMPANIES.find(c=>c.ticker===sell.ticker||c.altTicker===sell.ticker||c.name.toLowerCase().includes(sell.company.split(" ")[0].toLowerCase()));
+                        return (
+                          <div key={i} style={{ paddingBottom:9, marginBottom:9, borderBottom:"1px solid #EDE8E0" }}>
+                            <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:2 }}>
+                              <span style={{ fontSize:10, color:"#9A9A8A", width:14, flexShrink:0 }}>{i+1}</span>
+                              <span style={{ fontSize:12, fontWeight:700, color:"#1A1A14" }}>{sell.company}</span>
+                              <span style={{ ...MONO, fontSize:10, color:co?.color||"#B07A08", fontWeight:700 }}>{sell.ticker}</span>
+                            </div>
+                            <div style={{ fontSize:10, color:"#6A6A5A", marginBottom:3, paddingLeft:20 }}>{sell.seller}</div>
+                            <div style={{ display:"flex", justifyContent:"space-between", paddingLeft:20 }}>
+                              <span style={{ fontSize:12, fontWeight:800, color:"#C01818" }}>{sell.amount}</span>
+                              <span style={{ fontSize:10, color:"#9A9A8A" }}>{sell.date}</span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
 
                 </div>
