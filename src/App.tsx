@@ -1359,7 +1359,7 @@ export default function App() {
               const chAmt=(p*Math.abs(ch)/100).toFixed(3);
               const up=ch>=0;
               return (
-                <div onClick={()=>{setTab("companies");setExpanded(canu.id);}}
+                <div onClick={()=>setCompanyModal(canu)}
                   style={{ padding:"10px 12px", background:"rgba(176,122,8,0.06)", borderRadius:6, marginBottom:8, cursor:"pointer", border:"1px solid rgba(176,122,8,0.2)" }}>
                   {/* Main row */}
                   <div style={{ display:"flex", alignItems:"center", gap:12 }}>
