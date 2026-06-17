@@ -1772,27 +1772,27 @@ export default function App() {
                     {(()=>{
                       const h = HIGHLIGHTS["Global Reactor Buildout"];
                       return (
-                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"16px 18px" }}>
-                          <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.12em" }}>Global Reactor Buildout</div>
-                          <div style={{ display:"flex", gap:14, alignItems:"center" }}>
-                            <div style={{ width:150, flexShrink:0 }}><ReactorGlobe/></div>
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Global Reactor Buildout</div>
+                          <div style={{ display:"flex", gap:16, alignItems:"center" }}>
+                            <div style={{ width:140, flexShrink:0 }}><ReactorGlobe/></div>
                             <div>
                               <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
-                                <span style={{ ...SERIF, fontSize:40, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>60+</span>
-                                <span style={{ fontSize:11, color:"#6A6A5A" }}>reactors u/c by 2030</span>
+                                <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>60+</span>
+                                <span style={{ fontSize:11.5, color:"#6A6A5A" }}>reactors u/c by 2030</span>
                               </div>
-                              <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.5 }}>
+                              <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
                                 Each 1GWe reactor needs <strong style={{ color:"#1A1A14" }}>~400,000 lbs U₃O₈/yr</strong>. Demand is structural and contractual — locked in by engineering timelines, not speculation.
                               </div>
                             </div>
                           </div>
-                          <div style={{ fontSize:9.5, fontWeight:800, color:h.color, margin:"12px 0 8px", textTransform:"uppercase", letterSpacing:"0.1em" }}>Top Builders Under Construction</div>
-                          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"5px 16px" }}>
+                          <div style={{ fontSize:10, fontWeight:800, color:h.color, margin:"16px 0 10px", textTransform:"uppercase", letterSpacing:"0.1em" }}>Top Builders Under Construction</div>
+                          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"7px 18px" }}>
                             {[
                               ["China","#1A7A44",28],["India","#1A7A44",7],["Russia","#1A5AA8",6],
                               ["Turkey","#1A5AA8",4],["Egypt","#1A5AA8",4],["S. Korea","#B07A08",3],
                             ].map(([name,col,n])=>(
-                              <div key={name} style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, paddingBottom:4, borderBottom:"1px solid #EDE8E0" }}>
+                              <div key={name} style={{ display:"flex", alignItems:"center", gap:6, fontSize:11.5, paddingBottom:6, borderBottom:"1px solid #EDE8E0" }}>
                                 <span style={{ width:6, height:6, borderRadius:"50%", background:col, flexShrink:0 }}/>
                                 <span style={{ color:"#4A4A3A", flex:1 }}>{name}</span>
                                 <span style={{ ...MONO, color:"#1A1A14", fontWeight:700 }}>{n}</span>
@@ -1807,14 +1807,14 @@ export default function App() {
                     {(()=>{
                       const h = HIGHLIGHTS["Supply Constraints"];
                       return (
-                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F4F8F4 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"16px 18px" }}>
-                          <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.12em" }}>Supply Constraints</div>
-                          <div style={{ width:"100%" }}><SupplyChainFlow/></div>
-                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"10px 0 6px" }}>
-                            <span style={{ ...SERIF, fontSize:26, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>2016</span>
-                            <span style={{ fontSize:11, color:"#6A6A5A" }}>primary supply peaked at ~165 Mlb</span>
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F4F8F4 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Supply Constraints</div>
+                          <div style={{ width:"100%", flex:1, display:"flex", alignItems:"center" }}><SupplyChainFlow/></div>
+                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"16px 0 6px" }}>
+                            <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>2016</span>
+                            <span style={{ fontSize:11.5, color:"#6A6A5A" }}>primary supply peaked at ~165 Mlb</span>
                           </div>
-                          <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.5 }}>
+                          <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
                             Kazatomprom acid shortages, Cigar Lake production fatigue, and a decade of underinvestment mean <strong style={{ color:"#1A1A14" }}>no major new supply</strong> can arrive in under 10 years from a standing start.
                           </div>
                         </div>
@@ -1829,16 +1829,16 @@ export default function App() {
                     {(()=>{
                       const h = HIGHLIGHTS["Athabasca Focus"];
                       return (
-                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"16px 18px" }}>
-                          <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.12em" }}>Athabasca Focus</div>
-                          <div style={{ marginBottom:10 }}>
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Athabasca Focus</div>
+                          <div style={{ marginBottom:14 }}>
                             <AthabascaFocusMap satImage={basinSat}/>
                           </div>
                           <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
-                            <span style={{ ...SERIF, fontSize:26, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>~10%</span>
-                            <span style={{ fontSize:11, color:"#6A6A5A" }}>of global uranium resources · grades 10–100× world average</span>
+                            <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>~10%</span>
+                            <span style={{ fontSize:11.5, color:"#6A6A5A" }}>of global uranium resources · grades 10–100× world average</span>
                           </div>
-                          <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.5 }}>
+                          <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
                             The highest-grade uranium district on Earth. As the deficit widens, Basin explorers face the <strong style={{ color:"#1A1A14" }}>most compelling risk/reward</strong> in the junior resource sector.
                           </div>
                         </div>
@@ -1856,33 +1856,33 @@ export default function App() {
                       ];
                       const maxV = 120;
                       return (
-                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F6F2FA 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"16px 18px", display:"flex", flexDirection:"column" }}>
-                          <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.12em" }}>Price Outlook <span style={{ fontWeight:400, color:"#9A9A8A", textTransform:"none", letterSpacing:0 }}>· targets & history</span></div>
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F6F2FA 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Price Outlook <span style={{ fontWeight:400, color:"#9A9A8A", textTransform:"none", letterSpacing:0 }}>· targets & history</span></div>
                           <PriceOutlookTable/>
 
                           {/* Spot price recovery bars */}
-                          <div style={{ marginTop:16, marginBottom:4 }}>
-                            <div style={{ fontSize:9.5, fontWeight:800, color:h.color, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.1em" }}>Spot Price Trajectory (USD / lb)</div>
+                          <div style={{ marginTop:18, marginBottom:4 }}>
+                            <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:12, textTransform:"uppercase", letterSpacing:"0.1em" }}>Spot Price Trajectory (USD / lb)</div>
                             <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-around", gap:16, height:110, padding:"0 8px", borderBottom:"1px solid #D8D0C4" }}>
                               {bars.map(b=>(
                                 <div key={b.yr} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-end", height:"100%" }}>
-                                  <span style={{ ...MONO, fontSize:11, fontWeight:800, color:b.col, marginBottom:4 }}>${b.val}</span>
+                                  <span style={{ ...MONO, fontSize:11.5, fontWeight:800, color:b.col, marginBottom:4 }}>${b.val}</span>
                                   <div style={{ width:"100%", maxWidth:42, height:`${(b.val/maxV)*100}%`, background:`linear-gradient(to top,${b.col},${b.col}CC)`, borderRadius:"4px 4px 0 0" }}/>
                                 </div>
                               ))}
                             </div>
-                            <div style={{ display:"flex", justifyContent:"space-around", gap:16, padding:"5px 8px 0" }}>
+                            <div style={{ display:"flex", justifyContent:"space-around", gap:16, padding:"6px 8px 0" }}>
                               {bars.map(b=>(
-                                <span key={b.yr} style={{ flex:1, textAlign:"center", fontSize:9.5, color:"#6A6A5A", fontWeight:600 }}>{b.yr}</span>
+                                <span key={b.yr} style={{ flex:1, textAlign:"center", fontSize:10, color:"#6A6A5A", fontWeight:600 }}>{b.yr}</span>
                               ))}
                             </div>
                           </div>
 
-                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"14px 0 6px" }}>
-                            <span style={{ ...SERIF, fontSize:26, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>5×</span>
-                            <span style={{ fontSize:11, color:"#6A6A5A" }}>recovery from $18 (2016) to $87/lb (2024)</span>
+                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"16px 0 6px" }}>
+                            <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>5×</span>
+                            <span style={{ fontSize:11.5, color:"#6A6A5A" }}>recovery from $18 (2016) to $87/lb (2024)</span>
                           </div>
-                          <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.5 }}>
+                          <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
                             Long-term contract prices remain <strong style={{ color:"#1A1A14" }}>below the marginal cost</strong> of new mine supply — price must rise further to incentivise the capital needed to close the deficit.
                           </div>
                         </div>
