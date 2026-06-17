@@ -2633,12 +2633,12 @@ export default function App() {
               </div>
 
               {/* Key stats */}
-              <div style={{ padding:"8px 24px 16px" }}>
+              <div style={{ padding:"8px 24px 4px" }}>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:0, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
                   {[
-                    ["Market Cap",  mktCap>0?mktCapStr:"—"],
-                    ["Shares Out",  c.sharesBasic||"—"],
-                    ["Volume",      vol>0?vol>=1e6?`${(vol/1e6).toFixed(1)}M`:`${(vol/1e3).toFixed(0)}K`:"—"],
+                    ["Market Cap",  mktCap>0?mktCapStr:(c.marketCap?`$${c.marketCap}`:"—")],
+                    ["Shares (Basic)", c.sharesBasic||"—"],
+                    ["Volume",      vol>0?vol>=1e6?`${(vol/1e6).toFixed(1)}M`:`${(vol/1e3).toFixed(0)}K`:(c.avgVolume?`${c.avgVolume} avg`:"—")],
                     ["Stage",       c.stage||"—"],
                   ].map(([label,val])=>(
                     <div key={label} style={{ padding:"10px 12px", borderRight:"1px solid #D8D0C4", textAlign:"center" }}>
@@ -2649,8 +2649,64 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Capital Structure */}
+              <div style={{ padding:"12px 24px 4px" }}>
+                <div style={{ ...S.lbl, marginBottom:8 }}>CAPITAL STRUCTURE {SHARE_UPDATES[c.id] && <span style={{ fontWeight:400, color:"#9A9A8A", textTransform:"none", letterSpacing:0 }}>· as of {SHARE_UPDATES[c.id]}</span>}</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px 20px" }}>
+                  {[
+                    ["Shares Outstanding (Basic)", c.sharesBasic],
+                    ["Shares Fully Diluted",       c.sharesFD],
+                    ["Public Float",               c.float],
+                    ["Cash Position",              c.cashPosition],
+                    ["Insider Ownership",          c.insiderOwnership],
+                    ["Institutional Ownership",    c.institutionalOwnership],
+                    ["Avg Daily Volume",           c.avgVolume],
+                  ].filter(([,v])=>v).map(([label,val])=>(
+                    <div key={label} style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"5px 0", borderBottom:"1px solid #F0EDE8" }}>
+                      <span style={{ fontSize:11, color:"#6A6A5A" }}>{label}</span>
+                      <span style={{ ...MONO, fontSize:12, fontWeight:700, color:"#1A1A14" }}>{val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Projects */}
+              {c.projects?.length>0 && (
+                <div style={{ padding:"12px 24px 4px" }}>
+                  <div style={{ ...S.lbl, marginBottom:8 }}>PROJECTS & RESOURCES</div>
+                  {c.projects.map((pr,i)=>(
+                    <div key={i} style={{ padding:"8px 0", borderBottom:"1px solid #F0EDE8" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:3, flexWrap:"wrap" }}>
+                        <span style={{ fontSize:13, fontWeight:700, color:"#1A1A14" }}>{pr.name}</span>
+                        {pr.stage && <span style={{ ...S.badge("blue"), fontSize:9 }}>{pr.stage}</span>}
+                        {pr.ownership && <span style={{ fontSize:10, color:"#6A6A5A" }}>{pr.ownership} owned</span>}
+                      </div>
+                      <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
+                        {pr.grade    && <span style={{ fontSize:11, color:"#6A6A5A" }}>Grade: <strong style={{ color:"#1A1A14" }}>{pr.grade}</strong></span>}
+                        {pr.resource && <span style={{ fontSize:11, color:"#6A6A5A" }}>Resource: <strong style={{ color:"#1A7A44" }}>{pr.resource}</strong></span>}
+                        {pr.depth    && <span style={{ fontSize:11, color:"#6A6A5A" }}>Depth: <strong style={{ color:"#1A1A14" }}>{pr.depth}</strong></span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Marketing agreement */}
+              {MARKETING[c.id] && (
+                <div style={{ padding:"12px 24px 4px" }}>
+                  <div style={{ ...S.lbl, marginBottom:8 }}>MARKETING / IR AGREEMENT</div>
+                  <div style={{ background:"linear-gradient(135deg,#FFF8E8,#FFF2D4)", border:"1px solid #E8D890", borderRadius:8, padding:"12px 14px", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8 }}>
+                    <div>
+                      <div style={{ fontSize:13, fontWeight:700, color:"#1A1A14" }}>{MARKETING[c.id].firm}</div>
+                      <div style={{ fontSize:11, color:"#8A6A1A", marginTop:2 }}>{MARKETING[c.id].period}</div>
+                    </div>
+                    <span style={{ ...MONO, fontSize:13, fontWeight:800, color:"#B07A08" }}>{MARKETING[c.id].amount}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Latest press releases */}
-              <div style={{ padding:"0 24px 16px" }}>
+              <div style={{ padding:"12px 24px 16px" }}>
                 <div style={{ ...S.lbl, marginBottom:10 }}>LATEST PRESS RELEASES</div>
                 {companyNews.length>0 ? companyNews.map((n,i)=>(
                   <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none", display:"block" }}>
@@ -2667,9 +2723,10 @@ export default function App() {
 
               {/* Links */}
               <div style={{ padding:"0 24px 20px", display:"flex", gap:8, flexWrap:"wrap" }}>
-                {c.links?.yahoo  && <a href={`https://finance.yahoo.com/quote/${c.ticker}`} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>Yahoo Finance ↗</a>}
-                {c.links?.sedar  && <a href={c.links.sedar} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>SEDAR+ ↗</a>}
-                {c.links?.website && <a href={c.links.website} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>Website ↗</a>}
+                <a href={`https://finance.yahoo.com/quote/${c.altTicker||c.ticker}`} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>Yahoo Finance ↗</a>
+                <a href={`https://www.sedarplus.ca/`} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>SEDAR+ ↗</a>
+                {SOCIAL[c.id]?.x  && <a href={SOCIAL[c.id].x}  target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>X / Twitter ↗</a>}
+                {SOCIAL[c.id]?.li && <a href={SOCIAL[c.id].li} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>LinkedIn ↗</a>}
                 <button onClick={()=>{setCompanyModal(null);setTab("companies");setExpanded(c.id);}}
                   style={{ ...S.btn(), fontSize:11 }}>Full Profile →</button>
               </div>
