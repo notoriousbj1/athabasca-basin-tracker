@@ -904,7 +904,7 @@ export default function App() {
         {/* Featured Stories — two column */}
         <div style={{ marginBottom:20, paddingBottom:20, borderBottom:"2px solid #D8D0C4" }}>
           <div style={{ ...S.lbl, color:"#B07A08", marginBottom:12, letterSpacing:"0.15em" }}>FEATURED STORIES</div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1px 1fr 1px 200px", gap:"0 20px" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1px 1fr 1px 240px", gap:"0 20px" }}>
 
             {/* Left — top basin story */}
             <div>
