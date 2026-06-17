@@ -373,7 +373,6 @@ const STATIC_GLOBAL_NEWS = [
 
 const TABS = [
   { id:"overview",    label:"Overview"    },
-  { id:"companies",   label:"Companies"   },
   { id:"map",         label:"Basin Map"   },
   { id:"news",        label:"News Feed"   },
   { id:"drilling",    label:"Drilling"    },
@@ -3026,7 +3025,6 @@ export default function App() {
       {/* Content */}
       <main style={S.main}>
         {tab==="overview"   && renderOverview()}
-        {tab==="companies"  && renderCompanies()}
         {tab==="map"        && renderMap()}
         {tab==="news"       && renderNews()}
         {tab==="drilling"   && renderDrilling()}
@@ -3310,12 +3308,11 @@ export default function App() {
 
               {/* Links */}
               <div style={{ padding:"0 24px 20px", display:"flex", gap:8, flexWrap:"wrap" }}>
+                <a href={`https://ceo.ca/${(c.ticker||"").replace(/\..*$/,"")}`} target="_blank" rel="noopener noreferrer" style={{ ...S.btn(), fontSize:11, textDecoration:"none" }}>CEO.CA ↗</a>
                 <a href={`https://finance.yahoo.com/quote/${c.altTicker||c.ticker}`} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>Yahoo Finance ↗</a>
                 <a href={`https://www.sedarplus.ca/`} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>SEDAR+ ↗</a>
                 {SOCIAL[c.id]?.x  && <a href={SOCIAL[c.id].x}  target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>X / Twitter ↗</a>}
                 {SOCIAL[c.id]?.li && <a href={SOCIAL[c.id].li} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>LinkedIn ↗</a>}
-                <button onClick={()=>{setCompanyModal(null);setTab("companies");setExpanded(c.id);}}
-                  style={{ ...S.btn(), fontSize:11 }}>Full Profile →</button>
               </div>
 
             </div>
