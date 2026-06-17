@@ -1373,7 +1373,7 @@ export default function App() {
                     </div>
                     <span style={{ ...MONO, fontWeight:700, fontSize:15, color:"#1A1A14", flexShrink:0 }}>{fmtP(p)}</span>
                     <div style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
-                      <span style={{ fontSize:13, color:up?"#1A7A44":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
+                      <span className={up?"up-arrow":""} style={{ fontSize:13, color:up?"#16C44A":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
                       <span style={{ ...MONO, fontSize:11, fontWeight:700, color:up?"#1A7A44":"#C01818" }}>{chAmt}</span>
                       <span style={{ ...S.badge(up?"green":"red"), fontSize:10 }}>{fmtPct(ch)}</span>
                     </div>
@@ -1408,7 +1408,7 @@ export default function App() {
                     </div>
                     <span style={{ ...MONO, fontWeight:700, fontSize:15, color:"#1A1A14", flexShrink:0 }}>{fmtP(p)}</span>
                     <div style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
-                      <span style={{ fontSize:13, color:up?"#1A7A44":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
+                      <span className={up?"up-arrow":""} style={{ fontSize:13, color:up?"#16C44A":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
                       <span style={{ ...MONO, fontSize:11, fontWeight:700, color:up?"#1A7A44":"#C01818" }}>{chAmt}</span>
                       <span style={{ ...S.badge(up?"green":"red"), fontSize:10 }}>{fmtPct(ch)}</span>
                     </div>
@@ -1445,7 +1445,7 @@ export default function App() {
                         </div>
                         <span style={{ ...MONO, fontWeight:700, fontSize:15, color:"#1A1A14", flexShrink:0 }}>{fmtP(p)}</span>
                         <div style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
-                          <span style={{ fontSize:13, color:up?"#1A7A44":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
+                          <span className={up?"up-arrow":""} style={{ fontSize:13, color:up?"#16C44A":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
                           <span style={{ ...MONO, fontSize:11, fontWeight:700, color:up?"#1A7A44":"#C01818" }}>{chAmt}</span>
                           <span style={{ ...S.badge(up?"green":"red"), fontSize:10 }}>{fmtPct(ch)}</span>
                         </div>
@@ -1481,7 +1481,7 @@ export default function App() {
                             </div>
                             <span style={{ ...MONO, fontWeight:700, fontSize:15, color:"#1A1A14", flexShrink:0 }}>{fmtP(p)}</span>
                             <div style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
-                              <span style={{ fontSize:13, color:up?"#1A7A44":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
+                              <span className={up?"up-arrow":""} style={{ fontSize:13, color:up?"#16C44A":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
                               <span style={{ ...MONO, fontSize:11, fontWeight:700, color:up?"#1A7A44":"#C01818" }}>{(p*Math.abs(ch)/100).toFixed(3)}</span>
                               <span style={{ ...S.badge(up?"green":"red"), fontSize:10 }}>{fmtPct(ch)}</span>
                             </div>
@@ -1732,7 +1732,7 @@ export default function App() {
                 "Global Reactor Buildout": { color:"#C01818", note:"~60 new reactors are under construction globally by 2030. Each 1GWe reactor requires ~400,000 lbs U₃O₈ per year. This demand growth is structural and contractual — utilities have already committed to fuel cycles decades out. The demand curve is not speculative; it is locked in by engineering timelines." },
                 "Supply Constraints":      { color:"#1A7A44", note:"Primary mine supply peaked in 2016 at ~165 Mlb and has not recovered. Kazatomprom's sulphuric acid shortages, Cigar Lake production fatigue, and a decade of underinvestment in new mine development are structural headwinds. No significant new primary supply can come online in under 10 years from a standing start." },
                 "Athabasca Focus":         { color:"#B07A08", note:"The Athabasca Basin holds ~10% of global uranium resources at grades 10–100× the world average — the highest-grade uranium district on Earth. As the structural deficit widens and utilities scramble for long-term supply, explorers and developers in the Basin face the most compelling risk/reward in the junior resource sector." },
-                "Price Outlook":           { color:"#7C3AED", note:"Uranium spot prices recovered from $18/lb (2016) to $87/lb (2024) — a 5× move driven entirely by supply/demand fundamentals. Long-term contract prices remain below the marginal cost of new mine supply, suggesting the price must rise further to incentivise the capital investment needed to close the deficit by 2030." },
+                "Price Outlook":           { color:"#0E7C7B", note:"Uranium spot prices recovered from $18/lb (2016) to $87/lb (2024) — a 5× move driven entirely by supply/demand fundamentals. Long-term contract prices remain below the marginal cost of new mine supply, suggesting the price must rise further to incentivise the capital investment needed to close the deficit by 2030." },
               };
               const hl = HIGHLIGHTS[sdHighlight];
               const chartData = SUPPLY_DEFICIT_DATA.filter(d => parseInt(d.year) <= sdEndYear);
@@ -1899,7 +1899,7 @@ export default function App() {
                       ];
                       const maxV = 120;
                       return (
-                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F6F2FA 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F0F7F6 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
                           <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Price Outlook <span style={{ fontWeight:400, color:"#9A9A8A", textTransform:"none", letterSpacing:0 }}>· targets & history</span></div>
                           <PriceOutlookTable/>
 
@@ -2958,7 +2958,7 @@ export default function App() {
   return (
     <div style={S.root}>
       {/* Font + animation */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');@keyframes tkr{from{transform:translateX(0)}to{transform:translateX(-50%)}}.tkr-track{animation:tkr 55s linear infinite}.tkr-track:hover{animation-play-state:paused}@keyframes card-glow{0%,100%{box-shadow:0 0 0 0 rgba(176,122,8,0)}50%{box-shadow:0 0 28px 6px rgba(176,122,8,0.12)}}.spot-glow{animation:card-glow 3s ease-in-out infinite}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');@keyframes tkr{from{transform:translateX(0)}to{transform:translateX(-50%)}}.tkr-track{animation:tkr 55s linear infinite}.tkr-track:hover{animation-play-state:paused}@keyframes card-glow{0%,100%{box-shadow:0 0 0 0 rgba(176,122,8,0)}50%{box-shadow:0 0 28px 6px rgba(176,122,8,0.12)}}.spot-glow{animation:card-glow 3s ease-in-out infinite}@keyframes upPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.06)}}.up-arrow{display:inline-block;animation:upPulse 2.2s ease-in-out infinite;color:#16C44A}`}</style>
       <div style={{ background:"#FFFFFF", borderBottom:"2px solid #1A1A14", overflow:"hidden", height:28, display:"flex", alignItems:"center" }}>
         <div className="tkr-track" style={{ display:"inline-flex", alignItems:"center", whiteSpace:"nowrap", gap:0 }}>
           {[0,1].map(loop=>(
