@@ -1139,8 +1139,8 @@ export default function App() {
 
     const topCos = [...COMPANIES].filter(c=>c.id!=="canu").sort((a,b)=>coSort==="ytd"?getYTD(b)-getYTD(a):gCh(b)-gCh(a)).slice(0,5);
     const canu   = COMPANIES.find(c=>c.id==="canu");
-    const RuleH  = { borderBottom:"2px solid #D8D0C4", paddingBottom:8, marginBottom:14 };
-    const RuleHG = { borderBottom:"2px solid #E8A020", paddingBottom:8, marginBottom:14 };
+    const RuleH  = { borderBottom:"2px solid #D8D0C4", paddingBottom:10, marginBottom:18 };
+    const RuleHG = { borderBottom:"2px solid #E8A020", paddingBottom:10, marginBottom:18 };
 
     return (
       <div>
@@ -1545,7 +1545,7 @@ export default function App() {
         </div>
 
         {/* Ad Banner */}
-        <div style={{ marginBottom:20, padding:"18px 24px", background:"#F5F3EE", border:"1px solid #D8D0C4", borderRadius:8, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12 }}>
+        <div style={{ marginBottom:40, padding:"18px 24px", background:"#F5F3EE", border:"1px solid #D8D0C4", borderRadius:8, display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12 }}>
           <div>
             <div style={{ ...S.lbl, marginBottom:4 }}>ADVERTISEMENT</div>
             <div style={{ ...SERIF, fontSize:19, color:"#B07A08", fontWeight:700 }}>Advertise with Juniorstocks.com</div>
@@ -1557,7 +1557,7 @@ export default function App() {
         </div>
 
         {/* Basin Capital Monitor */}
-        <div style={{ marginBottom:24 }}>
+        <div style={{ marginBottom:48, marginTop:24 }}>
           <div style={{ ...RuleH }}>
             <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Basin Capital Monitor</div>
             <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Investment heatmap — where capital is being deployed across the Athabasca Basin</div>
@@ -1720,7 +1720,7 @@ export default function App() {
         </div>
 
         {/* Supply Deficit & Price Visualizer */}
-        <div style={{ marginBottom:24 }}>
+        <div style={{ marginBottom:48, marginTop:24 }}>
           <div style={{ ...RuleH }}>
             <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Uranium Supply & Demand Tracker</div>
             <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>The structural case for Athabasca exploration — global supply vs. reactor demand</div>
@@ -1938,7 +1938,7 @@ export default function App() {
         </div>
 
         {/* Athabasca Exploration Runway */}
-        <div style={{ marginBottom:24 }}>
+        <div style={{ marginBottom:48, marginTop:24 }}>
           <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
             <div>
               <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Athabasca Exploration Runway</div>
