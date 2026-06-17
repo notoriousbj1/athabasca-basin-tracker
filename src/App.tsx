@@ -1171,10 +1171,10 @@ export default function App() {
                 ["52-Wk High", `$${spot.high52||106}`, "green"],
                 ["52-Wk Low",  `$${spot.low52||73}`,   "red"  ],
                 ["Trend",      trendLabel,              trendUp?"green":"red"],
-              ].map(([label,val,color])=>(
-                <div key={label} style={{ padding:"12px 14px", borderLeft:"1px solid #D8D0C4", borderBottom:"1px solid #D8D0C4" }}>
-                  <div style={S.lbl}>{label}</div>
-                  <div style={{ ...SERIF, fontSize:18, fontWeight:700, lineHeight:1.2,
+              ].map(([label,val,color],idx,arr)=>(
+                <div key={label} style={{ padding:"12px 16px", borderLeft:"1px solid #D8D0C4", borderBottom:idx<arr.length-1?"1px solid #D8D0C4":"none", display:"flex", flexDirection:"column", justifyContent:"center" }}>
+                  <div style={{ ...S.lbl, marginBottom:4 }}>{label}</div>
+                  <div style={{ ...SERIF, fontSize:20, fontWeight:700, lineHeight:1,
                     color:color==="green"?"#1A7A44":"#C01818" }}>{val}</div>
                 </div>
               ));
