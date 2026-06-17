@@ -637,6 +637,284 @@ const S = {
 };
 
 // ─────────────────────────────────────────────
+// SPINNING REACTOR GLOBE (decorative, auto-spin)
+// ─────────────────────────────────────────────
+const REACTOR_NATIONS = [
+  { name:"China",   lat:35.0,  lng:103.0, reactors:28 },
+  { name:"India",   lat:21.0,  lng:78.0,  reactors:7  },
+  { name:"Russia",  lat:60.0,  lng:90.0,  reactors:6  },
+  { name:"Turkey",  lat:39.0,  lng:35.0,  reactors:4  },
+  { name:"Egypt",   lat:27.0,  lng:30.0,  reactors:4  },
+  { name:"S. Korea",lat:36.0,  lng:128.0, reactors:3  },
+  { name:"USA",     lat:39.0,  lng:-98.0, reactors:2  },
+  { name:"UK",      lat:54.0,  lng:-2.0,  reactors:2  },
+  { name:"France",  lat:47.0,  lng:2.0,   reactors:1  },
+  { name:"UAE",     lat:24.0,  lng:54.0,  reactors:1  },
+  { name:"Japan",   lat:36.0,  lng:138.0, reactors:2  },
+  { name:"Bangladesh",lat:24.0,lng:90.0,  reactors:2  },
+];
+
+const CONTINENTS = [
+  [[60,-130],[55,-130],[48,-124],[33,-117],[23,-106],[18,-95],[28,-82],[45,-67],[60,-64],[70,-80],[68,-110],[60,-130]],
+  [[10,-75],[0,-80],[-18,-70],[-40,-73],[-52,-69],[-38,-58],[-23,-43],[-5,-35],[5,-52],[10,-62],[10,-75]],
+  [[60,-5],[55,-8],[44,-9],[37,-9],[37,15],[40,18],[45,15],[55,12],[60,25],[68,28],[68,12],[60,-5]],
+  [[35,-5],[30,-10],[15,-17],[5,-5],[-5,10],[-22,15],[-34,18],[-30,30],[-12,40],[5,48],[12,43],[30,33],[33,10],[35,-5]],
+  [[68,30],[55,30],[45,50],[35,55],[25,60],[20,75],[8,78],[20,90],[10,105],[22,118],[35,122],[50,135],[68,140],[72,100],[70,60],[68,30]],
+  [[-12,132],[-20,115],[-35,117],[-38,145],[-25,153],[-15,142],[-12,132]],
+];
+
+function ReactorGlobe() {
+  const [rot, setRot] = useState(0);
+  useEffect(()=>{
+    let raf, last=performance.now();
+    const tick=(now)=>{ const dt=now-last; last=now; setRot(r=>(r+dt*0.012)%360); raf=requestAnimationFrame(tick); };
+    raf=requestAnimationFrame(tick);
+    return ()=>cancelAnimationFrame(raf);
+  },[]);
+
+  const R = 70, CX = 90, CY = 90;
+  const project = (lat, lng) => {
+    const λ = (lng + rot) * Math.PI/180;
+    const φ = lat * Math.PI/180;
+    const x = Math.cos(φ) * Math.sin(λ);
+    const y = Math.sin(φ);
+    const z = Math.cos(φ) * Math.cos(λ);
+    return [CX + x*R, CY - y*R, z];
+  };
+  const projectPath = (pts) => {
+    let d="", started=false;
+    pts.forEach(([lat,lng])=>{
+      const [x,y,z]=project(lat,lng);
+      if(z>=-0.05){ d+=`${started?"L":"M"}${x.toFixed(1)},${y.toFixed(1)}`; started=true; }
+      else { started=false; }
+    });
+    return d;
+  };
+  const graticule = [];
+  for(let lat=-60;lat<=60;lat+=30){ const pts=[]; for(let lng=-180;lng<=180;lng+=10)pts.push([lat,lng]); graticule.push(pts); }
+  for(let lng=-180;lng<180;lng+=30){ const pts=[]; for(let lat=-90;lat<=90;lat+=10)pts.push([lat,lng]); graticule.push(pts); }
+
+  const dotColor = (r) => r>=10?"#1A7A44" : r>=4?"#1A5AA8" : "#B07A08";
+
+  return (
+    <svg viewBox="0 0 180 180" width="100%" height="100%" style={{ display:"block", maxHeight:210 }}>
+      <defs>
+        <radialGradient id="globeOceanLt" cx="40%" cy="35%" r="75%">
+          <stop offset="0%"  stopColor="#EAF1F6"/>
+          <stop offset="65%" stopColor="#DCE6EE"/>
+          <stop offset="100%" stopColor="#C8D6E2"/>
+        </radialGradient>
+        <radialGradient id="globeRimLt" cx="50%" cy="50%" r="50%">
+          <stop offset="88%" stopColor="#B07A08" stopOpacity={0}/>
+          <stop offset="97%" stopColor="#B07A08" stopOpacity={0.22}/>
+          <stop offset="100%" stopColor="#B07A08" stopOpacity={0}/>
+        </radialGradient>
+        <filter id="dotGlow" x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="1.4" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      {/* Atmosphere glow */}
+      <circle cx={CX} cy={CY} r={R+10} fill="url(#globeRimLt)"/>
+      {/* Ocean sphere */}
+      <circle cx={CX} cy={CY} r={R} fill="url(#globeOceanLt)" stroke="#B8C8D6" strokeWidth={0.8}/>
+
+      {/* Graticule */}
+      {graticule.map((pts,i)=>(
+        <path key={i} d={projectPath(pts)} fill="none" stroke="#8AA4BC" strokeWidth={0.3} strokeOpacity={0.3}/>
+      ))}
+
+      {/* Continents */}
+      {CONTINENTS.map((pts,i)=>(
+        <path key={i} d={projectPath([...pts])} fill="none" stroke="#6E9A78" strokeWidth={1.2} strokeOpacity={0.85} strokeLinejoin="round"/>
+      ))}
+
+      {/* Reactor dots */}
+      {REACTOR_NATIONS.map(n=>{
+        const [x,y,z]=project(n.lat,n.lng);
+        if(z<0) return null;
+        const sz = 1.6 + Math.sqrt(n.reactors)*0.7;
+        const op = 0.5 + z*0.5;
+        const col = dotColor(n.reactors);
+        return (
+          <g key={n.name} opacity={op}>
+            <circle cx={x} cy={y} r={sz+2.5} fill={col} fillOpacity={0.22} filter="url(#dotGlow)"/>
+            <circle cx={x} cy={y} r={sz} fill={col} stroke="#FFFFFF" strokeWidth={0.4}/>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ─────────────────────────────────────────────
+// SUPPLY CHAIN FLOW DIAGRAM (light, animated arrows)
+// ─────────────────────────────────────────────
+function SupplyChainFlow() {
+  const [pulse, setPulse] = useState(0);
+  useEffect(()=>{
+    let raf, last=performance.now();
+    const tick=(now)=>{ const dt=now-last; last=now; setPulse(p=>(p+dt*0.0006)%1); raf=requestAnimationFrame(tick); };
+    raf=requestAnimationFrame(tick);
+    return ()=>cancelAnimationFrame(raf);
+  },[]);
+
+  // Node positions on a 460 x 150 canvas
+  const nodes = [
+    { id:"uranium", x:34,  y:92, label:"Uranium",      color:"#6A6A5A", icon:"flask",  sub:"" },
+    { id:"kaz",     x:140, y:92, label:"Kazatomprom",  color:"#C01818", icon:"alert",  sub:"Acid shortage" },
+    { id:"cigar",   x:248, y:92, label:"Cigar Lake",   color:"#C01818", icon:"alert",  sub:"Production fatigue" },
+    { id:"under",   x:356, y:92, label:"Underinvest.", color:"#C01818", icon:"alert",  sub:"10yr lead times" },
+    { id:"other",   x:440, y:92, label:"Supply",       color:"#1A7A44", icon:"stack",  sub:"" },
+  ];
+
+  const Icon = ({ type, x, y, color }) => {
+    if(type==="flask") return (
+      <g stroke={color} strokeWidth={1.4} fill="none" strokeLinejoin="round" strokeLinecap="round">
+        <path d={`M${x-4},${y-7} L${x-4},${y-1} L${x-8},${y+7} L${x+8},${y+7} L${x+4},${y-1} L${x+4},${y-7}`}/>
+        <line x1={x-5} y1={y-7} x2={x+5} y2={y-7}/>
+      </g>
+    );
+    if(type==="stack") return (
+      <g stroke={color} strokeWidth={1.3} fill="none">
+        <ellipse cx={x} cy={y-5} rx={8} ry={2.6}/>
+        <ellipse cx={x} cy={y} rx={8} ry={2.6}/>
+        <ellipse cx={x} cy={y+5} rx={8} ry={2.6}/>
+        <line x1={x-8} y1={y-5} x2={x-8} y2={y+5}/>
+        <line x1={x+8} y1={y-5} x2={x+8} y2={y+5}/>
+      </g>
+    );
+    // alert triangle
+    return (
+      <g stroke={color} strokeWidth={1.4} fill="none" strokeLinejoin="round">
+        <path d={`M${x},${y-8} L${x+8},${y+6} L${x-8},${y+6} Z`}/>
+        <line x1={x} y1={y-2} x2={x} y2={y+2} strokeWidth={1.6}/>
+        <circle cx={x} cy={y+4.4} r={0.5} fill={color}/>
+      </g>
+    );
+  };
+
+  return (
+    <svg viewBox="0 0 460 156" width="100%" height="100%" style={{ display:"block", maxHeight:210 }}>
+      {/* Bottleneck callout */}
+      {(()=>{
+        const bx=248, by=34;
+        return (
+          <g>
+            {/* curved feeders from kaz and under up to bottleneck */}
+            <path d={`M140,76 C140,50 ${bx-40},${by} ${bx-12},${by}`} fill="none" stroke="#B07A08" strokeWidth={1.4} strokeOpacity={0.6} strokeDasharray="3,3"/>
+            <path d={`M356,76 C356,50 ${bx+40},${by} ${bx+12},${by}`} fill="none" stroke="#B07A08" strokeWidth={1.4} strokeOpacity={0.6} strokeDasharray="3,3"/>
+            <circle cx={bx} cy={by} r={13} fill="#1A7A44" fillOpacity={0.1} stroke="#1A7A44" strokeWidth={1.4}/>
+            <g stroke="#1A7A44" strokeWidth={1.3} fill="none" strokeLinejoin="round" strokeLinecap="round">
+              <path d={`M${bx-3},${by-6} L${bx-3},${by-1} L${bx-6},${by+6} L${bx+6},${by+6} L${bx+3},${by-1} L${bx+3},${by-6}`}/>
+              <line x1={bx-4} y1={by-6} x2={bx+4} y2={by-6}/>
+            </g>
+            <text x={bx} y={by-17} textAnchor="middle" fontSize={9} fontWeight={700} fill="#1A7A44">BOTTLENECK</text>
+          </g>
+        );
+      })()}
+
+      {/* Connecting arrows between main nodes */}
+      {nodes.slice(0,-1).map((n,i)=>{
+        const next=nodes[i+1];
+        const x1=n.x+13, x2=next.x-13, y=92;
+        const dashOffset = -(pulse*16);
+        return (
+          <g key={i}>
+            <line x1={x1} y1={y} x2={x2-3} y2={y} stroke="#C8C0B4" strokeWidth={1.5}/>
+            <line x1={x1} y1={y} x2={x2-3} y2={y} stroke="#B07A08" strokeWidth={1.5} strokeDasharray="4,12" strokeDashoffset={dashOffset} strokeOpacity={0.8}/>
+            <path d={`M${x2-3},${y-3.5} L${x2+2},${y} L${x2-3},${y+3.5} Z`} fill="#8A8273"/>
+          </g>
+        );
+      })}
+
+      {/* Nodes */}
+      {nodes.map(n=>(
+        <g key={n.id}>
+          <circle cx={n.x} cy={n.y} r={13} fill={n.color} fillOpacity={0.08} stroke={n.color} strokeWidth={1.4}/>
+          <Icon type={n.icon} x={n.x} y={n.y} color={n.color}/>
+          <text x={n.x} y={n.y+26} textAnchor="middle" fontSize={9.5} fontWeight={700} fill="#1A1A14">{n.label}</text>
+          {n.sub && <text x={n.x} y={n.y+37} textAnchor="middle" fontSize={7.5} fill="#9A8A6A" fontStyle="italic">{n.sub}</text>}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// ─────────────────────────────────────────────
+// ATHABASCA FOCUS — stylized basin mini-map
+// ─────────────────────────────────────────────
+function AthabascaFocusMap() {
+  // Simplified basin outline + deposit markers on a 300x190 canvas
+  const basinPath = "M40,70 C60,48 110,40 160,46 C210,52 250,60 268,86 C278,104 264,128 234,142 C196,158 150,160 110,150 C72,140 44,120 38,98 C35,86 34,78 40,70 Z";
+  const deposits = [
+    { x:150, y:70,  label:"Highest-grade deposit", color:"#C01818", big:true },
+    { x:205, y:92,  label:"Eastern deposits",      color:"#C01818", big:true },
+    { x:120, y:108, label:"Western corridor",      color:"#B07A08", big:false },
+    { x:175, y:128, label:"Core explorers",        color:"#1A5AA8", big:false },
+  ];
+  return (
+    <svg viewBox="0 0 300 190" width="100%" height="100%" style={{ display:"block", maxHeight:200 }}>
+      <defs>
+        <radialGradient id="afTerrain" cx="45%" cy="40%" r="70%">
+          <stop offset="0%"  stopColor="#EFE7D6"/>
+          <stop offset="100%" stopColor="#DCCFB4"/>
+        </radialGradient>
+      </defs>
+      {/* terrain backdrop */}
+      <rect x={0} y={0} width={300} height={190} fill="#E8EEE6"/>
+      {/* faint surrounding lakes/forest texture */}
+      {[[30,30,14,8],[260,40,18,10],[40,160,16,7],[250,150,20,9],[150,30,10,5]].map(([cx,cy,rx,ry],i)=>(
+        <ellipse key={i} cx={cx} cy={cy} rx={rx} ry={ry} fill="#C4D6C0" opacity={0.6}/>
+      ))}
+      {/* basin sandstone body */}
+      <path d={basinPath} fill="url(#afTerrain)" stroke="#B07A08" strokeWidth={1.5} strokeOpacity={0.7}/>
+      <text x={150} y={112} textAnchor="middle" fontSize={9} fontWeight={700} fill="#B07A08" opacity={0.4} letterSpacing="1">ATHABASCA BASIN</text>
+      {/* deposits */}
+      {deposits.map((d,i)=>(
+        <g key={i}>
+          <circle cx={d.x} cy={d.y} r={d.big?5:4} fill={d.color} fillOpacity={0.2} stroke={d.color} strokeWidth={1}/>
+          <circle cx={d.x} cy={d.y} r={d.big?2.4:2} fill={d.color}/>
+          <text x={d.x+7} y={d.y+3} fontSize={7.5} fontWeight={600} fill="#4A4A3A">{d.label}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// ─────────────────────────────────────────────
+// PRICE OUTLOOK — target & correlation table
+// ─────────────────────────────────────────────
+function PriceOutlookTable() {
+  const rows = [
+    { label:"2016 Low",      lt:"$18/lb",  spot:"$18/lb",  note:"cycle bottom" },
+    { label:"2024 Actual",   lt:"$80/lb",  spot:"$87/lb",  note:"5× recovery" },
+    { label:"2026 Current",  lt:"$79/lb",  spot:"$82/lb",  note:"holding" },
+    { label:"2030 Forecast", lt:"$95/lb",  spot:"$110/lb", note:"consensus", highlight:true },
+  ];
+  return (
+    <div style={{ border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden", fontSize:11 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"1.3fr 1fr 1fr", background:"#F4F0E8", borderBottom:"1px solid #D8D0C4" }}>
+        {["","Long-term","Spot price"].map((h,i)=>(
+          <div key={i} style={{ padding:"7px 10px", fontSize:9.5, fontWeight:800, color:"#6A6A5A", textTransform:"uppercase", letterSpacing:"0.06em", borderRight:i<2?"1px solid #E8E0D4":"none", textAlign:i===0?"left":"center" }}>{h}</div>
+        ))}
+      </div>
+      {rows.map((r,i)=>(
+        <div key={i} style={{ display:"grid", gridTemplateColumns:"1.3fr 1fr 1fr", borderBottom:i<rows.length-1?"1px solid #EDE8E0":"none", background:r.highlight?"#FFF8E8":"transparent" }}>
+          <div style={{ padding:"7px 10px", borderRight:"1px solid #EDE8E0" }}>
+            <div style={{ fontWeight:700, color:"#1A1A14" }}>{r.label}</div>
+            <div style={{ fontSize:8.5, color:"#9A9A8A", fontStyle:"italic" }}>{r.note}</div>
+          </div>
+          <div style={{ padding:"7px 10px", textAlign:"center", borderRight:"1px solid #EDE8E0", ...MONO, fontWeight:700, color:r.highlight?"#1A7A44":"#1A1A14" }}>{r.lt}</div>
+          <div style={{ padding:"7px 10px", textAlign:"center", ...MONO, fontWeight:700, color:r.highlight?"#1A7A44":"#B07A08" }}>{r.spot}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
 // MAIN APP
 // ─────────────────────────────────────────────
 export default function App() {
@@ -991,7 +1269,7 @@ export default function App() {
 
             {/* Basin at a Glance — vertical */}
             <div style={{ ...S.card, marginBottom:0, background:"linear-gradient(145deg, #FFFDF5 0%, #FFF5DC 100%)", border:"1px solid #E8D890" }}>
-              <div style={{ ...S.lbl, marginBottom:12, fontSize:11, letterSpacing:"0.12em" }}>BASIN AT A GLANCE</div>
+              <div style={{ ...S.lbl, marginBottom:12, fontSize:11, letterSpacing:"0.12em", color:"#1A1A14" }}>BASIN AT A GLANCE</div>
               {(()=>{
                 const parseShares = s => { const n=parseFloat(s||"0"); if(!s)return 0; if(s.includes("B"))return n*1e9; if(s.includes("M"))return n*1e6; if(s.includes("K"))return n*1e3; return n; };
                 const totalMktCap = COMPANIES.reduce((s,c)=>s+gP(c)*parseShares(c.sharesBasic),0);
@@ -1010,9 +1288,9 @@ export default function App() {
                   <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:"1px solid #EDE8E0" }}>
                     <div>
                       <span style={{ fontSize:12, color:"#1A1A14", fontWeight:500 }}>{k}</span>
-                      {note && <div style={{ fontSize:9, color:"#9A9A8A", fontStyle:"italic", marginTop:1 }}>{note}</div>}
+                      {note && <div style={{ fontSize:9, color:"#1A1A14", fontStyle:"italic", marginTop:1 }}>{note}</div>}
                     </div>
-                    <span style={{ fontWeight:800, color:"#B07A08", fontSize:16 }}>{v}</span>
+                    <span style={{ fontWeight:800, color:"#1A1A14", fontSize:16 }}>{v}</span>
                   </div>
                 ));
               })()}
@@ -1484,19 +1762,103 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Highlight factor cards — below slider, full info text, no emojis */}
-                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginTop:20 }}>
-                    {Object.entries(HIGHLIGHTS).map(([key,h])=>(
-                      <div key={key} onClick={()=>setSdHighlight(key)} style={{
-                        padding:"12px 14px", borderRadius:8, cursor:"pointer",
-                        border:`1px solid ${sdHighlight===key?h.color:"#D8D0C4"}`,
-                        borderLeft:`3px solid ${h.color}`,
-                        background:sdHighlight===key?`${h.color}08`:"#FAFAF7",
-                      }}>
-                        <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:7, textTransform:"uppercase", letterSpacing:"0.08em", lineHeight:1.3 }}>{key}</div>
-                        <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.55 }}>{h.note}</div>
-                      </div>
-                    ))}
+                  {/* Hero row — Reactor Buildout (globe) + Supply Constraints (flow) */}
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginTop:28 }}>
+
+                    {/* Reactor Buildout */}
+                    {(()=>{
+                      const h = HIGHLIGHTS["Global Reactor Buildout"];
+                      return (
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"16px 18px" }}>
+                          <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:8, textTransform:"uppercase", letterSpacing:"0.12em" }}>Global Reactor Buildout</div>
+                          <div style={{ display:"flex", gap:14, alignItems:"center" }}>
+                            <div style={{ width:150, flexShrink:0 }}><ReactorGlobe/></div>
+                            <div>
+                              <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
+                                <span style={{ ...SERIF, fontSize:40, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>60+</span>
+                                <span style={{ fontSize:11, color:"#6A6A5A" }}>reactors u/c by 2030</span>
+                              </div>
+                              <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.5 }}>
+                                Each 1GWe reactor needs <strong style={{ color:"#1A1A14" }}>~400,000 lbs U₃O₈/yr</strong>. Demand is structural and contractual — locked in by engineering timelines, not speculation.
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ fontSize:9.5, fontWeight:800, color:h.color, margin:"12px 0 8px", textTransform:"uppercase", letterSpacing:"0.1em" }}>Top Builders Under Construction</div>
+                          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"5px 16px" }}>
+                            {[
+                              ["China","#1A7A44",28],["India","#1A7A44",7],["Russia","#1A5AA8",6],
+                              ["Turkey","#1A5AA8",4],["Egypt","#1A5AA8",4],["S. Korea","#B07A08",3],
+                            ].map(([name,col,n])=>(
+                              <div key={name} style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, paddingBottom:4, borderBottom:"1px solid #EDE8E0" }}>
+                                <span style={{ width:6, height:6, borderRadius:"50%", background:col, flexShrink:0 }}/>
+                                <span style={{ color:"#4A4A3A", flex:1 }}>{name}</span>
+                                <span style={{ ...MONO, color:"#1A1A14", fontWeight:700 }}>{n}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Supply Constraints */}
+                    {(()=>{
+                      const h = HIGHLIGHTS["Supply Constraints"];
+                      return (
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F4F8F4 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"16px 18px" }}>
+                          <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.12em" }}>Supply Constraints</div>
+                          <div style={{ width:"100%" }}><SupplyChainFlow/></div>
+                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"10px 0 6px" }}>
+                            <span style={{ ...SERIF, fontSize:26, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>2016</span>
+                            <span style={{ fontSize:11, color:"#6A6A5A" }}>primary supply peaked at ~165 Mlb</span>
+                          </div>
+                          <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.5 }}>
+                            Kazatomprom acid shortages, Cigar Lake production fatigue, and a decade of underinvestment mean <strong style={{ color:"#1A1A14" }}>no major new supply</strong> can arrive in under 10 years from a standing start.
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Hero row 2 — Athabasca Focus (map) + Price Outlook (table) */}
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginTop:20, marginBottom:8 }}>
+
+                    {/* Athabasca Focus */}
+                    {(()=>{
+                      const h = HIGHLIGHTS["Athabasca Focus"];
+                      return (
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"16px 18px" }}>
+                          <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.12em" }}>Athabasca Focus</div>
+                          <div style={{ borderRadius:8, overflow:"hidden", border:"1px solid #E8E4DE", marginBottom:10 }}>
+                            <AthabascaFocusMap/>
+                          </div>
+                          <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
+                            <span style={{ ...SERIF, fontSize:26, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>~10%</span>
+                            <span style={{ fontSize:11, color:"#6A6A5A" }}>of global uranium resources · grades 10–100× world average</span>
+                          </div>
+                          <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.5 }}>
+                            The highest-grade uranium district on Earth. As the deficit widens, Basin explorers face the <strong style={{ color:"#1A1A14" }}>most compelling risk/reward</strong> in the junior resource sector.
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Price Outlook */}
+                    {(()=>{
+                      const h = HIGHLIGHTS["Price Outlook"];
+                      return (
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F6F2FA 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"16px 18px" }}>
+                          <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.12em" }}>Price Outlook <span style={{ fontWeight:400, color:"#9A9A8A", textTransform:"none", letterSpacing:0 }}>· targets & history</span></div>
+                          <PriceOutlookTable/>
+                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"12px 0 6px" }}>
+                            <span style={{ ...SERIF, fontSize:26, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>5×</span>
+                            <span style={{ fontSize:11, color:"#6A6A5A" }}>recovery from $18 (2016) to $87/lb (2024)</span>
+                          </div>
+                          <div style={{ fontSize:11, color:"#4A4A3A", lineHeight:1.5 }}>
+                            Long-term contract prices remain <strong style={{ color:"#1A1A14" }}>below the marginal cost</strong> of new mine supply — price must rise further to incentivise the capital needed to close the deficit.
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </>
               );
@@ -1925,6 +2287,28 @@ export default function App() {
     const toggleStage = (key) => setStageFilter(f=>({...f,[key]:!f[key]}));
     const visibleCos = COMPANIES.filter(c=>c.location && stageFilter[getGroup(c.stage)]);
 
+    // Real geological deposits & landmarks (from published Athabasca Basin geology maps)
+    const DEPOSITS = [
+      { name:"Cigar Lake",      lat:58.06, lng:-104.53, type:"deposit" },
+      { name:"McArthur River",  lat:57.77, lng:-105.04, type:"deposit" },
+      { name:"Key Lake",        lat:57.20, lng:-105.62, type:"deposit" },
+      { name:"Rabbit Lake",     lat:58.22, lng:-103.68, type:"deposit" },
+      { name:"McClean Lake",    lat:58.30, lng:-103.83, type:"deposit" },
+      { name:"Midwest Lake",    lat:58.42, lng:-103.95, type:"deposit" },
+      { name:"Eagle Point",     lat:58.20, lng:-103.55, type:"deposit" },
+      { name:"Cluff Lake",      lat:58.39, lng:-109.51, type:"deposit" },
+      { name:"Shea Creek",      lat:58.18, lng:-109.50, type:"deposit" },
+      { name:"Millennium",      lat:57.58, lng:-104.70, type:"prospect" },
+      { name:"Centennial",      lat:57.65, lng:-106.45, type:"prospect" },
+      { name:"Maybelle River",  lat:58.45, lng:-110.30, type:"prospect" },
+      { name:"Maurice Bay",     lat:59.45, lng:-110.30, type:"prospect" },
+      { name:"Beaverlodge District", lat:59.55, lng:-108.60, type:"district" },
+    ];
+
+    // Major structural features
+    const SNOWBIRD = [[-111.0,60.3],[-108.5,59.0],[-106.0,57.8],[-104.0,57.0]];
+    const snowbirdPath = SNOWBIRD.map(([lng,lat],i)=>{ const [x,y]=toSVG(lat,lng); return `${i===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ");
+
     return (
       <div>
         <div style={S.sectionTitle}>Athabasca Basin — Geological Project Map</div>
@@ -1987,6 +2371,31 @@ export default function App() {
               {(()=>{ const [x,y]=toSVG(57.0,-107.5);
                 return <text x={x} y={y} fill="#B07A08" fontSize={9.5} fontWeight={700} textAnchor="middle" opacity={0.22} letterSpacing="2">ATHABASCA BASIN</text>;
               })()}
+
+              {/* Snowbird Tectonic Zone */}
+              <path d={snowbirdPath} fill="none" stroke="#1A5AA8" strokeWidth={2.5} strokeOpacity={0.35} strokeDasharray="2,4"/>
+              {(()=>{ const [x,y]=toSVG(57.3,-104.5);
+                return <text x={x} y={y} fill="#1A5AA8" fontSize={7} fontWeight={600} textAnchor="middle" opacity={0.5} fontStyle="italic" transform={`rotate(-32 ${x} ${y})`}>Snowbird Tectonic Zone</text>;
+              })()}
+
+              {/* Geological deposits & landmarks (reference, non-investment) */}
+              {DEPOSITS.map(d=>{
+                const [x,y]=toSVG(d.lat,d.lng);
+                const isDistrict = d.type==="district";
+                const isDeposit  = d.type==="deposit";
+                return (
+                  <g key={d.name} style={{ pointerEvents:"none" }}>
+                    {isDistrict ? (
+                      <rect x={x-3} y={y-3} width={6} height={6} fill="#C01818" fillOpacity={0.55} stroke="#C01818" strokeWidth={0.6}/>
+                    ) : isDeposit ? (
+                      <rect x={x-2.3} y={y-2.3} width={4.6} height={4.6} fill="#8A1818" fillOpacity={0.5} stroke="#8A1818" strokeWidth={0.5}/>
+                    ) : (
+                      <circle cx={x} cy={y} r={2.2} fill="#8A6A1A" fillOpacity={0.45} stroke="#8A6A1A" strokeWidth={0.4}/>
+                    )}
+                    <text x={x} y={y-4.5} fill="#5A5A4A" fontSize={6} fontWeight={isDistrict?700:500} textAnchor="middle" opacity={0.75}>{d.name}</text>
+                  </g>
+                );
+              })}
 
               {/* Company markers */}
               {visibleCos.map(c=>{
@@ -2057,8 +2466,17 @@ export default function App() {
                 </div>
               ))}
               <div style={{ borderTop:"1px solid #1C2840", paddingTop:8, marginTop:4 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:10, color:"#9A9A8A" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:10, color:"#9A9A8A", marginBottom:6 }}>
                   <span>— —</span> AB / SK border
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:10, color:"#9A9A8A", marginBottom:4 }}>
+                  <span style={{ width:7, height:7, background:"#8A1818", display:"inline-block" }}/> Major uranium deposit (reference)
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:10, color:"#9A9A8A", marginBottom:4 }}>
+                  <span style={{ width:6, height:6, borderRadius:"50%", background:"#8A6A1A", display:"inline-block" }}/> Prospect (reference)
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:10, color:"#9A9A8A" }}>
+                  <span style={{ color:"#1A5AA8" }}>· · ·</span> Snowbird Tectonic Zone
                 </div>
               </div>
             </div>
@@ -2102,6 +2520,11 @@ export default function App() {
             </div>
           );
         })()}
+
+        {/* Disclaimer */}
+        <div style={{ marginTop:14, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10.5, color:"#9A9A8A", lineHeight:1.6 }}>
+          <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> This map is a simplified schematic for illustrative purposes only. Deposit locations, structural features, basin boundaries, and company project positions are approximate and may not be accurate or to scale. Geological deposit and prospect markers are shown for geographic reference only and do not represent ownership or investment recommendations. Always verify locations and data with official company disclosures and authoritative geological surveys (e.g. Saskatchewan Geological Survey, NRCan) before making any decisions.
+        </div>
       </div>
     );
   };
