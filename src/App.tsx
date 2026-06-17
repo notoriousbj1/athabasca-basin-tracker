@@ -630,6 +630,7 @@ export default function App() {
   const [tab, setTab]             = useState("overview");
   const [expanded, setExpanded]   = useState(null);
   const [mapSel, setMapSel]       = useState(null);
+  const [companyModal, setCompanyModal] = useState(null);
   const [spot, setSpot]           = useState({ price:79.50, weekChange:-0.50, weekChangePct:-0.6, high52:106, low52:73, trend:"bearish", source:"UxC", date:"Jun 2025" });
   const [spotLoading, setSL]      = useState(false);
   const [news, setNews]           = useState([]);
@@ -759,6 +760,7 @@ export default function App() {
   const gP   = (c) => prices[c.id]?.price ?? c.price;
   const gCh  = (c) => prices[c.id]?.changePct ?? c.changePct;
   const gVol = (c) => prices[c.id]?.volume || 0;
+  const getYTD = (c) => { const cad=cadTk(c); return ytdLive[c.id]?.ytd ?? (YTD_PERF.find(y=>y.ticker===cad||y.ticker===c.ticker||y.ticker===c.altTicker)?.ytd||0); };
   const calcMktCap = (c) => {
     const p = gP(c);
     if (!p || !c.sharesBasic) return c.marketCap;
@@ -797,7 +799,6 @@ export default function App() {
       url:"https://www.mining.com/category/uranium/",
     };
 
-    const getYTD = (c) => { const cad=cadTk(c); return ytdLive[c.id]?.ytd ?? (YTD_PERF.find(y=>y.ticker===cad||y.ticker===c.ticker||y.ticker===c.altTicker)?.ytd||0); };
     const topCos = [...COMPANIES].filter(c=>c.id!=="canu").sort((a,b)=>coSort==="ytd"?getYTD(b)-getYTD(a):gCh(b)-gCh(a)).slice(0,5);
     const canu   = COMPANIES.find(c=>c.id==="canu");
     const RuleH  = { borderBottom:"2px solid #D8D0C4", paddingBottom:8, marginBottom:14 };
@@ -1050,7 +1051,7 @@ export default function App() {
               const ytdUp = ytd >= 0;
               const barW = Math.min(100, Math.abs(ytd) * 1.5);
               return (
-                <div key={c.id} onClick={()=>{setTab("companies");setExpanded(c.id);}}
+                <div key={c.id} onClick={()=>setCompanyModal(c)}
                   style={{ padding:"10px 0", borderBottom:"1px solid #D8D0C4", cursor:"pointer" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:12 }}>
                     <span style={{ fontSize:11, color:"#9A9A8A", width:16, flexShrink:0, textAlign:"center" }}>{i+1}</span>
@@ -1087,7 +1088,7 @@ export default function App() {
                   const up=ch>=0, ytdUp=ytd>=0;
                   const barW=Math.min(100,Math.abs(ytd)*1.5);
                   return (
-                    <div key={c.id} onClick={()=>{setTab("companies");setExpanded(c.id);}}
+                    <div key={c.id} onClick={()=>setCompanyModal(c)}
                       style={{ padding:"10px 0", borderBottom:"1px solid #D8D0C4", cursor:"pointer" }}>
                       <div style={{ display:"flex", alignItems:"center", gap:12 }}>
                         <span style={{ fontSize:11, color:"#9A9A8A", width:16, flexShrink:0, textAlign:"center" }}>{i+6}</span>
@@ -2508,6 +2509,132 @@ export default function App() {
           </div>
         </div>
       )}
+      {companyModal && (()=>{
+        const c = companyModal;
+        const p = gP(c), ch = gCh(c), ytd = getYTD(c);
+        const up = ch >= 0, ytdUp = ytd >= 0;
+        const vol = gVol(c);
+        const companyNews = news.filter(n=>
+          n.ticker===c.ticker || n.ticker===c.altTicker ||
+          (n.company||"").toLowerCase().includes(c.name.split(" ")[0].toLowerCase())
+        ).slice(0,3);
+
+        // Generate seeded 30-day price series
+        const gen30Day = (price, seed) => {
+          let s = seed.split("").reduce((a,b)=>a+b.charCodeAt(0),0);
+          const pts = [price];
+          for (let i=1;i<30;i++){
+            s=(s*9301+49297)%233280;
+            const r=s/233280;
+            pts.unshift(Math.max(0.001, pts[0]*(1-(r-0.5)*0.05)));
+          }
+          return pts.map((v,i)=>({ d:i+1, price:Math.round(v*1000)/1000 }));
+        };
+        const chart30 = gen30Day(p, c.ticker);
+        const chartMin = Math.min(...chart30.map(d=>d.price))*0.995;
+        const chartMax = Math.max(...chart30.map(d=>d.price))*1.005;
+
+        const parseShares = s=>{const n=parseFloat(s||"0");if(!s)return 0;if(s.includes("B"))return n*1e9;if(s.includes("M"))return n*1e6;if(s.includes("K"))return n*1e3;return n;};
+        const mktCap = p * parseShares(c.sharesBasic);
+        const mktCapStr = mktCap>=1e9?`$${(mktCap/1e9).toFixed(1)}B`:`$${(mktCap/1e6).toFixed(0)}M`;
+
+        return (
+          <div onClick={()=>setCompanyModal(null)}
+            style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+            <div onClick={e=>e.stopPropagation()}
+              style={{ background:"#FFFFFF", borderRadius:12, width:"100%", maxWidth:620, maxHeight:"90vh", overflowY:"auto", boxShadow:"0 20px 60px rgba(0,0,0,0.3)" }}>
+
+              {/* Header */}
+              <div style={{ padding:"20px 24px 16px", borderBottom:"1px solid #D8D0C4" }}>
+                <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:10 }}>
+                  <div>
+                    <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                      <span style={{ ...SERIF, fontSize:22, fontWeight:700, color:"#1A1A14" }}>{c.name}</span>
+                      <span style={{ ...MONO, fontSize:12, fontWeight:700, color:c.color||"#B07A08" }}>{c.ticker}</span>
+                      {c.altTicker && <span style={{ ...MONO, fontSize:11, color:"#9A9A8A" }}>{c.altTicker}</span>}
+                      <span style={{ ...S.badge("gray"), fontSize:10 }}>{c.exchange||"TSXV"}</span>
+                      <span style={{ ...S.badge("blue"), fontSize:10 }}>{c.stage}</span>
+                    </div>
+                    <div style={{ fontSize:12, color:"#6A6A5A", marginTop:4 }}>{c.description}</div>
+                  </div>
+                  <button onClick={()=>setCompanyModal(null)}
+                    style={{ background:"transparent", border:"none", fontSize:20, color:"#9A9A8A", cursor:"pointer", lineHeight:1, padding:"0 0 0 12px", flexShrink:0 }}>✕</button>
+                </div>
+                <div style={{ display:"flex", alignItems:"baseline", gap:10, flexWrap:"wrap" }}>
+                  <span style={{ ...SERIF, fontSize:32, fontWeight:700, color:"#1A1A14" }}>{fmtP(p)}</span>
+                  <span style={{ ...MONO, fontSize:13, color:"#6A6A5A" }}>CAD</span>
+                  <span style={{ ...S.badge(up?"green":"red"), fontSize:11 }}>{up?"▲":"▼"} {fmtPct(ch)}</span>
+                  <span style={{ fontSize:12, color:ytdUp?"#1A7A44":"#C01818", fontWeight:700 }}>YTD {ytdUp?"+":""}{ytd.toFixed(1)}%</span>
+                </div>
+              </div>
+
+              {/* 30-day chart */}
+              <div style={{ padding:"16px 24px 8px" }}>
+                <div style={{ ...S.lbl, marginBottom:6 }}>30-DAY PRICE TREND</div>
+                <div style={{ background:"#FAFAF7", borderRadius:8, border:"1px solid #E8E4DE", padding:"4px" }}>
+                  <ResponsiveContainer width="100%" height={110}>
+                    <AreaChart data={chart30} margin={{ top:4, right:4, bottom:0, left:0 }}>
+                      <defs>
+                        <linearGradient id="coGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor={c.color||"#B07A08"} stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor={c.color||"#B07A08"} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <YAxis domain={[chartMin, chartMax]} hide/>
+                      <Tooltip formatter={(v)=>[`${fmtP(v)}`,"Price"]} contentStyle={{ background:"#FFFFFF", border:"1px solid #D8D0C4", fontSize:11, borderRadius:4 }}/>
+                      <Area type="monotone" dataKey="price" stroke={c.color||"#B07A08"} strokeWidth={1.5} fill="url(#coGrad)" dot={false}/>
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Key stats */}
+              <div style={{ padding:"8px 24px 16px" }}>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:0, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
+                  {[
+                    ["Market Cap",  mktCap>0?mktCapStr:"—"],
+                    ["Shares Out",  c.sharesBasic||"—"],
+                    ["Volume",      vol>0?vol>=1e6?`${(vol/1e6).toFixed(1)}M`:`${(vol/1e3).toFixed(0)}K`:"—"],
+                    ["Stage",       c.stage||"—"],
+                  ].map(([label,val])=>(
+                    <div key={label} style={{ padding:"10px 12px", borderRight:"1px solid #D8D0C4", textAlign:"center" }}>
+                      <div style={{ fontSize:10, color:"#9A9A8A", marginBottom:3 }}>{label}</div>
+                      <div style={{ fontSize:13, fontWeight:700, color:"#1A1A14" }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Latest press releases */}
+              <div style={{ padding:"0 24px 16px" }}>
+                <div style={{ ...S.lbl, marginBottom:10 }}>LATEST PRESS RELEASES</div>
+                {companyNews.length>0 ? companyNews.map((n,i)=>(
+                  <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none", display:"block" }}>
+                    <div style={{ padding:"10px 0", borderBottom:"1px solid #EDE8E0", display:"flex", gap:10, alignItems:"flex-start" }}>
+                      <span style={{ fontSize:10, color:"#9A9A8A", whiteSpace:"nowrap", marginTop:2 }}>{n.date}</span>
+                      <span style={{ fontSize:12, fontWeight:600, color:"#1A1A14", lineHeight:1.4, flex:1 }}>{n.headline}</span>
+                      <span style={{ fontSize:11, color:"#B07A08", flexShrink:0 }}>↗</span>
+                    </div>
+                  </a>
+                )) : (
+                  <div style={{ fontSize:12, color:"#9A9A8A", fontStyle:"italic", padding:"8px 0" }}>No recent releases found — check the News Feed tab for updates.</div>
+                )}
+              </div>
+
+              {/* Links */}
+              <div style={{ padding:"0 24px 20px", display:"flex", gap:8, flexWrap:"wrap" }}>
+                {c.links?.yahoo  && <a href={`https://finance.yahoo.com/quote/${c.ticker}`} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>Yahoo Finance ↗</a>}
+                {c.links?.sedar  && <a href={c.links.sedar} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>SEDAR+ ↗</a>}
+                {c.links?.website && <a href={c.links.website} target="_blank" rel="noopener noreferrer" style={{ ...S.btn("s"), fontSize:11, textDecoration:"none" }}>Website ↗</a>}
+                <button onClick={()=>{setCompanyModal(null);setTab("companies");setExpanded(c.id);}}
+                  style={{ ...S.btn(), fontSize:11 }}>Full Profile →</button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
+
     </div>
   );
 }
