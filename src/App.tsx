@@ -2502,224 +2502,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Supply Deficit & Price Visualizer */}
-        <div style={{ marginBottom:48, marginTop:24 }}>
-          <div style={{ ...RuleH }}>
-            <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Uranium Supply & Demand Tracker</div>
-            <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>The structural case for Athabasca exploration — global supply vs. reactor demand</div>
-          </div>
-          <div style={{ ...S.card, padding:20 }}>
-            {(()=>{
-              const HIGHLIGHTS = {
-                "Global Reactor Buildout": { color:"#C01818", note:"~60 new reactors are under construction globally by 2030. Each 1GWe reactor requires ~400,000 lbs U₃O₈ per year. This demand growth is structural and contractual — utilities have already committed to fuel cycles decades out. The demand curve is not speculative; it is locked in by engineering timelines." },
-                "Supply Constraints":      { color:"#1A7A44", note:"Primary mine supply peaked in 2016 at ~165 Mlb and has not recovered. Kazatomprom's sulphuric acid shortages, Cigar Lake production fatigue, and a decade of underinvestment in new mine development are structural headwinds. No significant new primary supply can come online in under 10 years from a standing start." },
-                "Athabasca Focus":         { color:"#B07A08", note:"The Athabasca Basin holds ~10% of global uranium resources at grades 10–100× the world average — the highest-grade uranium district on Earth. As the structural deficit widens and utilities scramble for long-term supply, explorers and developers in the Basin face the most compelling risk/reward in the junior resource sector." },
-                "Price Outlook":           { color:"#0E7C7B", note:"Uranium spot prices recovered from $18/lb (2016) to $87/lb (2024) — a 5× move driven entirely by supply/demand fundamentals. Long-term contract prices remain below the marginal cost of new mine supply, suggesting the price must rise further to incentivise the capital investment needed to close the deficit by 2030." },
-              };
-              const hl = HIGHLIGHTS[sdHighlight];
-              const chartData = SUPPLY_DEFICIT_DATA.filter(d => parseInt(d.year) <= sdEndYear);
-
-              const CustomTooltip = ({ active, payload, label }) => {
-                if (!active||!payload?.length) return null;
-                return (
-                  <div style={{ background:"#FFFFFF", border:"1px solid #D8D0C4", borderRadius:6, padding:"8px 12px", fontSize:11 }}>
-                    <div style={{ fontWeight:700, marginBottom:4 }}>{label}</div>
-                    {payload.map(p=>(
-                      <div key={p.name} style={{ color:p.color, marginBottom:2 }}>
-                        {p.name}: {p.name==="Spot Price ($)"&&p.value?`$${p.value}/lb`:p.value!=null?`${p.value} Mlb`:"Projected"}
-                      </div>
-                    ))}
-                  </div>
-                );
-              };
-
-              return (
-                <>
-                  {/* Stats row */}
-                  <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:0, marginBottom:16, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
-                    {[["Supply Trend","Declining","#C01818"],["Demand Trend","Rising","#1A7A44"],["Structural Deficit","Widening","#B07A08"]].map(([label,val,color])=>(
-                      <div key={label} style={{ padding:"10px 14px", borderRight:"1px solid #D8D0C4", textAlign:"center" }}>
-                        <div style={{ fontSize:11, color:"#9A9A8A", letterSpacing:"0.08em", marginBottom:3 }}>{label}</div>
-                        <div style={{ fontSize:15, fontWeight:800, color }}>{val}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Chart — always starts 2018, extends to sdEndYear */}
-                  <ResponsiveContainer width="100%" height={240}>
-                    <ComposedChart data={chartData} margin={{ top:8, right:20, left:0, bottom:0 }}>
-                      <defs>
-                        <linearGradient id="sdDemandGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%"  stopColor="#1A5AA8" stopOpacity={0.35}/>
-                          <stop offset="95%" stopColor="#1A5AA8" stopOpacity={0.05}/>
-                        </linearGradient>
-                        <linearGradient id="sdSupplyGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%"  stopColor="#1A7A44" stopOpacity={0.5}/>
-                          <stop offset="95%" stopColor="#1A7A44" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                      <XAxis dataKey="year" tick={{ fontSize:10, fill:"#6A6A5A" }}/>
-                      <YAxis yAxisId="vol" width={42} tick={{ fontSize:10, fill:"#6A6A5A" }} tickFormatter={v=>`${v}M`} domain={[100,320]}/>
-                      <YAxis yAxisId="price" width={36} orientation="right" tick={{ fontSize:10, fill:"#B07A08" }} tickFormatter={v=>`$${v}`} domain={[0,120]}/>
-                      <Tooltip content={<CustomTooltip/>}/>
-                      <Legend wrapperStyle={{ fontSize:10, paddingTop:6 }}/>
-                      <ReferenceLine yAxisId="vol" x="2026" stroke="#B07A08" strokeDasharray="4 3" label={{ value:"Today", position:"insideTopLeft", fontSize:9, fill:"#B07A08" }}/>
-                      <Area yAxisId="vol" type="monotone" dataKey="demand" name="Reactor Demand" stroke="#1A5AA8" strokeWidth={2} fill="url(#sdDemandGrad)" dot={false}/>
-                      <Area yAxisId="vol" type="monotone" dataKey="supply" name="Primary Supply"  stroke="#1A7A44" strokeWidth={2} fill="url(#sdSupplyGrad)"  dot={false}/>
-                      <Line  yAxisId="price" type="monotone" dataKey="price"  name="Spot Price ($)"  stroke="#B07A08" strokeWidth={2} dot={{ fill:"#B07A08", r:3 }} connectNulls={false}/>
-                    </ComposedChart>
-                  </ResponsiveContainer>
-
-                  {/* Timeframe slider — extends chart rightward */}
-                  <div style={{ marginTop:16, padding:"0 4px" }}>
-                    <style>{`input[type=range].sd-slider{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:linear-gradient(to right,#1A1A14 0%,#1A1A14 ${((sdEndYear-2026)/(2034-2026))*100}%,#D8D0C4 ${((sdEndYear-2026)/(2034-2026))*100}%,#D8D0C4 100%);outline:none;}input[type=range].sd-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#1A1A14;cursor:pointer;border:2px solid #FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,0.3);}input[type=range].sd-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#1A1A14;cursor:pointer;border:2px solid #FFFFFF;}`}</style>
-                    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                      <span style={{ fontSize:10, color:"#9A9A8A" }}>2018 ← History</span>
-                      <span style={{ fontSize:10, color:"#B07A08", fontWeight:700 }}>Extended to: {sdEndYear}</span>
-                      <span style={{ fontSize:10, color:"#9A9A8A" }}>Projections → 2034</span>
-                    </div>
-                    <input type="range" className="sd-slider" min={2026} max={2034} step={1} value={sdEndYear} onChange={e=>setSdEndYear(parseInt(e.target.value))}/>
-                    <div style={{ display:"flex", justifyContent:"space-between", marginTop:5 }}>
-                      {[2026,2027,2028,2029,2030,2031,2032,2033,2034].map(y=>(
-                        <span key={y} style={{ fontSize:9, color:y===sdEndYear?"#1A1A14":"#9A9A8A", fontWeight:y===sdEndYear?700:400 }}>{y}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Hero row — Reactor Buildout (globe) + Supply Constraints (flow) */}
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginTop:28 }}>
-
-                    {/* Reactor Buildout */}
-                    {(()=>{
-                      const h = HIGHLIGHTS["Global Reactor Buildout"];
-                      const spinTo = (name) => {
-                        const n = REACTOR_NATIONS.find(x=>x.name===name || x.name.startsWith(name));
-                        if(n) setGlobeTarget(t=>({ lng:n.lng, token:t.token+1 }));
-                      };
-                      return (
-                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
-                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Global Reactor Buildout</div>
-                          <div style={{ display:"flex", gap:18, alignItems:"center" }}>
-                            <div style={{ width:185, flexShrink:0 }}><ReactorGlobe targetLng={globeTarget.lng} spinToken={globeTarget.token}/></div>
-                            <div>
-                              <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
-                                <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>60+</span>
-                                <span style={{ fontSize:11.5, color:"#6A6A5A" }}>reactors u/c by 2030</span>
-                              </div>
-                              <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
-                                Each 1GWe reactor needs <strong style={{ color:"#1A1A14" }}>~400,000 lbs U₃O₈/yr</strong>. Demand is structural and contractual — locked in by engineering timelines, not speculation.
-                              </div>
-                            </div>
-                          </div>
-                          <div style={{ fontSize:10, fontWeight:800, color:h.color, margin:"16px 0 10px", textTransform:"uppercase", letterSpacing:"0.1em" }}>Top Builders Under Construction <span style={{ fontWeight:400, color:"#9A9A8A", textTransform:"none", letterSpacing:0 }}>· tap to locate</span></div>
-                          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"7px 18px" }}>
-                            {[
-                              ["China","#1A7A44",28],["India","#1A7A44",7],["Russia","#1A5AA8",6],
-                              ["Turkey","#1A5AA8",4],["Egypt","#1A5AA8",4],["S. Korea","#B07A08",3],
-                            ].map(([name,col,n])=>(
-                              <div key={name} onClick={()=>spinTo(name)} style={{ display:"flex", alignItems:"center", gap:6, fontSize:11.5, paddingBottom:6, borderBottom:"1px solid #EDE8E0", cursor:"pointer" }}>
-                                <span style={{ width:6, height:6, borderRadius:"50%", background:col, flexShrink:0 }}/>
-                                <span style={{ color:"#4A4A3A", flex:1 }}>{name}</span>
-                                <span style={{ ...MONO, color:"#1A1A14", fontWeight:700 }}>{n}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Supply Constraints */}
-                    {(()=>{
-                      const h = HIGHLIGHTS["Supply Constraints"];
-                      return (
-                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F4F8F4 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
-                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Supply Constraints</div>
-                          <div style={{ width:"100%", flex:1, display:"flex", alignItems:"center" }}><SupplyChainFlow/></div>
-                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"16px 0 6px" }}>
-                            <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>2016</span>
-                            <span style={{ fontSize:11.5, color:"#6A6A5A" }}>primary supply peaked at ~165 Mlb</span>
-                          </div>
-                          <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
-                            Kazatomprom acid shortages, Cigar Lake production fatigue, and a decade of underinvestment mean <strong style={{ color:"#1A1A14" }}>no major new supply</strong> can arrive in under 10 years from a standing start.
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-
-                  {/* Hero row 2 — Athabasca Focus (map) + Price Outlook (table) */}
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginTop:20, marginBottom:8 }}>
-
-                    {/* Athabasca Focus */}
-                    {(()=>{
-                      const h = HIGHLIGHTS["Athabasca Focus"];
-                      return (
-                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
-                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Athabasca Focus</div>
-                          <div style={{ marginBottom:14 }}>
-                            <AthabascaFocusMap satImage={basinSat}/>
-                          </div>
-                          <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
-                            <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>~10%</span>
-                            <span style={{ fontSize:11.5, color:"#6A6A5A" }}>of global uranium resources · grades 10–100× world average</span>
-                          </div>
-                          <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
-                            The highest-grade uranium district on Earth. As the deficit widens, Basin explorers face the <strong style={{ color:"#1A1A14" }}>most compelling risk/reward</strong> in the junior resource sector.
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Price Outlook */}
-                    {(()=>{
-                      const h = HIGHLIGHTS["Price Outlook"];
-                      const bars = [
-                        { yr:"2016", val:18,  col:"#C01818" },
-                        { yr:"2024", val:87,  col:"#B07A08" },
-                        { yr:"2026", val:82,  col:"#B07A08" },
-                        { yr:"2030E", val:110, col:"#1A7A44" },
-                      ];
-                      const maxV = 120;
-                      return (
-                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F0F7F6 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
-                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Price Outlook <span style={{ fontWeight:400, color:"#9A9A8A", textTransform:"none", letterSpacing:0 }}>· targets & history</span></div>
-                          <PriceOutlookTable/>
-
-                          {/* Spot price recovery bars */}
-                          <div style={{ marginTop:18, marginBottom:4 }}>
-                            <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:12, textTransform:"uppercase", letterSpacing:"0.1em" }}>Spot Price Trajectory (USD / lb)</div>
-                            <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-around", gap:16, height:110, padding:"0 8px", borderBottom:"1px solid #D8D0C4" }}>
-                              {bars.map(b=>(
-                                <div key={b.yr} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-end", height:"100%" }}>
-                                  <span style={{ ...MONO, fontSize:11.5, fontWeight:800, color:b.col, marginBottom:4 }}>${b.val}</span>
-                                  <div style={{ width:"100%", maxWidth:42, height:`${(b.val/maxV)*100}%`, background:`linear-gradient(to top,${b.col},${b.col}CC)`, borderRadius:"4px 4px 0 0" }}/>
-                                </div>
-                              ))}
-                            </div>
-                            <div style={{ display:"flex", justifyContent:"space-around", gap:16, padding:"6px 8px 0" }}>
-                              {bars.map(b=>(
-                                <span key={b.yr} style={{ flex:1, textAlign:"center", fontSize:10, color:"#6A6A5A", fontWeight:600 }}>{b.yr}</span>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"16px 0 6px" }}>
-                            <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>5×</span>
-                            <span style={{ fontSize:11.5, color:"#6A6A5A" }}>recovery from $18 (2016) to $87/lb (2024)</span>
-                          </div>
-                          <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
-                            Long-term contract prices remain <strong style={{ color:"#1A1A14" }}>below the marginal cost</strong> of new mine supply — price must rise further to incentivise the capital needed to close the deficit.
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        </div>
-
         {/* Athabasca Exploration Runway */}
         <div style={{ marginBottom:48, marginTop:24 }}>
           <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
@@ -2979,6 +2761,224 @@ export default function App() {
                   {/* Disclaimer */}
                   <div style={{ marginTop:16, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10, color:"#9A9A8A", lineHeight:1.6 }}>
                     <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> Cash runway, budget, cash position, Safety Scores, and burn-rate figures shown here are illustrative estimates derived from a simplified internal model — not audited financial data or investment advice. Figures may be inaccurate or out of date. Always verify with official company filings (SEDAR+) and consult a licensed advisor before making investment decisions.
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Supply Deficit & Price Visualizer */}
+        <div style={{ marginBottom:48, marginTop:24 }}>
+          <div style={{ ...RuleH }}>
+            <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Uranium Supply & Demand Tracker</div>
+            <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>The structural case for Athabasca exploration — global supply vs. reactor demand</div>
+          </div>
+          <div style={{ ...S.card, padding:20 }}>
+            {(()=>{
+              const HIGHLIGHTS = {
+                "Global Reactor Buildout": { color:"#C01818", note:"~60 new reactors are under construction globally by 2030. Each 1GWe reactor requires ~400,000 lbs U₃O₈ per year. This demand growth is structural and contractual — utilities have already committed to fuel cycles decades out. The demand curve is not speculative; it is locked in by engineering timelines." },
+                "Supply Constraints":      { color:"#1A7A44", note:"Primary mine supply peaked in 2016 at ~165 Mlb and has not recovered. Kazatomprom's sulphuric acid shortages, Cigar Lake production fatigue, and a decade of underinvestment in new mine development are structural headwinds. No significant new primary supply can come online in under 10 years from a standing start." },
+                "Athabasca Focus":         { color:"#B07A08", note:"The Athabasca Basin holds ~10% of global uranium resources at grades 10–100× the world average — the highest-grade uranium district on Earth. As the structural deficit widens and utilities scramble for long-term supply, explorers and developers in the Basin face the most compelling risk/reward in the junior resource sector." },
+                "Price Outlook":           { color:"#0E7C7B", note:"Uranium spot prices recovered from $18/lb (2016) to $87/lb (2024) — a 5× move driven entirely by supply/demand fundamentals. Long-term contract prices remain below the marginal cost of new mine supply, suggesting the price must rise further to incentivise the capital investment needed to close the deficit by 2030." },
+              };
+              const hl = HIGHLIGHTS[sdHighlight];
+              const chartData = SUPPLY_DEFICIT_DATA.filter(d => parseInt(d.year) <= sdEndYear);
+
+              const CustomTooltip = ({ active, payload, label }) => {
+                if (!active||!payload?.length) return null;
+                return (
+                  <div style={{ background:"#FFFFFF", border:"1px solid #D8D0C4", borderRadius:6, padding:"8px 12px", fontSize:11 }}>
+                    <div style={{ fontWeight:700, marginBottom:4 }}>{label}</div>
+                    {payload.map(p=>(
+                      <div key={p.name} style={{ color:p.color, marginBottom:2 }}>
+                        {p.name}: {p.name==="Spot Price ($)"&&p.value?`$${p.value}/lb`:p.value!=null?`${p.value} Mlb`:"Projected"}
+                      </div>
+                    ))}
+                  </div>
+                );
+              };
+
+              return (
+                <>
+                  {/* Stats row */}
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:0, marginBottom:16, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
+                    {[["Supply Trend","Declining","#C01818"],["Demand Trend","Rising","#1A7A44"],["Structural Deficit","Widening","#B07A08"]].map(([label,val,color])=>(
+                      <div key={label} style={{ padding:"10px 14px", borderRight:"1px solid #D8D0C4", textAlign:"center" }}>
+                        <div style={{ fontSize:11, color:"#9A9A8A", letterSpacing:"0.08em", marginBottom:3 }}>{label}</div>
+                        <div style={{ fontSize:15, fontWeight:800, color }}>{val}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Chart — always starts 2018, extends to sdEndYear */}
+                  <ResponsiveContainer width="100%" height={240}>
+                    <ComposedChart data={chartData} margin={{ top:8, right:20, left:0, bottom:0 }}>
+                      <defs>
+                        <linearGradient id="sdDemandGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor="#1A5AA8" stopOpacity={0.35}/>
+                          <stop offset="95%" stopColor="#1A5AA8" stopOpacity={0.05}/>
+                        </linearGradient>
+                        <linearGradient id="sdSupplyGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%"  stopColor="#1A7A44" stopOpacity={0.5}/>
+                          <stop offset="95%" stopColor="#1A7A44" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="year" tick={{ fontSize:10, fill:"#6A6A5A" }}/>
+                      <YAxis yAxisId="vol" width={42} tick={{ fontSize:10, fill:"#6A6A5A" }} tickFormatter={v=>`${v}M`} domain={[100,320]}/>
+                      <YAxis yAxisId="price" width={36} orientation="right" tick={{ fontSize:10, fill:"#B07A08" }} tickFormatter={v=>`$${v}`} domain={[0,120]}/>
+                      <Tooltip content={<CustomTooltip/>}/>
+                      <Legend wrapperStyle={{ fontSize:10, paddingTop:6 }}/>
+                      <ReferenceLine yAxisId="vol" x="2026" stroke="#B07A08" strokeDasharray="4 3" label={{ value:"Today", position:"insideTopLeft", fontSize:9, fill:"#B07A08" }}/>
+                      <Area yAxisId="vol" type="monotone" dataKey="demand" name="Reactor Demand" stroke="#1A5AA8" strokeWidth={2} fill="url(#sdDemandGrad)" dot={false}/>
+                      <Area yAxisId="vol" type="monotone" dataKey="supply" name="Primary Supply"  stroke="#1A7A44" strokeWidth={2} fill="url(#sdSupplyGrad)"  dot={false}/>
+                      <Line  yAxisId="price" type="monotone" dataKey="price"  name="Spot Price ($)"  stroke="#B07A08" strokeWidth={2} dot={{ fill:"#B07A08", r:3 }} connectNulls={false}/>
+                    </ComposedChart>
+                  </ResponsiveContainer>
+
+                  {/* Timeframe slider — extends chart rightward */}
+                  <div style={{ marginTop:16, padding:"0 4px" }}>
+                    <style>{`input[type=range].sd-slider{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:linear-gradient(to right,#1A1A14 0%,#1A1A14 ${((sdEndYear-2026)/(2034-2026))*100}%,#D8D0C4 ${((sdEndYear-2026)/(2034-2026))*100}%,#D8D0C4 100%);outline:none;}input[type=range].sd-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#1A1A14;cursor:pointer;border:2px solid #FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,0.3);}input[type=range].sd-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#1A1A14;cursor:pointer;border:2px solid #FFFFFF;}`}</style>
+                    <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                      <span style={{ fontSize:10, color:"#9A9A8A" }}>2018 ← History</span>
+                      <span style={{ fontSize:10, color:"#B07A08", fontWeight:700 }}>Extended to: {sdEndYear}</span>
+                      <span style={{ fontSize:10, color:"#9A9A8A" }}>Projections → 2034</span>
+                    </div>
+                    <input type="range" className="sd-slider" min={2026} max={2034} step={1} value={sdEndYear} onChange={e=>setSdEndYear(parseInt(e.target.value))}/>
+                    <div style={{ display:"flex", justifyContent:"space-between", marginTop:5 }}>
+                      {[2026,2027,2028,2029,2030,2031,2032,2033,2034].map(y=>(
+                        <span key={y} style={{ fontSize:9, color:y===sdEndYear?"#1A1A14":"#9A9A8A", fontWeight:y===sdEndYear?700:400 }}>{y}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Hero row — Reactor Buildout (globe) + Supply Constraints (flow) */}
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginTop:28 }}>
+
+                    {/* Reactor Buildout */}
+                    {(()=>{
+                      const h = HIGHLIGHTS["Global Reactor Buildout"];
+                      const spinTo = (name) => {
+                        const n = REACTOR_NATIONS.find(x=>x.name===name || x.name.startsWith(name));
+                        if(n) setGlobeTarget(t=>({ lng:n.lng, token:t.token+1 }));
+                      };
+                      return (
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Global Reactor Buildout</div>
+                          <div style={{ display:"flex", gap:18, alignItems:"center" }}>
+                            <div style={{ width:185, flexShrink:0 }}><ReactorGlobe targetLng={globeTarget.lng} spinToken={globeTarget.token}/></div>
+                            <div>
+                              <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
+                                <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>60+</span>
+                                <span style={{ fontSize:11.5, color:"#6A6A5A" }}>reactors u/c by 2030</span>
+                              </div>
+                              <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
+                                Each 1GWe reactor needs <strong style={{ color:"#1A1A14" }}>~400,000 lbs U₃O₈/yr</strong>. Demand is structural and contractual — locked in by engineering timelines, not speculation.
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ fontSize:10, fontWeight:800, color:h.color, margin:"16px 0 10px", textTransform:"uppercase", letterSpacing:"0.1em" }}>Top Builders Under Construction <span style={{ fontWeight:400, color:"#9A9A8A", textTransform:"none", letterSpacing:0 }}>· tap to locate</span></div>
+                          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"7px 18px" }}>
+                            {[
+                              ["China","#1A7A44",28],["India","#1A7A44",7],["Russia","#1A5AA8",6],
+                              ["Turkey","#1A5AA8",4],["Egypt","#1A5AA8",4],["S. Korea","#B07A08",3],
+                            ].map(([name,col,n])=>(
+                              <div key={name} onClick={()=>spinTo(name)} style={{ display:"flex", alignItems:"center", gap:6, fontSize:11.5, paddingBottom:6, borderBottom:"1px solid #EDE8E0", cursor:"pointer" }}>
+                                <span style={{ width:6, height:6, borderRadius:"50%", background:col, flexShrink:0 }}/>
+                                <span style={{ color:"#4A4A3A", flex:1 }}>{name}</span>
+                                <span style={{ ...MONO, color:"#1A1A14", fontWeight:700 }}>{n}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Supply Constraints */}
+                    {(()=>{
+                      const h = HIGHLIGHTS["Supply Constraints"];
+                      return (
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F4F8F4 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Supply Constraints</div>
+                          <div style={{ width:"100%", flex:1, display:"flex", alignItems:"center" }}><SupplyChainFlow/></div>
+                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"16px 0 6px" }}>
+                            <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>2016</span>
+                            <span style={{ fontSize:11.5, color:"#6A6A5A" }}>primary supply peaked at ~165 Mlb</span>
+                          </div>
+                          <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
+                            Kazatomprom acid shortages, Cigar Lake production fatigue, and a decade of underinvestment mean <strong style={{ color:"#1A1A14" }}>no major new supply</strong> can arrive in under 10 years from a standing start.
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Hero row 2 — Athabasca Focus (map) + Price Outlook (table) */}
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginTop:20, marginBottom:8 }}>
+
+                    {/* Athabasca Focus */}
+                    {(()=>{
+                      const h = HIGHLIGHTS["Athabasca Focus"];
+                      return (
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#FAF6EE 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Athabasca Focus</div>
+                          <div style={{ marginBottom:14 }}>
+                            <AthabascaFocusMap satImage={basinSat}/>
+                          </div>
+                          <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:6 }}>
+                            <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>~10%</span>
+                            <span style={{ fontSize:11.5, color:"#6A6A5A" }}>of global uranium resources · grades 10–100× world average</span>
+                          </div>
+                          <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
+                            The highest-grade uranium district on Earth. As the deficit widens, Basin explorers face the <strong style={{ color:"#1A1A14" }}>most compelling risk/reward</strong> in the junior resource sector.
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Price Outlook */}
+                    {(()=>{
+                      const h = HIGHLIGHTS["Price Outlook"];
+                      const bars = [
+                        { yr:"2016", val:18,  col:"#C01818" },
+                        { yr:"2024", val:87,  col:"#B07A08" },
+                        { yr:"2026", val:82,  col:"#B07A08" },
+                        { yr:"2030E", val:110, col:"#1A7A44" },
+                      ];
+                      const maxV = 120;
+                      return (
+                        <div style={{ background:"linear-gradient(135deg,#FFFFFF,#F0F7F6 55%,#FFFFFF)", borderRadius:12, border:"1px solid #D8D0C4", borderLeft:`3px solid ${h.color}`, padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+                          <div style={{ fontSize:11, fontWeight:800, color:h.color, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.12em" }}>Price Outlook <span style={{ fontWeight:400, color:"#9A9A8A", textTransform:"none", letterSpacing:0 }}>· targets & history</span></div>
+                          <PriceOutlookTable/>
+
+                          {/* Spot price recovery bars */}
+                          <div style={{ marginTop:18, marginBottom:4 }}>
+                            <div style={{ fontSize:10, fontWeight:800, color:h.color, marginBottom:12, textTransform:"uppercase", letterSpacing:"0.1em" }}>Spot Price Trajectory (USD / lb)</div>
+                            <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-around", gap:16, height:110, padding:"0 8px", borderBottom:"1px solid #D8D0C4" }}>
+                              {bars.map(b=>(
+                                <div key={b.yr} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-end", height:"100%" }}>
+                                  <span style={{ ...MONO, fontSize:11.5, fontWeight:800, color:b.col, marginBottom:4 }}>${b.val}</span>
+                                  <div style={{ width:"100%", maxWidth:42, height:`${(b.val/maxV)*100}%`, background:`linear-gradient(to top,${b.col},${b.col}CC)`, borderRadius:"4px 4px 0 0" }}/>
+                                </div>
+                              ))}
+                            </div>
+                            <div style={{ display:"flex", justifyContent:"space-around", gap:16, padding:"6px 8px 0" }}>
+                              {bars.map(b=>(
+                                <span key={b.yr} style={{ flex:1, textAlign:"center", fontSize:10, color:"#6A6A5A", fontWeight:600 }}>{b.yr}</span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"16px 0 6px" }}>
+                            <span style={{ ...SERIF, fontSize:38, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>5×</span>
+                            <span style={{ fontSize:11.5, color:"#6A6A5A" }}>recovery from $18 (2016) to $87/lb (2024)</span>
+                          </div>
+                          <div style={{ fontSize:11.5, color:"#4A4A3A", lineHeight:1.55 }}>
+                            Long-term contract prices remain <strong style={{ color:"#1A1A14" }}>below the marginal cost</strong> of new mine supply — price must rise further to incentivise the capital needed to close the deficit.
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </>
               );
