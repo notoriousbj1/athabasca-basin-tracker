@@ -1074,6 +1074,8 @@ export default function App() {
   const [showDrillHits, setShowDrillHits] = useState(true);
   const [bmtSizeMode,   setBmtSizeMode]   = useState("stage");  // "stage" | "resource" | "grade"
   const [showHwy,       setShowHwy]        = useState(true);
+  const [mapView,       setMapView]        = useState({ z:1, cx:0, cy:0 }); // zoom + pan center offset (svg units)
+  const mapDrag = useRef(null);
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
   const [basinTopStory, setBasinTopStory] = useState(null);
@@ -1691,6 +1693,7 @@ export default function App() {
           <div style={{ ...S.card, padding:0, overflow:"hidden" }}>
             {(()=>{
               const STAGE_COL = { Producer:"#1A5AA8", Developer:"#B07A08", Explorer:"#1A7A44", Royalty:"#8B5CF6" };
+              const lf = 1/Math.sqrt(mapView.z); // label-scale factor — shrink text as we zoom in
               const STAGE_LBL = { Producer:"Producing", Developer:"Development", Explorer:"Exploration", Royalty:"Royalty" };
               const visible = BASIN_PROJECTS.filter(p=>bmtFilters[p.stage]);
               const toggle = (k)=> setBmtFilters(f=>({...f,[k]:!f[k]}));
@@ -1861,8 +1864,13 @@ export default function App() {
 
                     {/* SVG map */}
                     <div style={{ position:"relative", background:"#EFEAE0" }}>
-                      <svg width="100%" viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ display:"block" }}
-                        onMouseLeave={()=>setBmtHover(null)}>
+                      <svg width="100%"
+                        viewBox={(()=>{ const z=mapView.z, vw=SVG_W/z, vh=SVG_H/z, maxX=SVG_W-vw, maxY=SVG_H-vh; const vx=Math.max(0,Math.min(maxX,(SVG_W-vw)/2+mapView.cx)); const vy=Math.max(0,Math.min(maxY,(SVG_H-vh)/2+mapView.cy)); return `${vx} ${vy} ${vw} ${vh}`; })()}
+                        style={{ display:"block", cursor: mapView.z>1 ? (mapDrag.current?"grabbing":"grab") : "default", touchAction:"none" }}
+                        onMouseLeave={()=>{ setBmtHover(null); mapDrag.current=null; }}
+                        onMouseDown={e=>{ if(mapView.z>1){ mapDrag.current={ sx:e.clientX, sy:e.clientY, cx:mapView.cx, cy:mapView.cy, w:e.currentTarget.getBoundingClientRect().width }; } }}
+                        onMouseMove={e=>{ if(mapDrag.current){ const d=mapDrag.current; const scale=(SVG_W/mapView.z)/d.w; setMapView(v=>({ ...v, cx:d.cx-(e.clientX-d.sx)*scale, cy:d.cy-(e.clientY-d.sy)*scale })); } }}
+                        onMouseUp={()=>{ mapDrag.current=null; }}>
                         <defs>
                           <radialGradient id="basinFill" cx="50%" cy="45%" r="65%">
                             <stop offset="0%" stopColor="#F0E2C0" stopOpacity="0.75"/>
@@ -1903,9 +1911,9 @@ export default function App() {
                           return (
                             <g key={i}>
                               <path d={d} fill="#AECBDA" fillOpacity={0.75} stroke="#6E96AC" strokeWidth={0.6}/>
-                              <text x={lx} y={ly} textAnchor="middle" fontSize={major?8.5:7} fontWeight={major?700:400}
+                              <text x={lx} y={ly} textAnchor="middle" fontSize={(major?8.5:7)*lf} fontWeight={major?700:400}
                                 fill="#2E5468" fontStyle="italic" opacity={major?1:0.9}
-                                style={{ paintOrder:"stroke" }} stroke="#C4D8E2" strokeWidth={major?2.8:1.8} strokeLinejoin="round">{lake.name}</text>
+                                style={{ paintOrder:"stroke" }} stroke="#C4D8E2" strokeWidth={(major?2.8:1.8)*lf} strokeLinejoin="round">{lake.name}</text>
                             </g>
                           );
                         })}
@@ -1939,8 +1947,8 @@ export default function App() {
                               <path d={d} fill="none" stroke="#E8B84B" strokeWidth={26} strokeLinecap="round" strokeOpacity={0.28} style={{ filter:"blur(5px)" }}/>
                               <path d={d} fill="none" stroke="#B07A08" strokeWidth={12} strokeLinecap="round" strokeOpacity={0.22} style={{ filter:"blur(3px)" }}/>
                               <text x={mid[0]} y={mid[1]} textAnchor="middle" transform={`rotate(${ang.toFixed(1)} ${mid[0]} ${mid[1]})`}
-                                fontSize={7} fontWeight={700} fill="#8A6A1A" letterSpacing="0.04em" opacity={0.85}
-                                style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={1.8} strokeLinejoin="round">{t.name}</text>
+                                fontSize={7*lf} fontWeight={700} fill="#8A6A1A" letterSpacing="0.04em" opacity={0.85}
+                                style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={1.8*lf} strokeLinejoin="round">{t.name}</text>
                             </g>
                           );
                         })}
@@ -1976,8 +1984,8 @@ export default function App() {
                               ) : (
                                 <rect x={x-2.2} y={y-2.2} width={4.4} height={4.4} fill="#8A8A7E" stroke="#FFFFFF" strokeWidth={0.7}/>
                               )}
-                              <text x={x} y={y-5} textAnchor="middle" fontSize={6.5} fontWeight={600} fill="#5A5A4A" opacity={0.85}
-                                style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={1.6} strokeLinejoin="round">{s.name}</text>
+                              <text x={x} y={y-5} textAnchor="middle" fontSize={6.5*lf} fontWeight={600} fill="#5A5A4A" opacity={0.85}
+                                style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={1.6*lf} strokeLinejoin="round">{s.name}</text>
                             </g>
                           );
                         })}
@@ -2060,7 +2068,7 @@ export default function App() {
                                 const ly = dir==="up" ? y-r-5 : dir==="down" ? y+r+9 : y+3;
                                 const anchor = dir==="left" ? "end" : dir==="right" ? "start" : "middle";
                                 return (
-                                  <text x={lx} y={ly} textAnchor={anchor} fontSize={8} fontWeight={700} fill="#1A1A14" style={{ paintOrder:"stroke" }} stroke="#EFEAE0" strokeWidth={3} strokeLinejoin="round" strokeOpacity={0.92}>{p.name}</text>
+                                  <text x={lx} y={ly} textAnchor={anchor} fontSize={8*lf} fontWeight={700} fill="#1A1A14" style={{ paintOrder:"stroke" }} stroke="#EFEAE0" strokeWidth={3*lf} strokeLinejoin="round" strokeOpacity={0.92}>{p.name}</text>
                                 );
                               })()}
                             </g>
@@ -2119,6 +2127,23 @@ export default function App() {
                           );
                         })()}
                       </svg>
+
+                      {/* Zoom controls */}
+                      <div style={{ position:"absolute", top:12, right:12, display:"flex", flexDirection:"column", gap:4, zIndex:5 }}>
+                        {[["+",()=>setMapView(v=>({ ...v, z:Math.min(6, +(v.z+0.5).toFixed(2)) }))],
+                          ["\u2212",()=>setMapView(v=>{ const z=Math.max(1, +(v.z-0.5).toFixed(2)); return z===1?{z:1,cx:0,cy:0}:{ ...v, z }; })]].map(([lbl,fn],i)=>(
+                          <button key={i} onClick={fn} style={{ width:30, height:30, borderRadius:7, border:"1px solid #D8D0C4", background:"#FFFFFF", color:"#1A1A14", fontSize:18, fontWeight:700, cursor:"pointer", lineHeight:1, boxShadow:"0 1px 3px rgba(0,0,0,0.1)", display:"flex", alignItems:"center", justifyContent:"center" }}>{lbl}</button>
+                        ))}
+                        {mapView.z>1 && (
+                          <button onClick={()=>setMapView({ z:1, cx:0, cy:0 })} title="Reset view"
+                            style={{ width:30, height:30, borderRadius:7, border:"1px solid #D8D0C4", background:"#FFFFFF", color:"#6A6A5A", fontSize:13, cursor:"pointer", boxShadow:"0 1px 3px rgba(0,0,0,0.1)", display:"flex", alignItems:"center", justifyContent:"center" }}>⤢</button>
+                        )}
+                      </div>
+                      {mapView.z>1 && (
+                        <div style={{ position:"absolute", bottom:12, right:12, fontSize:9, color:"#9A9A8A", background:"#FFFFFFcc", padding:"2px 7px", borderRadius:5, zIndex:5 }}>
+                          {mapView.z.toFixed(1)}× · drag to pan
+                        </div>
+                      )}
 
                       {/* Hover tooltip */}
                       {bmtHover && (
