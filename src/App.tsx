@@ -410,25 +410,31 @@ const BASIN_BOUNDARY = [
 // stage: Producer | Developer | Explorer | Royalty
 // ─────────────────────────────────────────────
 const BASIN_PROJECTS = [
-  { name:"Cigar Lake",       company:"Cameco / Orano",     ticker:"CCO",   lat:58.06, lng:-104.53, stage:"Producer", grade:"~14.7% U₃O₈", type:"Unconformity",        info:"World's highest-grade producing uranium mine." },
-  { name:"McArthur River",   company:"Cameco",             ticker:"CCO",   lat:57.77, lng:-105.04, stage:"Producer", grade:"~6.9% U₃O₈",  type:"Unconformity",        info:"Largest high-grade uranium mine; restarted 2022." },
-  { name:"Key Lake Mill",    company:"Cameco",             ticker:"CCO",   lat:57.20, lng:-105.62, stage:"Producer", grade:"Mill",        type:"Processing",          info:"Processes McArthur River ore." },
-  { name:"Rabbit Lake",      company:"Cameco",             ticker:"CCO",   lat:58.22, lng:-103.68, stage:"Producer", grade:"Care & maint.", type:"Unconformity",      info:"Historic mill, on care & maintenance." },
-  { name:"McClean Lake",     company:"Orano",              ticker:"—",     lat:58.30, lng:-103.83, stage:"Producer", grade:"Mill",        type:"Processing",          info:"Processes Cigar Lake ore." },
-  { name:"Arrow / Rook I",   company:"NexGen Energy",      ticker:"NXE",   lat:58.18, lng:-103.45, stage:"Developer",grade:"~2.4% U₃O₈",  type:"Basement-hosted",     info:"FS complete; flagship development, undergoing permitting." },
-  { name:"Wheeler River",    company:"Denison Mines",      ticker:"DML",   lat:57.95, lng:-104.55, stage:"Developer",grade:"~3.5% U₃O₈",  type:"Unconformity",        info:"Phoenix ISR + Gryphon deposits; FEED stage." },
-  { name:"Triple R",         company:"Fission Uranium",    ticker:"FCU",   lat:58.10, lng:-109.50, stage:"Developer",grade:"~1.6% U₃O₈",  type:"Basement / shallow",  info:"Patterson Lake South; FS-stage development." },
-  { name:"Hurricane",        company:"IsoEnergy",          ticker:"ISO",   lat:58.35, lng:-103.60, stage:"Developer",grade:"~34% U₃O₈",   type:"Unconformity",        info:"World's highest-grade indicated U deposit." },
-  { name:"Patterson Lake N", company:"F3 Uranium",         ticker:"FUU",   lat:58.30, lng:-109.10, stage:"Explorer", grade:"~5–10% U₃O₈ (disc.)", type:"Basement-hosted", info:"JR Zone high-grade discovery; active drilling." },
-  { name:"Moore / Russell",  company:"Skyharbour Res.",    ticker:"SYH",   lat:57.70, lng:-104.85, stage:"Explorer", grade:"~6% U₃O₈ (zones)", type:"Unconformity",     info:"Maverick zone; flagship + JV portfolio." },
-  { name:"CMB Package",      company:"Atha Energy",        ticker:"SASK",  lat:58.50, lng:-103.20, stage:"Explorer", grade:"Early-stage",  type:"Multiple targets",    info:"One of the largest basin land packages." },
-  { name:"West McArthur",    company:"CanAlaska",          ticker:"CVV",   lat:57.85, lng:-105.30, stage:"Explorer", grade:"~6% U₃O₈ (disc.)", type:"Unconformity",     info:"Pike Zone discovery; Cameco JV." },
-  { name:"Hook Lake JV",     company:"Purepoint Uranium",  ticker:"PTU",   lat:58.22, lng:-103.95, stage:"Explorer", grade:"Spitfire zone", type:"Unconformity",       info:"Cameco & Orano joint venture." },
-  { name:"Davidson River",   company:"Standard Uranium",   ticker:"STND",  lat:58.05, lng:-109.30, stage:"Explorer", grade:"Drill target", type:"Basement-hosted",     info:"Western basin, near PLS trend." },
-  { name:"ACKIO / Hook",     company:"Baselode / Geiger",  ticker:"FIND",  lat:57.55, lng:-104.40, stage:"Explorer", grade:"Near-surface",  type:"Basement, shallow",  info:"Near-surface ACKIO discovery." },
-  { name:"Key Lake area",    company:"Canadian Uranium",   ticker:"CANU",  lat:57.30, lng:-105.40, stage:"Explorer", grade:"Drill-ready",   type:"Unconformity",       info:"Projects adjacent to Key Lake infrastructure." },
-  { name:"East Preston",     company:"Azincourt Energy",   ticker:"AAZ",   lat:58.00, lng:-109.70, stage:"Explorer", grade:"Drill target",  type:"Basement-hosted",    info:"JV with Skyharbour; western basin." },
-  { name:"Royalty Portfolio",company:"Uranium Royalty",    ticker:"URC",   lat:57.50, lng:-106.20, stage:"Royalty",  grade:"Multiple",      type:"Royalties + physical",info:"Royalties across basin assets + physical U₃O₈." },
+  { name:"Cigar Lake",       company:"Cameco / Orano",     ticker:"CCO",   lat:58.06, lng:-104.53, stage:"Producer", grade:"~14.7% U₃O₈", gradePct:14.7, resourceMlb:230, drilling:false, type:"Unconformity",        info:"World's highest-grade producing uranium mine." },
+  { name:"McArthur River",   company:"Cameco",             ticker:"CCO",   lat:57.77, lng:-105.04, stage:"Producer", grade:"~6.9% U₃O₈",  gradePct:6.9,  resourceMlb:390, drilling:false, type:"Unconformity",        info:"Largest high-grade uranium mine; restarted 2022." },
+  { name:"Key Lake Mill",    company:"Cameco",             ticker:"CCO",   lat:57.20, lng:-105.62, stage:"Producer", grade:"Mill",        gradePct:null, resourceMlb:null,drilling:false, type:"Processing",          info:"Processes McArthur River ore." },
+  { name:"Rabbit Lake",      company:"Cameco",             ticker:"CCO",   lat:58.22, lng:-103.68, stage:"Producer", grade:"Care & maint.", gradePct:0.7, resourceMlb:60,  drilling:false, type:"Unconformity",      info:"Historic mill, on care & maintenance." },
+  { name:"McClean Lake",     company:"Orano",              ticker:"—",     lat:58.30, lng:-103.83, stage:"Producer", grade:"Mill",        gradePct:null, resourceMlb:null,drilling:false, type:"Processing",          info:"Processes Cigar Lake ore." },
+  { name:"Arrow / Rook I",   company:"NexGen Energy",      ticker:"NXE",   lat:58.18, lng:-103.45, stage:"Developer",grade:"~2.4% U₃O₈",  gradePct:2.4,  resourceMlb:340, drilling:false, type:"Basement-hosted",     info:"FS complete; flagship development, undergoing permitting." },
+  { name:"Wheeler River",    company:"Denison Mines",      ticker:"DML",   lat:57.95, lng:-104.55, stage:"Developer",grade:"~3.5% U₃O₈",  gradePct:3.5,  resourceMlb:130, drilling:false, type:"Unconformity",        info:"Phoenix ISR + Gryphon deposits; FEED stage." },
+  { name:"Triple R",         company:"Fission Uranium",    ticker:"FCU",   lat:58.10, lng:-109.50, stage:"Developer",grade:"~1.6% U₃O₈",  gradePct:1.6,  resourceMlb:130, drilling:false, type:"Basement / shallow",  info:"Patterson Lake South; FS-stage development." },
+  { name:"Hurricane",        company:"IsoEnergy",          ticker:"ISO",   lat:58.35, lng:-103.60, stage:"Developer",grade:"~34% U₃O₈",   gradePct:34.0, resourceMlb:48,  drilling:false, type:"Unconformity",        info:"World's highest-grade indicated U deposit." },
+  { name:"Patterson Lake N", company:"F3 Uranium",         ticker:"FUU",   lat:58.30, lng:-109.10, stage:"Explorer", grade:"~5–10% U₃O₈ (disc.)", gradePct:7.0, resourceMlb:null, drilling:true,  type:"Basement-hosted", info:"JR Zone high-grade discovery; active drilling." },
+  { name:"Moore / Russell",  company:"Skyharbour Res.",    ticker:"SYH",   lat:57.70, lng:-104.85, stage:"Explorer", grade:"~6% U₃O₈ (zones)", gradePct:6.0, resourceMlb:null, drilling:true,  type:"Unconformity",     info:"Maverick zone; flagship + JV portfolio." },
+  { name:"CMB Package",      company:"Atha Energy",        ticker:"SASK",  lat:58.50, lng:-103.20, stage:"Explorer", grade:"Early-stage",  gradePct:null, resourceMlb:null,drilling:false, type:"Multiple targets",    info:"One of the largest basin land packages." },
+  { name:"West McArthur",    company:"CanAlaska",          ticker:"CVV",   lat:57.85, lng:-105.30, stage:"Explorer", grade:"~6% U₃O₈ (disc.)", gradePct:6.0, resourceMlb:null, drilling:true,  type:"Unconformity",     info:"Pike Zone discovery; Cameco JV." },
+  { name:"Hook Lake JV",     company:"Purepoint Uranium",  ticker:"PTU",   lat:58.22, lng:-103.95, stage:"Explorer", grade:"Spitfire zone", gradePct:4.0, resourceMlb:null, drilling:false, type:"Unconformity",       info:"Cameco & Orano joint venture." },
+  { name:"Davidson River",   company:"Standard Uranium",   ticker:"STND",  lat:58.05, lng:-109.30, stage:"Explorer", grade:"Drill target", gradePct:null, resourceMlb:null,drilling:true,  type:"Basement-hosted",     info:"Western basin, near PLS trend." },
+  { name:"ACKIO / Hook",     company:"Baselode / Geiger",  ticker:"FIND",  lat:57.55, lng:-104.40, stage:"Explorer", grade:"Near-surface",  gradePct:1.0, resourceMlb:null, drilling:false, type:"Basement, shallow",  info:"Near-surface ACKIO discovery." },
+  { name:"Key Lake area",    company:"Canadian Uranium",   ticker:"CANU",  lat:57.30, lng:-105.40, stage:"Explorer", grade:"Drill-ready",   gradePct:null, resourceMlb:null,drilling:false, type:"Unconformity",       info:"Projects adjacent to Key Lake infrastructure." },
+  { name:"East Preston",     company:"Azincourt Energy",   ticker:"AAZ",   lat:58.00, lng:-109.70, stage:"Explorer", grade:"Drill target",  gradePct:null, resourceMlb:null,drilling:false, type:"Basement-hosted",    info:"JV with Skyharbour; western basin." },
+  { name:"Royalty Portfolio",company:"Uranium Royalty",    ticker:"URC",   lat:57.50, lng:-106.20, stage:"Royalty",  grade:"Multiple",      gradePct:null, resourceMlb:null,drilling:false, type:"Royalties + physical",info:"Royalties across basin assets + physical U₃O₈." },
+];
+
+// All-weather highways (real approximate routes) — Hwy 905 (eastern) & Hwy 914 (Key Lake)
+const BASIN_HIGHWAYS = [
+  { name:"Highway 905", pts:[[-103.30,56.20],[-103.50,57.00],[-103.70,57.80],[-103.85,58.30],[-104.00,58.80]] },
+  { name:"Highway 914", pts:[[-105.55,56.10],[-105.60,56.70],[-105.62,57.20]] },
 ];
 
 // Stylised prospective "uranium trend" corridors (illustrative — not survey geology)
@@ -1020,6 +1026,9 @@ export default function App() {
   const [drillResults,  setDrillResults]  = useState([]);
   const [drillLoading,  setDrillLoading]  = useState(false);
   const [drillGenAt,    setDrillGenAt]    = useState(null);
+  const [showDrillHits, setShowDrillHits] = useState(true);
+  const [bmtSizeMode,   setBmtSizeMode]   = useState("stage");  // "stage" | "resource" | "grade"
+  const [showHwy,       setShowHwy]        = useState(true);
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
   const [basinTopStory, setBasinTopStory] = useState(null);
@@ -1646,6 +1655,29 @@ export default function App() {
                 .filter(p=>p.stage!=="Royalty")
                 .slice(0,6);
 
+              // Match top drill results to known coordinates (project name or company name)
+              const norm = (s)=> (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+              const locateHit = (r) => {
+                const proj = norm(r.project), comp = norm(r.company), tick = (r.ticker||"").replace(/\..*$/,"").toUpperCase();
+                // 1) match against curated BASIN_PROJECTS by project name, ticker, or company
+                let hit = BASIN_PROJECTS.find(p =>
+                  (proj && (norm(p.name).includes(proj) || proj.includes(norm(p.name)))) ||
+                  (tick && p.ticker===tick) ||
+                  (comp && norm(p.company).includes(comp.slice(0,6)))
+                );
+                if (hit) return { lat:hit.lat, lng:hit.lng, matchedTo:hit.name };
+                // 2) match against SMDI deposit names
+                if (smdiDeposits.length) {
+                  const sm = smdiDeposits.find(d => proj && norm(d.name).includes(proj));
+                  if (sm) return { lat:sm.lat, lng:sm.lng, matchedTo:sm.name };
+                }
+                return null;
+              };
+              const drillHits = drillResults
+                .map(r => { const loc=locateHit(r); return loc ? { ...r, ...loc } : null; })
+                .filter(Boolean)
+                .slice(0, 10);
+
               return (
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 220px", gap:0 }}>
                   {/* MAP */}
@@ -1683,7 +1715,48 @@ export default function App() {
                         <span style={{ width:8, height:8, borderRadius:2, background:"#6B4FA0", opacity:0.6 }}/>
                         <span style={{ fontSize:11, fontWeight:600, color:"#1A1A14" }}>Mineral Claims {basinClaims.length>0 && `(${basinClaims.length})`}</span>
                       </button>
+                      <button onClick={()=>setShowDrillHits(v=>!v)} title="Top 10 recent drill intercepts, placed at their project location" style={{
+                        display:"flex", alignItems:"center", gap:6, padding:"4px 10px", borderRadius:20, cursor:"pointer",
+                        border:`1px solid ${showDrillHits?"#C01818":"#D8D0C4"}`, background:showDrillHits?"#C0181814":"#F5F3EE", opacity:showDrillHits?1:0.5,
+                      }}>
+                        <span style={{ fontSize:10 }}>🔥</span>
+                        <span style={{ fontSize:11, fontWeight:600, color:"#1A1A14" }}>Top Drill Hits {drillHits.length>0 && `(${drillHits.length})`}</span>
+                      </button>
+                      <button onClick={()=>setShowHwy(v=>!v)} title="All-weather highways 905 & 914" style={{
+                        display:"flex", alignItems:"center", gap:6, padding:"4px 10px", borderRadius:20, cursor:"pointer",
+                        border:`1px solid ${showHwy?"#C8881A":"#D8D0C4"}`, background:showHwy?"#C8881A14":"#F5F3EE", opacity:showHwy?1:0.5,
+                      }}>
+                        <span style={{ width:14, height:0, borderTop:"2px dashed #C8881A" }}/>
+                        <span style={{ fontSize:11, fontWeight:600, color:"#1A1A14" }}>Highways</span>
+                      </button>
+                      <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                        <span style={{ fontSize:10, color:"#9A9A8A", fontWeight:600 }}>Bubbles:</span>
+                        <select value={bmtSizeMode} onChange={e=>setBmtSizeMode(e.target.value)}
+                          style={{ padding:"4px 8px", fontSize:10.5, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14", cursor:"pointer" }}>
+                          <option value="stage">By stage</option>
+                          <option value="resource">Size by resource (Mlb)</option>
+                          <option value="grade">Size + colour by grade</option>
+                        </select>
+                      </div>
                     </div>
+
+                    {/* Grade colour legend (grade mode) */}
+                    {bmtSizeMode==="grade" && (
+                      <div style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 14px", borderBottom:"1px solid #EDE8E0", flexWrap:"wrap", fontSize:10, color:"#6A6A5A" }}>
+                        <span style={{ fontWeight:700 }}>Grade (% U₃O₈):</span>
+                        {[["<2%","#E8A020"],["2–6%","#E8730C"],["6–15%","#C01818"],["15%+","#7C1D6F"]].map(([lbl,c])=>(
+                          <span key={lbl} style={{ display:"flex", alignItems:"center", gap:4 }}>
+                            <span style={{ width:10, height:10, borderRadius:"50%", background:c }}/>{lbl}
+                          </span>
+                        ))}
+                        <span style={{ fontStyle:"italic", color:"#9A9A8A" }}>· bubble size ∝ grade · estimates only</span>
+                      </div>
+                    )}
+                    {bmtSizeMode==="resource" && (
+                      <div style={{ padding:"8px 14px", borderBottom:"1px solid #EDE8E0", fontSize:10, color:"#6A6A5A" }}>
+                        <span style={{ fontWeight:700 }}>Bubble size</span> ∝ estimated contained resource (Mlb U₃O₈) · <span style={{ fontStyle:"italic", color:"#9A9A8A" }}>approximate public estimates, deposits only</span>
+                      </div>
+                    )}
 
                     {/* SVG map */}
                     <div style={{ position:"relative", background:"#EFEAE0" }}>
@@ -1718,6 +1791,20 @@ export default function App() {
                         {/* AB/SK border */}
                         {(()=>{ const [x1,y1]=toSVG(60.5,-110.0); const [x2,y2]=toSVG(55.0,-110.0); return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#9A9A8A" strokeWidth={1} strokeDasharray="4,4" opacity={0.5}/>; })()}
 
+                        {/* All-weather highways */}
+                        {showHwy && BASIN_HIGHWAYS.map((h,i)=>{
+                          const d = h.pts.map(([lng,lat],j)=>{ const [x,y]=toSVG(lat,lng); return `${j===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ");
+                          const mid = h.pts[Math.floor(h.pts.length/2)];
+                          const [mx,my]=toSVG(mid[1],mid[0]);
+                          return (
+                            <g key={`hwy-${i}`}>
+                              <path d={d} fill="none" stroke="#FFFFFF" strokeWidth={3.5} strokeOpacity={0.7} strokeLinecap="round"/>
+                              <path d={d} fill="none" stroke="#C8881A" strokeWidth={1.6} strokeDasharray="6,4" strokeLinecap="round"/>
+                              <text x={mx+4} y={my} fontSize={7} fontWeight={700} fill="#8A6A1A" style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={2} strokeLinejoin="round">{h.name}</text>
+                            </g>
+                          );
+                        })}
+
                         {/* Mineral claims (active dispositions) — real tenure data, bottom layer */}
                         {showClaims && basinClaims.map((c,i)=>{
                           if(c.lat<55||c.lat>61||c.lng<-113||c.lng>-101) return null;
@@ -1751,17 +1838,55 @@ export default function App() {
                         {/* Project markers (curated) */}
                         {visible.map((p,i)=>{
                           const [x,y]=toSVG(p.lat,p.lng);
-                          const col=STAGE_COL[p.stage];
-                          const r = p.stage==="Producer"?7 : p.stage==="Developer"?6.5 : 5.5;
+                          // Color: by grade spectrum (if grade mode) else by stage
+                          const gradeColor = (g)=> g==null?"#9A9A8A" : g>=15?"#7C1D6F" : g>=6?"#C01818" : g>=2?"#E8730C" : "#E8A020";
+                          const col = bmtSizeMode==="grade" ? gradeColor(p.gradePct) : STAGE_COL[p.stage];
+                          // Size: by resource (if resource mode), by grade (grade mode), else by stage
+                          let r;
+                          if (bmtSizeMode==="resource") {
+                            r = p.resourceMlb ? 4 + Math.sqrt(p.resourceMlb)*0.9 : 4;
+                          } else if (bmtSizeMode==="grade") {
+                            r = p.gradePct ? 4 + Math.sqrt(p.gradePct)*1.6 : 4;
+                          } else {
+                            r = p.stage==="Producer"?7 : p.stage==="Developer"?6.5 : 5.5;
+                          }
+                          r = Math.min(r, 16);
                           const hov = bmtHover?.name===p.name;
                           return (
                             <g key={i} style={{ cursor:"pointer" }}
                               onMouseEnter={()=>setBmtHover(p)} onClick={()=>setBmtHover(p)}>
+                              {/* active drilling pulse ring */}
+                              {p.drilling && (
+                                <circle cx={x} cy={y} r={r+3} fill="none" stroke="#C01818" strokeWidth={1.5}
+                                  style={{ transformOrigin:`${x}px ${y}px`, animation:"rigPulse 2s ease-in-out infinite" }}/>
+                              )}
                               <circle cx={x} cy={y} r={r+(hov?5:3)} fill={col} fillOpacity={0.2}/>
                               <circle cx={x} cy={y} r={r} fill={col} stroke="#FFFFFF" strokeWidth={1.5}/>
+                              {p.drilling && <text x={x} y={y+2.6} textAnchor="middle" fontSize={7} fill="#FFFFFF" fontWeight={900}>▲</text>}
                               {(p.stage==="Producer"||hov) && (
                                 <text x={x+r+3} y={y+3} fontSize={8} fontWeight={700} fill="#1A1A14" style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={2.5} strokeLinejoin="round">{p.name}</text>
                               )}
+                            </g>
+                          );
+                        })}
+                        {/* Top drill hits — hot markers, top layer */}
+                        {showDrillHits && drillHits.map((h,i)=>{
+                          if(h.lat==null||h.lng==null) return null;
+                          const [x,y]=toSVG(h.lat,h.lng);
+                          const hov = bmtHover?.isDrill && bmtHover?._i===i;
+                          const sz = hov?10:8;
+                          // small starburst
+                          const spikes = Array.from({length:8},(_,k)=>{
+                            const a=(k/8)*Math.PI*2; const r1=sz, r2=sz*0.45;
+                            return `${x+Math.cos(a)*r1},${y+Math.sin(a)*r1} ${x+Math.cos(a+Math.PI/8)*r2},${y+Math.sin(a+Math.PI/8)*r2}`;
+                          }).join(" ");
+                          return (
+                            <g key={`drill-${i}`} style={{ cursor:"pointer" }}
+                              onMouseEnter={()=>setBmtHover({ ...h, isDrill:true, _i:i, name:h.company })}>
+                              <circle cx={x} cy={y} r={sz+4} fill="#C01818" fillOpacity={0.18}/>
+                              <polygon points={spikes} fill="#E83838" stroke="#FFFFFF" strokeWidth={0.8} opacity={0.95}/>
+                              <circle cx={x} cy={y} r={2.4} fill="#FFFFFF"/>
+                              <text x={x} y={y-sz-3} textAnchor="middle" fontSize={7.5} fontWeight={800} fill="#C01818" style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={2.5} strokeLinejoin="round">{i+1}</text>
                             </g>
                           );
                         })}
@@ -1769,12 +1894,24 @@ export default function App() {
 
                       {/* Hover tooltip */}
                       {bmtHover && (
-                        <div style={{ position:"absolute", top:12, left:12, width:236, background:"#FFFFFF", border:`1px solid ${bmtHover.isClaim?"#6B4FA0":bmtHover.isSmdi?"#8A1818":STAGE_COL[bmtHover.stage]}`, borderRadius:10, padding:"12px 14px", boxShadow:"0 4px 16px rgba(0,0,0,0.15)", fontSize:11 }}>
+                        <div style={{ position:"absolute", top:12, left:12, width:236, background:"#FFFFFF", border:`1px solid ${bmtHover.isDrill?"#C01818":bmtHover.isClaim?"#6B4FA0":bmtHover.isSmdi?"#8A1818":STAGE_COL[bmtHover.stage]}`, borderRadius:10, padding:"12px 14px", boxShadow:"0 4px 16px rgba(0,0,0,0.15)", fontSize:11 }}>
                           <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
-                            <span style={{ width:9, height:9, borderRadius:bmtHover.isClaim?2:"50%", background:bmtHover.isClaim?"#6B4FA0":bmtHover.isSmdi?"#8A1818":STAGE_COL[bmtHover.stage] }}/>
-                            <span style={{ fontSize:13, fontWeight:800, color:"#1A1A14" }}>{bmtHover.isClaim?`Claim ${bmtHover.name}`:bmtHover.name}</span>
+                            <span style={{ width:9, height:9, borderRadius:bmtHover.isClaim?2:"50%", background:bmtHover.isDrill?"#C01818":bmtHover.isClaim?"#6B4FA0":bmtHover.isSmdi?"#8A1818":STAGE_COL[bmtHover.stage] }}/>
+                            <span style={{ fontSize:13, fontWeight:800, color:"#1A1A14" }}>{bmtHover.isDrill?`🔥 ${bmtHover.company}`:bmtHover.isClaim?`Claim ${bmtHover.name}`:bmtHover.name}</span>
                           </div>
-                          {bmtHover.isClaim ? (
+                          {bmtHover.isDrill ? (
+                            <>
+                              <div style={{ display:"grid", gap:3 }}>
+                                <div><span style={{ color:"#9A9A8A" }}>Intercept: </span><strong style={{ ...MONO, color:"#C01818" }}>{bmtHover.interval_text || `${bmtHover.thickness_m}m @ ${bmtHover.grade_pct}%`}</strong></div>
+                                {bmtHover.hole    && <div><span style={{ color:"#9A9A8A" }}>Hole: </span><strong style={{ color:"#1A1A14" }}>{bmtHover.hole}</strong></div>}
+                                <div><span style={{ color:"#9A9A8A" }}>Grade × Thickness: </span><strong style={{ color:"#1A7A44" }}>{bmtHover.gt}</strong></div>
+                                {bmtHover.matchedTo && <div><span style={{ color:"#9A9A8A" }}>Location: </span><strong style={{ color:"#1A1A14" }}>{bmtHover.matchedTo}</strong></div>}
+                              </div>
+                              <div style={{ marginTop:6, paddingTop:6, borderTop:"1px solid #EDE8E0", color:"#9A9A8A", fontSize:9.5, fontStyle:"italic" }}>
+                                AI-extracted from a press release · pin shows project area, not exact hole{bmtHover.url && <> · <a href={bmtHover.url} target="_blank" rel="noopener noreferrer" style={{ color:"#C01818" }}>source ↗</a></>}
+                              </div>
+                            </>
+                          ) : bmtHover.isClaim ? (
                             <>
                               <div style={{ display:"grid", gap:3 }}>
                                 <div><span style={{ color:"#9A9A8A" }}>Owner: </span><strong style={{ color:"#6B4FA0" }}>{bmtHover.owner}</strong></div>
@@ -1806,6 +1943,8 @@ export default function App() {
                                 <div><span style={{ color:"#9A9A8A" }}>Stage: </span><strong style={{ color:STAGE_COL[bmtHover.stage] }}>{STAGE_LBL[bmtHover.stage]}</strong></div>
                                 <div><span style={{ color:"#9A9A8A" }}>Grade: </span><strong style={{ color:"#1A7A44" }}>{bmtHover.grade}</strong></div>
                                 <div><span style={{ color:"#9A9A8A" }}>Type: </span><strong style={{ color:"#1A1A14" }}>{bmtHover.type}</strong></div>
+                                {bmtHover.resourceMlb && <div><span style={{ color:"#9A9A8A" }}>Resource: </span><strong style={{ color:"#B07A08" }}>~{bmtHover.resourceMlb} Mlb U₃O₈ <span style={{ fontWeight:400, fontStyle:"italic" }}>(approx.)</span></strong></div>}
+                                {bmtHover.drilling && <div style={{ color:"#C01818", fontWeight:700, fontSize:10 }}>● Active drilling reported</div>}
                               </div>
                               <div style={{ marginTop:6, paddingTop:6, borderTop:"1px solid #EDE8E0", color:"#4A4A3A", lineHeight:1.45 }}>{bmtHover.info}</div>
                             </>
@@ -1862,7 +2001,7 @@ export default function App() {
           </div>
           {/* Disclaimer */}
           <div style={{ marginTop:12, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10, color:"#9A9A8A", lineHeight:1.6 }}>
-            <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> The larger labelled markers are curated company projects — positions and grades are approximate, from public disclosures, and may be out of date. The small dark-red dots (SMDI Occurrences) are real uranium occurrence locations from the <strong>Saskatchewan Mineral Deposit Index</strong>. The purple squares (Mineral Claims) are real active mineral dispositions from <strong>Saskatchewan Mineral Tenure</strong>, shown at claim centroids and coloured brighter where the registered owner matches a tracked company; claims cover all minerals, not only uranium, and owner names are as-registered. The basin outline and "uranium trend" corridors are simplified schematics, not survey-grade geology. Verify everything with official sources before making decisions. Not investment advice.
+            <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> The larger labelled markers are curated company projects — positions, grades, and resource estimates are <strong>approximate public-knowledge figures</strong> and may be out of date. Bubble size/colour modes (resource, grade) use these estimates and are illustrative, not NI 43-101 figures. "Active drilling" flags and 🔥 top hits are derived from press releases and may lag reality. Highways 905/914 are approximate routes. The small dark-red dots (SMDI) and purple squares (Mineral Claims) are real data from Saskatchewan Geological Survey / Mineral Tenure. The basin outline and trend corridors are simplified schematics, not survey geology. Verify everything with official sources before making decisions. Not investment advice.
         </div>
         </div>
 
@@ -3391,7 +3530,7 @@ export default function App() {
   return (
     <div style={S.root}>
       {/* Font + animation */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');@keyframes tkr{from{transform:translateX(0)}to{transform:translateX(-50%)}}.tkr-track{animation:tkr 55s linear infinite}.tkr-track:hover{animation-play-state:paused}@keyframes card-glow{0%,100%{box-shadow:0 0 0 0 rgba(176,122,8,0)}50%{box-shadow:0 0 28px 6px rgba(176,122,8,0.12)}}.spot-glow{animation:card-glow 3s ease-in-out infinite}@keyframes upPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.06)}}.up-arrow{display:inline-block;animation:upPulse 2.2s ease-in-out infinite;color:#16C44A}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');@keyframes tkr{from{transform:translateX(0)}to{transform:translateX(-50%)}}.tkr-track{animation:tkr 55s linear infinite}.tkr-track:hover{animation-play-state:paused}@keyframes card-glow{0%,100%{box-shadow:0 0 0 0 rgba(176,122,8,0)}50%{box-shadow:0 0 28px 6px rgba(176,122,8,0.12)}}.spot-glow{animation:card-glow 3s ease-in-out infinite}@keyframes upPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.06)}}.up-arrow{display:inline-block;animation:upPulse 2.2s ease-in-out infinite;color:#16C44A}@keyframes rigPulse{0%,100%{opacity:0.3;transform:scale(1)}50%{opacity:0.75;transform:scale(1.8)}}`}</style>
       <div style={{ background:"#FFFFFF", borderBottom:"2px solid #1A1A14", overflow:"hidden", height:28, display:"flex", alignItems:"center" }}>
         <div className="tkr-track" style={{ display:"inline-flex", alignItems:"center", whiteSpace:"nowrap", gap:0 }}>
           {[0,1].map(loop=>(
