@@ -426,7 +426,7 @@ const BASIN_PROJECTS = [
   { name:"Key Lake Mill",    company:"Cameco",             ticker:"CCO",   lat:57.20, lng:-105.62, stage:"Producer", grade:"Mill",        gradePct:null, resourceMlb:null,drilling:false, type:"Processing",          info:"Processes McArthur River ore." },
   { name:"Rabbit Lake",      company:"Cameco",             ticker:"CCO",   lat:58.22, lng:-103.68, stage:"Producer", grade:"Care & maint.", gradePct:0.7, resourceMlb:60,  drilling:false, type:"Unconformity",      info:"Historic mill, on care & maintenance." },
   { name:"McClean Lake",     company:"Orano",              ticker:"—",     lat:58.30, lng:-103.83, stage:"Producer", grade:"Mill",        gradePct:null, resourceMlb:null,drilling:false, type:"Processing",          info:"Processes Cigar Lake ore." },
-  { name:"Arrow / Rook I",   company:"NexGen Energy",      ticker:"NXE",   lat:58.18, lng:-103.45, stage:"Developer",grade:"~2.4% U₃O₈",  gradePct:2.4,  resourceMlb:340, drilling:false, type:"Basement-hosted",     info:"FS complete; flagship development, undergoing permitting." },
+  { name:"Arrow / Rook I",   company:"NexGen Energy",      ticker:"NXE",   lat:58.12, lng:-109.68, stage:"Developer",grade:"~2.4% U₃O₈",  gradePct:2.4,  resourceMlb:340, drilling:false, type:"Basement-hosted",     info:"FS complete; flagship development, undergoing permitting. SW of Patterson Lake South." },
   { name:"Wheeler River",    company:"Denison Mines",      ticker:"DML",   lat:57.95, lng:-104.55, stage:"Developer",grade:"~3.5% U₃O₈",  gradePct:3.5,  resourceMlb:130, drilling:false, type:"Unconformity",        info:"Phoenix ISR + Gryphon deposits; FEED stage." },
   { name:"Triple R",         company:"Fission Uranium",    ticker:"FCU",   lat:58.10, lng:-109.50, stage:"Developer",grade:"~1.6% U₃O₈",  gradePct:1.6,  resourceMlb:130, drilling:false, type:"Basement / shallow",  info:"Patterson Lake South; FS-stage development." },
   { name:"Hurricane",        company:"IsoEnergy",          ticker:"ISO",   lat:58.35, lng:-103.60, stage:"Developer",grade:"~34% U₃O₈",   gradePct:34.0, resourceMlb:48,  drilling:false, type:"Unconformity",        info:"World's highest-grade indicated U deposit." },
@@ -1692,6 +1692,32 @@ export default function App() {
 
               // Match top drill results to known coordinates (project name or company name)
               const norm = (s)=> (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+              // Tidy raw claim-owner strings: drop ownership %, title-case, shorten suffixes
+              const cleanOwner = (raw) => {
+                if (!raw) return "Unknown holder";
+                let s = raw
+                  .replace(/\b\d{1,3}\.\d+\s*%?/g, "")   // "100.000%" / "100.000"
+                  .replace(/\b\d{1,3}\s*%/g, "")          // "100 %"
+                  .replace(/[:;,]+\s*$/g, "")             // trailing punctuation
+                  .replace(/\s{2,}/g, " ")
+                  .trim();
+                // Title-case if the source is ALL CAPS
+                if (s === s.toUpperCase()) {
+                  s = s.toLowerCase().replace(/\b([a-z])/g, (m,c)=>c.toUpperCase());
+                }
+                // Shorten common corporate suffixes
+                s = s
+                  .replace(/\bCorporation\b/gi, "Corp.")
+                  .replace(/\bIncorporated\b/gi, "Inc.")
+                  .replace(/\bLimited\b/gi, "Ltd.")
+                  .replace(/\bResources\b/gi, "Res.")
+                  .replace(/\bExploration\b/gi, "Expl.")
+                  .replace(/\bCompany\b/gi, "Co.")
+                  .replace(/\bUranium\b/gi, "U")
+                  .replace(/\s{2,}/g, " ")
+                  .trim();
+                return s || "Unknown holder";
+              };
               const locateHit = (r) => {
                 const proj = norm(r.project), comp = norm(r.company), tick = (r.ticker||"").replace(/\..*$/,"").toUpperCase();
                 // 1) match against curated BASIN_PROJECTS by project name, ticker, or company
@@ -1729,6 +1755,10 @@ export default function App() {
                           <span style={{ fontSize:11, fontWeight:600, color:"#1A1A14" }}>{STAGE_LBL[k]}</span>
                         </button>
                       ))}
+                      <span style={{ display:"flex", alignItems:"center", gap:5, padding:"4px 8px", fontSize:10.5, color:"#6A6A5A" }} title="Mill / ore-processing facility">
+                        <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="6" width="10" height="5" rx="0.5" fill="#1A5AA8"/><path d="M1,6 L4,3 L4,6 L7,3 L7,6 L10,3 L10,6 Z" fill="#1A5AA8"/><rect x="7.5" y="1.5" width="1.6" height="2.5" fill="#1A5AA8"/></svg>
+                        Mill / processing
+                      </span>
                       <button onClick={()=>setBmtTrends(v=>!v)} style={{
                         display:"flex", alignItems:"center", gap:6, padding:"4px 10px", borderRadius:20, cursor:"pointer", marginLeft:"auto",
                         border:`1px solid ${bmtTrends?"#B07A08":"#D8D0C4"}`, background:bmtTrends?"#B07A0814":"#F5F3EE", opacity:bmtTrends?1:0.5,
@@ -1803,11 +1833,13 @@ export default function App() {
                         {BASIN_LAKES.map((lake,i)=>{
                           const d = lake.pts.map(([lng,lat],j)=>{ const [x,y]=toSVG(lat,lng); return `${j===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ")+" Z";
                           const [lx,ly]=toSVG(lake.label[1],lake.label[0]);
+                          const major = lake.name==="Lake Athabasca" || lake.name==="Wollaston Lake";
                           return (
                             <g key={i}>
                               <path d={d} fill="#AECBDA" fillOpacity={0.75} stroke="#6E96AC" strokeWidth={0.6}/>
-                              <text x={lx} y={ly} textAnchor="middle" fontSize={7} fill="#3E6478" fontStyle="italic" opacity={0.9}
-                                style={{ paintOrder:"stroke" }} stroke="#AECBDA" strokeWidth={1.6} strokeLinejoin="round">{lake.name}</text>
+                              <text x={lx} y={ly} textAnchor="middle" fontSize={major?8.5:7} fontWeight={major?700:400}
+                                fill="#2E5468" fontStyle="italic" opacity={major?1:0.9}
+                                style={{ paintOrder:"stroke" }} stroke="#AECBDA" strokeWidth={major?2.2:1.6} strokeLinejoin="round">{lake.name}</text>
                             </g>
                           );
                         })}
@@ -1901,7 +1933,18 @@ export default function App() {
                                   style={{ transformOrigin:`${x}px ${y}px`, animation:"rigPulse 2s ease-in-out infinite" }}/>
                               )}
                               <circle cx={x} cy={y} r={r+(hov?5:3)} fill={col} fillOpacity={0.2}/>
-                              <circle cx={x} cy={y} r={r} fill={col} stroke="#FFFFFF" strokeWidth={1.5}/>
+                              {p.type==="Processing" ? (
+                                // Mill / processing facility glyph (factory)
+                                <g>
+                                  <rect x={x-r} y={y-r*0.55} width={r*2} height={r*1.4} rx={1} fill={col} stroke="#FFFFFF" strokeWidth={1.2}/>
+                                  {/* sawtooth roofline */}
+                                  <path d={`M${x-r},${y-r*0.55} L${x-r*0.4},${y-r*1.05} L${x-r*0.4},${y-r*0.55} L${x+r*0.2},${y-r*1.05} L${x+r*0.2},${y-r*0.55} L${x+r*0.8},${y-r*1.05} L${x+r*0.8},${y-r*0.55} Z`} fill={col} stroke="#FFFFFF" strokeWidth={0.8} strokeLinejoin="round"/>
+                                  {/* chimney */}
+                                  <rect x={x+r*0.45} y={y-r*1.5} width={r*0.35} height={r*0.6} fill={col} stroke="#FFFFFF" strokeWidth={0.6}/>
+                                </g>
+                              ) : (
+                                <circle cx={x} cy={y} r={r} fill={col} stroke="#FFFFFF" strokeWidth={1.5}/>
+                              )}
                               {p.drilling && <text x={x} y={y+2.6} textAnchor="middle" fontSize={7} fill="#FFFFFF" fontWeight={900}>▲</text>}
                               {(p.stage==="Producer"||hov) && (
                                 <text x={x+r+3} y={y+3} fontSize={8} fontWeight={700} fill="#1A1A14" style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={2.5} strokeLinejoin="round">{p.name}</text>
@@ -2026,9 +2069,9 @@ export default function App() {
                       <div style={{ padding:"14px" }}>
                         <div style={{ ...S.lbl, marginBottom:8 }}>TOP CLAIM HOLDERS</div>
                         {claimOwners.slice(0,8).map((o,i)=>(
-                          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 0", borderBottom:i<7?"1px solid #F0EDE8":"none", gap:8 }}>
-                            <span style={{ fontSize:10, color:"#1A1A14", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{o.owner}</span>
-                            <span style={{ ...MONO, fontSize:10, fontWeight:700, color:"#6B4FA0", flexShrink:0 }}>{o.count}</span>
+                          <div key={i} title={o.owner} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"5px 0", borderBottom:i<7?"1px solid #F0EDE8":"none", gap:8 }}>
+                            <span style={{ fontSize:11, color:"#1A1A14", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{cleanOwner(o.owner)}</span>
+                            <span style={{ ...MONO, fontSize:11, fontWeight:700, color:"#6B4FA0", flexShrink:0 }}>{o.count}</span>
                           </div>
                         ))}
                         <div style={{ fontSize:8.5, color:"#9A9A8A", marginTop:6, fontStyle:"italic" }}>Active dispositions · Sask. Mineral Tenure</div>
