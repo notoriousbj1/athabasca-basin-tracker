@@ -1077,6 +1077,8 @@ export default function App() {
   const [drillResults,  setDrillResults]  = useState([]);
   const [drillLoading,  setDrillLoading]  = useState(false);
   const [drillGenAt,    setDrillGenAt]    = useState(null);
+  const [drillSeed,     setDrillSeed]     = useState(false);
+  const [drillSort,     setDrillSort]     = useState({ col:"gt", dir:"desc" });
   const [showDrillHits, setShowDrillHits] = useState(true);
   const [bmtSizeMode,   setBmtSizeMode]   = useState("stage");  // "stage" | "resource" | "grade"
   const [showHwy,       setShowHwy]        = useState(true);
@@ -1175,6 +1177,7 @@ export default function App() {
       const data = await res.json();
       if (Array.isArray(data?.results)) setDrillResults(data.results);
       if (data?.generatedAt) setDrillGenAt(data.generatedAt);
+      setDrillSeed(!!data?.seed);
     } catch(e) { console.error("Drill results fetch failed", e); }
     setDrillLoading(false);
   }, []);
@@ -2296,7 +2299,10 @@ export default function App() {
           <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
             <div>
               <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Drill Result Tracker</div>
-              <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Latest assay intercepts from basin press releases, ranked by grade × thickness</div>
+              <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>
+                Latest assay intercepts from basin press releases, ranked by grade × thickness
+                {drillSeed && <span style={{ color:"#B07A08", fontWeight:600 }}> · showing recent known results (no new assays in latest feed)</span>}
+              </div>
             </div>
             <button onClick={fetchDrillResults} disabled={drillLoading}
               style={{ ...S.btn("s"), fontSize:10, padding:"4px 10px", marginBottom:8 }}>
@@ -2313,44 +2319,71 @@ export default function App() {
                 No drill assays found in the latest releases. Check back after the next batch of results, or hit Refresh.
               </div>
             ) : (() => {
-              const maxGT = Math.max(...drillResults.map(r=>r.gt||0), 1);
               const conf = { high:"#1A7A44", medium:"#B07A08", low:"#9A9A8A" };
+              // sortable
+              const sorted = [...drillResults].sort((a,b)=>{
+                const { col, dir } = drillSort;
+                let av, bv;
+                if(col==="company"){ av=(a.company||"").toLowerCase(); bv=(b.company||"").toLowerCase(); }
+                else if(col==="grade"){ av=a.grade_pct||0; bv=b.grade_pct||0; }
+                else if(col==="thickness"){ av=a.thickness_m||0; bv=b.thickness_m||0; }
+                else if(col==="date"){ av=a.date||""; bv=b.date||""; }
+                else { av=a.gt||0; bv=b.gt||0; }
+                if(av<bv) return dir==="asc"?-1:1;
+                if(av>bv) return dir==="asc"?1:-1;
+                return 0;
+              });
+              const topGT = Math.max(...drillResults.map(r=>r.gt||0));
+              const sortBy = (col)=> setDrillSort(s=> s.col===col ? { col, dir:s.dir==="asc"?"desc":"asc" } : { col, dir: col==="company"?"asc":"desc" });
+              const Arrow = ({col}) => drillSort.col===col ? <span style={{ fontSize:8, marginLeft:3 }}>{drillSort.dir==="asc"?"▲":"▼"}</span> : <span style={{ fontSize:8, marginLeft:3, opacity:0.3 }}>⇅</span>;
+              const COLS = "44px 1.5fr 1.3fr 0.9fr 1fr 90px";
+              const hCell = { cursor:"pointer", userSelect:"none", display:"flex", alignItems:"center" };
               return (
                 <>
                   {/* Header row */}
-                  <div style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 0.8fr 0.8fr 1.2fr 60px", gap:0, padding:"10px 16px", borderBottom:"2px solid #D8D0C4", background:"#FAF8F3", fontSize:9.5, fontWeight:800, color:"#6A6A5A", textTransform:"uppercase", letterSpacing:"0.06em" }}>
-                    <div>Company / Project</div>
-                    <div>Intercept</div>
-                    <div style={{ textAlign:"right" }}>Thick.</div>
-                    <div style={{ textAlign:"right" }}>Grade</div>
-                    <div style={{ paddingLeft:12 }}>Grade × Thickness</div>
-                    <div style={{ textAlign:"center" }}>Source</div>
+                  <div style={{ display:"grid", gridTemplateColumns:COLS, gap:0, padding:"10px 16px", borderBottom:"2px solid #D8D0C4", background:"#FAF8F3", fontSize:9.5, fontWeight:800, color:"#6A6A5A", textTransform:"uppercase", letterSpacing:"0.06em" }}>
+                    <div style={{ ...hCell }} onClick={()=>sortBy("gt")}>Rank</div>
+                    <div style={{ ...hCell }} onClick={()=>sortBy("company")}>Company / Project<Arrow col="company"/></div>
+                    <div style={{ ...hCell }} onClick={()=>sortBy("grade")}>Intercept (Grade / Thickness)<Arrow col="grade"/></div>
+                    <div style={{ ...hCell, justifyContent:"flex-end" }} onClick={()=>sortBy("gt")}>G × T<Arrow col="gt"/></div>
+                    <div style={{ ...hCell }} onClick={()=>sortBy("date")}>Release Date<Arrow col="date"/></div>
+                    <div style={{ textAlign:"center" }}>PR Link</div>
                   </div>
                   {/* Rows */}
-                  {drillResults.map((r,i)=>{
-                    const gtPct = ((r.gt||0)/maxGT)*100;
+                  {sorted.map((r,i)=>{
+                    const isTop = (r.gt||0)===topGT && topGT>0;
                     return (
-                      <div key={i} style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 0.8fr 0.8fr 1.2fr 60px", gap:0, padding:"11px 16px", borderBottom:i<drillResults.length-1?"1px solid #EDE8E0":"none", alignItems:"center", fontSize:12, background:i===0?"#F4FAF5":"transparent" }}>
-                        <div style={{ minWidth:0 }}>
+                      <div key={i} style={{ display:"grid", gridTemplateColumns:COLS, gap:0, padding:"12px 16px", borderBottom:i<sorted.length-1?"1px solid #EDE8E0":"none", alignItems:"center", fontSize:12, background:isTop?"#F4FAF5":"transparent" }}>
+                        {/* Rank */}
+                        <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+                          {isTop && <span style={{ fontSize:13 }}>👑</span>}
+                          <span style={{ ...MONO, fontWeight:700, color:isTop?"#1A7A44":"#9A9A8A" }}>{i+1}</span>
+                        </div>
+                        {/* Company / Project */}
+                        <div style={{ minWidth:0, paddingRight:8 }}>
                           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                             <span style={{ fontWeight:700, color:"#1A1A14", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.company||"—"}</span>
                             {r.ticker && <span style={{ ...MONO, fontSize:9.5, color:"#B07A08", fontWeight:700, flexShrink:0 }}>{r.ticker}</span>}
-                            {i===0 && <span style={{ ...S.badge("green"), fontSize:8, flexShrink:0 }}>TOP HIT</span>}
                           </div>
-                          <div style={{ fontSize:10, color:"#9A9A8A", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.project||""}{r.hole?` · ${r.hole}`:""}</div>
+                          {r.project && <div style={{ fontSize:10, color:"#9A9A8A", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.project}{r.hole?` · ${r.hole}`:""}</div>}
                         </div>
-                        <div style={{ ...MONO, fontSize:11, color:"#1A1A14", fontWeight:600 }}>{r.interval_text || `${r.thickness_m}m @ ${r.grade_pct}%`}</div>
-                        <div style={{ ...MONO, textAlign:"right", color:"#1A1A14" }}>{r.thickness_m!=null?`${r.thickness_m}m`:"—"}</div>
-                        <div style={{ ...MONO, textAlign:"right", fontWeight:700, color:"#1A7A44" }}>{r.grade_pct!=null?`${r.grade_pct}%`:"—"}</div>
-                        <div style={{ paddingLeft:12, display:"flex", alignItems:"center", gap:8 }}>
-                          <div style={{ flex:1, height:7, background:"#EDE8E0", borderRadius:4, overflow:"hidden", minWidth:40 }}>
-                            <div style={{ width:`${gtPct}%`, height:"100%", background:"linear-gradient(90deg,#1A7A44,#16C44A)", borderRadius:4 }}/>
-                          </div>
-                          <span style={{ ...MONO, fontSize:11, fontWeight:800, color:"#1A1A14", flexShrink:0, minWidth:32, textAlign:"right" }}>{r.gt}</span>
+                        {/* Intercept (grade / thickness) */}
+                        <div style={{ ...MONO, fontSize:11.5, color:"#1A1A14", fontWeight:600, paddingRight:8 }}>
+                          {r.grade_pct!=null && r.thickness_m!=null
+                            ? <>{r.grade_pct}% U₃O₈ <span style={{ color:"#9A9A8A" }}>/</span> {r.thickness_m}m</>
+                            : (r.interval_text || "—")}
                         </div>
+                        {/* G x T */}
+                        <div style={{ ...MONO, textAlign:"right", fontWeight:800, fontSize:13, color:isTop?"#1A7A44":"#1A1A14", paddingRight:4 }}>{r.gt}</div>
+                        {/* Release date */}
+                        <div style={{ fontSize:11, color:"#6A6A5A" }}>{r.date||"—"}</div>
+                        {/* PR link */}
                         <div style={{ textAlign:"center" }}>
                           {r.url ? (
-                            <a href={r.url} target="_blank" rel="noopener noreferrer" title={`Confidence: ${r.confidence||"n/a"}`} style={{ textDecoration:"none", fontSize:14, color:conf[r.confidence]||"#9A9A8A" }}>↗</a>
+                            <a href={r.url} target="_blank" rel="noopener noreferrer" title={`Confidence: ${r.confidence||"n/a"}`}
+                              style={{ textDecoration:"none", fontSize:10.5, fontWeight:600, color:conf[r.confidence]||"#9A9A8A", whiteSpace:"nowrap" }}>
+                              PR ↗
+                            </a>
                           ) : <span style={{ color:"#D8D0C4" }}>—</span>}
                         </div>
                       </div>
@@ -2359,10 +2392,10 @@ export default function App() {
                   {/* Footer */}
                   <div style={{ padding:"10px 16px", borderTop:"1px solid #EDE8E0", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8, fontSize:9.5, color:"#9A9A8A" }}>
                     <div style={{ display:"flex", gap:12, alignItems:"center" }}>
-                      <span style={{ fontWeight:700 }}>Confidence:</span>
-                      <span style={{ display:"flex", alignItems:"center", gap:4 }}><span style={{ color:"#1A7A44" }}>↗</span> High</span>
-                      <span style={{ display:"flex", alignItems:"center", gap:4 }}><span style={{ color:"#B07A08" }}>↗</span> Medium</span>
-                      <span style={{ display:"flex", alignItems:"center", gap:4 }}><span style={{ color:"#9A9A8A" }}>↗</span> Low</span>
+                      <span style={{ fontWeight:700 }}>PR link colour = confidence:</span>
+                      <span style={{ color:"#1A7A44" }}>High</span>
+                      <span style={{ color:"#B07A08" }}>Medium</span>
+                      <span style={{ color:"#9A9A8A" }}>Low</span>
                     </div>
                     {drillGenAt && <span>Updated {new Date(drillGenAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span>}
                   </div>
