@@ -1062,7 +1062,7 @@ export default function App() {
   const [bcmRegion,     setBcmRegion]     = useState("All");
   const [insiderView,   setInsiderView]   = useState("buys");
   const [erMinMktCap,   setErMinMktCap]   = useState(0);
-  const [erStage,       setErStage]       = useState("All");
+  const [erStages,      setErStages]      = useState({ Grassroots:true, Advanced:true, Resource:true });
   const [erGuide,       setErGuide]       = useState(true);
   const [globeTarget,   setGlobeTarget]   = useState({ lng:null, token:0 });
   const [bmtFilters,    setBmtFilters]    = useState({ Producer:true, Developer:true, Explorer:true, Royalty:true });
@@ -2741,13 +2741,46 @@ export default function App() {
               };
               const filtered = EXPLORATION_RUNWAY.filter(e =>
                 e.mktCap >= erMinMktCap &&
-                (erStage==="All" || e.stage===erStage)
+                (erStages[e.stage])
               );
               const byStage = {
                 "Resource":   filtered.filter(e=>e.stage==="Resource"),
                 "Advanced":   filtered.filter(e=>e.stage==="Advanced"),
                 "Grassroots": filtered.filter(e=>e.stage==="Grassroots"),
               };
+              // De-collide: nudge overlapping bubbles apart in data space (keep originals for tooltip).
+              // Simple iterative relaxation on (runway, budget) using display coordinates.
+              const decollide = (items) => {
+                const pts = items.map(e=>({ ...e, _x:e.runway, _y:e.budget }));
+                const xMin=0,xMax=36,yMin=0,yMax=11;
+                // min separation in data units (~ bubble footprint)
+                const sepX = 1.9, sepY = 0.62;
+                for(let iter=0; iter<60; iter++){
+                  for(let i=0;i<pts.length;i++){
+                    for(let j=i+1;j<pts.length;j++){
+                      const a=pts[i], b=pts[j];
+                      const dx=(a._x-b._x)/sepX, dy=(a._y-b._y)/sepY;
+                      const d2=dx*dx+dy*dy;
+                      if(d2<1 && d2>0){
+                        const d=Math.sqrt(d2), push=(1-d)/2;
+                        const ox=(dx/d)*push*sepX, oy=(dy/d)*push*sepY;
+                        a._x+=ox; a._y+=oy; b._x-=ox; b._y-=oy;
+                      } else if(d2===0){
+                        a._x+=sepX*0.3; b._x-=sepX*0.3;
+                      }
+                    }
+                  }
+                }
+                // clamp into bounds
+                pts.forEach(p=>{ p._x=Math.max(xMin+0.4,Math.min(xMax-0.4,p._x)); p._y=Math.max(yMin+0.3,Math.min(yMax-0.3,p._y)); });
+                return pts;
+              };
+              const byStageDC = {
+                "Resource":   decollide(byStage["Resource"]),
+                "Advanced":   decollide(byStage["Advanced"]),
+                "Grassroots": decollide(byStage["Grassroots"]),
+              };
+              // Note: de-collision is per-stage; good enough since stages rarely overlap heavily.
               const avgRunway = filtered.length ? (filtered.reduce((s,e)=>s+e.runway,0)/filtered.length).toFixed(1) : "—";
               // Derived sector cash (parse the cash strings loosely)
               const parseCash = (str) => { const n=parseFloat((str||"").replace(/[^0-9.]/g,""))||0; return /B/i.test(str)?n*1000:n; };
@@ -2814,65 +2847,123 @@ export default function App() {
 
               return (
                 <>
-                  {/* Top bar: legend + beginner toggle */}
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14, gap:16, flexWrap:"wrap" }}>
-                    <div style={{ display:"flex", gap:16, flexWrap:"wrap", flex:1 }}>
-                      {Object.entries(STAGE_COLORS).map(([stage,color])=>(
-                        <div key={stage} style={{ display:"flex", alignItems:"center", gap:6 }}>
-                          <div style={{ width:11, height:11, borderRadius:"50%", background:color, flexShrink:0 }}/>
-                          <span style={{ fontSize:11, color:"#4A4A3A" }}>
-                            <strong style={{ color:"#1A1A14" }}>{stage}:</strong> {erGuide ? STAGE_DESC[stage] : ""}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                      <span style={{ fontSize:11, fontWeight:700, color:"#1A1A14" }}>Beginner Guide</span>
-                      <button onClick={()=>setErGuide(v=>!v)} style={{ width:38, height:20, borderRadius:10, border:"none", cursor:"pointer", background:erGuide?"#1A7A44":"#C8C0B4", position:"relative", transition:"background 0.2s", flexShrink:0 }}>
-                        <span style={{ position:"absolute", top:2, left:erGuide?20:2, width:16, height:16, borderRadius:"50%", background:"#FFFFFF", transition:"left 0.2s" }}/>
-                      </button>
-                    </div>
+                  {/* KPI strip — top-level summary */}
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:0, marginBottom:18, border:"1px solid #E8E4DE", borderRadius:8, overflow:"hidden", background:"#FBFAF6" }}>
+                    {[
+                      ["Companies Shown", filtered.length],
+                      ["Avg Runway", `${avgRunway} mo`],
+                      ["Total Sector Cash", totalCashStr],
+                      ["Avg Invest Horizon", `${avgHorizon} yrs`],
+                    ].map(([label,val],idx,arr)=>(
+                      <div key={label} style={{ padding:"12px 14px", borderRight:idx<arr.length-1?"1px solid #E8E4DE":"none", textAlign:"center" }}>
+                        <div style={{ fontSize:10.5, color:"#9A9A8A", marginBottom:4 }}>{label}</div>
+                        <div style={{ ...SERIF, fontSize:24, fontWeight:800, color:"#1A1A14" }}>{val}</div>
+                      </div>
+                    ))}
                   </div>
 
-                  {/* Main grid: chart + AI insights */}
-                  <div style={{ display:"grid", gridTemplateColumns:erGuide?"1fr 230px":"1fr", gap:16 }}>
+                  {/* Legend — click to filter by stage */}
+                  <div style={{ display:"flex", gap:14, flexWrap:"wrap", marginBottom:12, alignItems:"center" }}>
+                    {Object.entries(STAGE_COLORS).map(([stage,color])=>{
+                      const on = erStages[stage];
+                      return (
+                        <button key={stage} onClick={()=>setErStages(s=>({ ...s, [stage]:!s[stage] }))}
+                          title={`Toggle ${stage}`}
+                          style={{ display:"flex", alignItems:"center", gap:6, padding:"3px 9px", borderRadius:20, cursor:"pointer",
+                            border:`1px solid ${on?color:"#D8D0C4"}`, background:on?`${color}14`:"#F5F3EE", opacity:on?1:0.55 }}>
+                          <div style={{ width:11, height:11, borderRadius:"50%", background:color, flexShrink:0 }}/>
+                          <span style={{ fontSize:11, color:"#4A4A3A" }}>
+                            <strong style={{ color:"#1A1A14" }}>{stage}</strong>{erGuide ? ` — ${STAGE_DESC[stage]}` : ""}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    <span style={{ fontSize:10, color:"#9A9A8A", marginLeft:2 }}>click to filter</span>
+                  </div>
+
+                  {/* Main grid: chart + narrow vertical Market Cap slider */}
+                  <div style={{ display:"grid", gridTemplateColumns:"1fr 84px", gap:12 }}>
                     <div>
-                      <ResponsiveContainer width="100%" height={330}>
-                        <ScatterChart margin={{ top:16, right:20, bottom:20, left:8 }}>
-                          <ReferenceArea x1={0}  x2={12} y1={5}  y2={11} fill="#C01818" fillOpacity={0.05} label={{ value:erGuide?"HIGH DILUTION RISK (Needs Cash Soon)":"HIGH DILUTION RISK", position:"insideTopLeft", fontSize:9.5, fill:"#C01818", fontWeight:700 }}/>
-                          <ReferenceArea x1={12} x2={36} y1={5}  y2={11} fill="#B07A08" fillOpacity={0.05} label={{ value:erGuide?"AGGRESSIVE GROWTH (Spending for Discovery)":"AGGRESSIVE GROWTH", position:"insideTopLeft", fontSize:9.5, fill:"#B07A08", fontWeight:700 }}/>
-                          <ReferenceArea x1={0}  x2={12} y1={0}  y2={5}  fill="#6A6A5A" fillOpacity={0.05} label={{ value:erGuide?"SURVIVAL MODE (Maintenance Only)":"SURVIVAL MODE", position:"insideTopLeft", fontSize:9.5, fill:"#7A7A6A", fontWeight:700 }}/>
-                          <ReferenceArea x1={12} x2={36} y1={0}  y2={5}  fill="#1A7A44" fillOpacity={0.05} label={{ value:erGuide?"FULLY FUNDED (Low Near-term Risk)":"FULLY FUNDED", position:"insideTopLeft", fontSize:9.5, fill:"#1A7A44", fontWeight:700 }}/>
-                          <XAxis type="number" dataKey="runway" domain={[0,36]} ticks={[0,9,18,27,36]} tick={{ fontSize:10, fill:"#6A6A5A" }}
-                            label={{ value:"Cash Runway (months) →", position:"insideBottom", offset:-8, fontSize:9.5, fill:"#9A9A8A" }}/>
-                          <YAxis type="number" dataKey="budget" domain={[0,11]} width={48} ticks={[0,3,6,9,11]} tick={{ fontSize:10, fill:"#6A6A5A" }}
+                      <ResponsiveContainer width="100%" height={360}>
+                        <ScatterChart margin={{ top:14, right:20, bottom:22, left:8 }}>
+                          {/* Soft pastel quadrant tints — let the background tell the story */}
+                          <ReferenceArea x1={0}  x2={12} y1={5}  y2={11} fill="#C01818" fillOpacity={0.06} stroke="none"/>
+                          <ReferenceArea x1={12} x2={36} y1={5}  y2={11} fill="#B07A08" fillOpacity={0.06} stroke="none"/>
+                          <ReferenceArea x1={0}  x2={12} y1={0}  y2={5}  fill="#9A9A8A" fillOpacity={0.06} stroke="none"/>
+                          <ReferenceArea x1={12} x2={36} y1={0}  y2={5}  fill="#1A7A44" fillOpacity={0.07} stroke="none"/>
+                          {/* tiny muted corner labels */}
+                          <ReferenceArea x1={0}  x2={12} y1={5} y2={11} fill="none" label={{ value:"High Dilution Risk", position:"insideTopLeft", fontSize:9, fill:"#C0181899", fontWeight:600 }}/>
+                          <ReferenceArea x1={12} x2={36} y1={5} y2={11} fill="none" label={{ value:"Aggressive Growth", position:"insideTopRight", fontSize:9, fill:"#B07A0899", fontWeight:600 }}/>
+                          <ReferenceArea x1={0}  x2={12} y1={0} y2={5}  fill="none" label={{ value:"Survival Mode", position:"insideBottomLeft", fontSize:9, fill:"#7A7A6A99", fontWeight:600 }}/>
+                          <ReferenceArea x1={12} x2={36} y1={0} y2={5}  fill="none" label={{ value:"Fully Funded", position:"insideBottomRight", fontSize:9, fill:"#1A7A4499", fontWeight:600 }}/>
+                          <XAxis type="number" dataKey="_x" domain={[0,36]} ticks={[0,9,18,27,36]} tick={{ fontSize:10, fill:"#6A6A5A" }}
+                            label={{ value:"Cash Runway (months) →", position:"insideBottom", offset:-10, fontSize:9.5, fill:"#9A9A8A" }}/>
+                          <YAxis type="number" dataKey="_y" domain={[0,11]} width={48} ticks={[0,3,6,9,11]} tick={{ fontSize:10, fill:"#6A6A5A" }}
                             tickFormatter={v=>`$${v}M`} label={{ value:"Annual Budget (CAD M)", angle:-90, position:"insideLeft", offset:10, fontSize:9.5, fill:"#9A9A8A" }}/>
-                          <ReferenceLine x={12} stroke="#D8D0C4" strokeDasharray="4 3" strokeWidth={1.5}/>
-                          <ReferenceLine y={5}  stroke="#D8D0C4" strokeDasharray="4 3" strokeWidth={1.5}/>
-                          <Tooltip content={<CustomTooltip/>}/>
-                          {Object.entries(byStage).map(([stage,data])=>(
+                          <Tooltip content={<CustomTooltip/>} cursor={{ strokeDasharray:"3 3", stroke:"#C8C0B4" }}/>
+                          {Object.entries(byStageDC).map(([stage,data])=>(
                             <Scatter key={stage} data={data} fill={STAGE_COLORS[stage]} shape={<BubbleShape/>}/>
                           ))}
                         </ScatterChart>
                       </ResponsiveContainer>
                     </div>
 
-                    {/* AI Insights panel */}
-                    {erGuide && (
-                      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-                        <div style={{ ...S.card, padding:14, marginBottom:0, background:"#FAFAF7" }}>
-                          <div style={{ fontSize:11, fontWeight:800, color:"#1A1A14", marginBottom:8 }}>Quick Investor Tips</div>
-                          <div style={{ fontSize:10.5, color:"#4A4A3A", lineHeight:1.6 }}>
-                            Aim <strong>bottom-right</strong> for cash safety. <strong>Top-right</strong> for funded growth. Watch <strong style={{ color:"#C01818" }}>top-left</strong> carefully for dilution risk.
-                          </div>
+                    {/* Vertical Market Cap slider — drag up to raise minimum */}
+                    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6, paddingTop:10 }}>
+                      <span style={{ fontSize:9, color:"#9A9A8A", fontWeight:600, textAlign:"center", lineHeight:1.3 }}>Min Mkt Cap<br/>(CAD M)</span>
+                      <span style={{ fontSize:13, fontWeight:800, color:"#1A1A14" }}>{erMinMktCap||"All"}</span>
+                      <style>{`
+                        input[type=range].er-vslider{
+                          -webkit-appearance:none; appearance:none;
+                          writing-mode:vertical-lr; direction:rtl;
+                          width:6px; height:225px; border-radius:3px;
+                          background:#D8D0C4; outline:none; cursor:pointer;
+                        }
+                        input[type=range].er-vslider::-webkit-slider-thumb{
+                          -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+                          background:#1A7A44; cursor:pointer; border:2px solid #FFFFFF;
+                          box-shadow:0 1px 3px rgba(0,0,0,0.25);
+                        }
+                        input[type=range].er-vslider::-moz-range-thumb{
+                          width:18px; height:18px; border-radius:50%; background:#1A7A44;
+                          cursor:pointer; border:2px solid #FFFFFF;
+                        }
+                        input[type=range].er-vslider::-moz-range-track{
+                          width:6px; border-radius:3px; background:#D8D0C4;
+                        }
+                      `}</style>
+                      <input type="range" className="er-vslider" min={0} max={500} step={10}
+                        value={erMinMktCap} onChange={e=>setErMinMktCap(parseInt(e.target.value))}/>
+                      <span style={{ fontSize:8.5, color:"#B0A890", textAlign:"center" }}>drag up ↑</span>
+                    </div>
+                  </div>
+
+                  {/* Beginner Guide toggle — below chart */}
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:16 }}>
+                    <span style={{ fontSize:11, fontWeight:700, color:"#1A1A14" }}>Beginner Guide</span>
+                    <button onClick={()=>setErGuide(v=>!v)} style={{ width:38, height:20, borderRadius:10, border:"none", cursor:"pointer", background:erGuide?"#1A7A44":"#C8C0B4", position:"relative", transition:"background 0.2s", flexShrink:0 }}>
+                      <span style={{ position:"absolute", top:2, left:erGuide?20:2, width:16, height:16, borderRadius:"50%", background:"#FFFFFF", transition:"left 0.2s" }}/>
+                    </button>
+                    <span style={{ fontSize:10, color:"#9A9A8A" }}>{erGuide?"Showing chart guide & top picks":"Show how to read this chart"}</span>
+                  </div>
+
+                  {/* Beginner Guide — full-width below chart, only when on */}
+                  {erGuide && (
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginTop:12 }}>
+                      <div style={{ ...S.card, padding:14, marginBottom:0, background:"#FAFAF7" }}>
+                        <div style={{ fontSize:11, fontWeight:800, color:"#1A1A14", marginBottom:8 }}>How to read this chart</div>
+                        <div style={{ fontSize:10.5, color:"#4A4A3A", lineHeight:1.6 }}>
+                          Each bubble is a company; size reflects market cap. Bubbles to the <strong>right</strong> have more cash runway and are generally safer. <strong style={{ color:"#1A7A44" }}>Bottom-right</strong> companies are funded and steady; <strong style={{ color:"#C01818" }}>top-left</strong> ones spend fast with little runway — watch for share dilution. Use the vertical slider to filter out smaller companies.
                         </div>
-                        <div style={{ ...S.card, padding:14, marginBottom:0, background:"#FAFAF7" }}>
-                          <div style={{ fontSize:11, fontWeight:800, color:"#1A1A14", marginBottom:2 }}>Model Insights</div>
-                          <div style={{ fontSize:9, color:"#9A9A8A", marginBottom:10, fontStyle:"italic" }}>Top safety-score picks</div>
+                      </div>
+                      <div style={{ ...S.card, padding:14, marginBottom:0, background:"#FAFAF7" }}>
+                        <div style={{ fontSize:11, fontWeight:800, color:"#1A1A14", marginBottom:2 }}>Model Insights</div>
+                        <div style={{ fontSize:9, color:"#9A9A8A", marginBottom:10, fontStyle:"italic" }}>Top safety-score picks</div>
+                        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
                           {topPicks.map((p,i)=>{
                             const col = STAGE_COLORS[p.stage];
                             return (
-                              <div key={i} style={{ marginBottom:i<topPicks.length-1?10:0, paddingBottom:i<topPicks.length-1?10:0, borderBottom:i<topPicks.length-1?"1px solid #EDE8E0":"none" }}>
+                              <div key={i}>
                                 <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:3 }}>
                                   <span style={{ ...MONO, fontSize:11, fontWeight:800, color:col }}>{p.ticker}</span>
                                   <span style={{ fontSize:9, color:"#9A9A8A" }}>({p.stage})</span>
@@ -2884,43 +2975,11 @@ export default function App() {
                           })}
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Stats row */}
-                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:0, margin:"16px 0 14px", border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
-                    {[
-                      ["Companies Shown", filtered.length],
-                      ["Avg Runway", `${avgRunway}mo`],
-                      ["Total Sector Cash", totalCashStr],
-                      ["Avg Invest Horizon", `${avgHorizon} yrs`],
-                    ].map(([label,val],idx,arr)=>(
-                      <div key={label} style={{ padding:"10px 14px", borderRight:idx<arr.length-1?"1px solid #D8D0C4":"none", textAlign:"center" }}>
-                        <div style={{ fontSize:10.5, color:"#9A9A8A", marginBottom:3 }}>{label}</div>
-                        <div style={{ fontSize:17, fontWeight:800, color:"#1A1A14" }}>{val}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Filters */}
-                  <div style={{ display:"flex", gap:16, alignItems:"center", flexWrap:"wrap" }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:8, flex:1, minWidth:200 }}>
-                      <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600, whiteSpace:"nowrap" }}>Market Cap (CAD M)</span>
-                      <style>{`input[type=range].er-slider{-webkit-appearance:none;flex:1;height:4px;border-radius:2px;background:linear-gradient(to right,#1A1A14 0%,#1A1A14 ${(erMinMktCap/500)*100}%,#D8D0C4 ${(erMinMktCap/500)*100}%,#D8D0C4 100%);outline:none;}input[type=range].er-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#1A1A14;cursor:pointer;border:2px solid #FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,0.2);}input[type=range].er-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#1A1A14;cursor:pointer;border:2px solid #FFFFFF;}`}</style>
-                      <input type="range" className="er-slider" min={0} max={500} step={10} value={erMinMktCap} onChange={e=>setErMinMktCap(parseInt(e.target.value))} style={{ flex:1 }}/>
-                      <span style={{ fontSize:11, fontWeight:700, color:"#1A1A14", minWidth:36 }}>{erMinMktCap||"All"}</span>
                     </div>
-                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                      <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600 }}>Development Stage</span>
-                      <select value={erStage} onChange={e=>setErStage(e.target.value)}
-                        style={{ padding:"5px 10px", fontSize:11, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14", cursor:"pointer" }}>
-                        {["All","Grassroots","Advanced","Resource"].map(s=><option key={s}>{s}</option>)}
-                      </select>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Disclaimer */}
-                  <div style={{ marginTop:14, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10, color:"#9A9A8A", lineHeight:1.6 }}>
+                  <div style={{ marginTop:16, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10, color:"#9A9A8A", lineHeight:1.6 }}>
                     <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> Cash runway, budget, cash position, Safety Scores, and burn-rate figures shown here are illustrative estimates derived from a simplified internal model — not audited financial data or investment advice. Figures may be inaccurate or out of date. Always verify with official company filings (SEDAR+) and consult a licensed advisor before making investment decisions.
                   </div>
                 </>
