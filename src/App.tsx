@@ -474,9 +474,9 @@ const BASIN_LAKES = [
 
 // Stylised prospective "uranium trend" corridors (illustrative — not survey geology)
 const URANIUM_TRENDS = [
-  { name:"Patterson Lake Corridor", pts:[[-110.0,58.5],[-109.2,58.2],[-108.6,57.9]] },
-  { name:"Athabasca Eastern Trend", pts:[[-104.8,58.4],[-104.3,58.0],[-103.6,57.5],[-103.3,57.1]] },
-  { name:"Key Lake Trend",          pts:[[-105.8,57.4],[-105.4,57.2],[-105.0,57.0]] },
+  { name:"Patterson Lake Corridor",            pts:[[-110.0,58.5],[-109.2,58.2],[-108.6,57.9]] },
+  { name:"Wollaston–Mudjatik Transition Zone", pts:[[-104.8,58.4],[-104.3,58.0],[-103.6,57.5],[-103.3,57.1]] },
+  { name:"Key Lake Trend",                     pts:[[-105.8,57.4],[-105.4,57.2],[-105.0,57.0]] },
 ];
 
 const SMART_MONEY_EVENTS = [
@@ -705,6 +705,7 @@ const S = {
       amber:  { background:"#FFF2CC", color:"#B07A08", border:"1px solid #E8D890" },
       blue:   { background:"#E0EDFC", color:"#1A5AA8", border:"1px solid #A8CCF0" },
       purple: { background:"#EEE4FC", color:"#6B48A8", border:"1px solid #CDB8F0" },
+      indigo: { background:"#E2E2F2", color:"#3B3B7A", border:"1px solid #BFBFE0" },
       gray:   { background:"#F0EDE8", color:"#5A5A4A", border:"1px solid #D8D0C4" },
     };
     return { ...(M[t]||M.gray), padding:"2px 7px", borderRadius:4, fontSize:11, fontWeight:600, display:"inline-block" };
@@ -1710,6 +1711,10 @@ export default function App() {
                   .replace(/\b\d{1,3}\.\d+\s*%?/g, "")   // "100.000%" / "100.000"
                   .replace(/\b\d{1,3}\s*%/g, "")          // "100 %"
                   .replace(/[:;,]+\s*$/g, "")             // trailing punctuation
+                  .replace(/\s*[;]{1,}\s*/g, " / ")       // ";" or ";;" between JV partners → " / "
+                  .replace(/\s*&\s*/g, " / ")             // "&" between partners → " / "
+                  .replace(/\s*\/\s*\/+\s*/g, " / ")      // collapse any "//" → " / "
+                  .replace(/^\s*\/\s*|\s*\/\s*$/g, "")    // strip leading/trailing slashes
                   .replace(/\s{2,}/g, " ")
                   .trim();
                 // Title-case if the source is ALL CAPS
@@ -1874,10 +1879,20 @@ export default function App() {
                         {/* Uranium trend corridors */}
                         {bmtTrends && URANIUM_TRENDS.map((t,i)=>{
                           const d = t.pts.map(([lng,lat],j)=>{ const [x,y]=toSVG(lat,lng); return `${j===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ");
+                          // label: midpoint + angle from first→last point so text follows the corridor
+                          const a = toSVG(t.pts[0][1], t.pts[0][0]);
+                          const b = toSVG(t.pts[t.pts.length-1][1], t.pts[t.pts.length-1][0]);
+                          const mid = toSVG(t.pts[Math.floor(t.pts.length/2)][1], t.pts[Math.floor(t.pts.length/2)][0]);
+                          let ang = Math.atan2(b[1]-a[1], b[0]-a[0]) * 180/Math.PI;
+                          if (ang>90) ang -= 180;
+                          if (ang<-90) ang += 180;
                           return (
                             <g key={i}>
                               <path d={d} fill="none" stroke="#E8B84B" strokeWidth={26} strokeLinecap="round" strokeOpacity={0.28} style={{ filter:"blur(5px)" }}/>
                               <path d={d} fill="none" stroke="#B07A08" strokeWidth={12} strokeLinecap="round" strokeOpacity={0.22} style={{ filter:"blur(3px)" }}/>
+                              <text x={mid[0]} y={mid[1]} textAnchor="middle" transform={`rotate(${ang.toFixed(1)} ${mid[0]} ${mid[1]})`}
+                                fontSize={7} fontWeight={700} fill="#8A6A1A" letterSpacing="0.04em" opacity={0.85}
+                                style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={1.8} strokeLinejoin="round">{t.name}</text>
                             </g>
                           );
                         })}
@@ -2079,7 +2094,7 @@ export default function App() {
                             <div style={{ fontSize:11, fontWeight:700, color:"#1A1A14", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{p.name}</div>
                             <div style={{ fontSize:9, color:"#9A9A8A" }}>{p.company}</div>
                           </div>
-                          <span style={{ ...S.badge(p.stage==="Producer"?"blue":p.stage==="Developer"?"amber":"green"), fontSize:8, flexShrink:0, marginLeft:6 }}>{STAGE_LBL[p.stage]}</span>
+                          <span style={{ ...S.badge(p.type==="Processing"?"indigo":p.stage==="Producer"?"blue":p.stage==="Developer"?"amber":"green"), fontSize:8, flexShrink:0, marginLeft:6 }}>{p.type==="Processing"?"Mill / processing":STAGE_LBL[p.stage]}</span>
                         </div>
                       ))}
                     </div>
