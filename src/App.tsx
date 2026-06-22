@@ -1091,6 +1091,35 @@ export default function App() {
   const [showSubModal, setShowSubModal] = useState(false);
   const [subscribed, setSubscribed]     = useState(false);
   const [subEmail, setSubEmail]         = useState("");
+  const [subBusy, setSubBusy]           = useState(false);
+  const [subError, setSubError]         = useState("");
+
+  const submitSubscribe = useCallback(async () => {
+    const email = subEmail.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ setSubError("Please enter a valid email address."); return; }
+    setSubBusy(true); setSubError("");
+    try {
+      const res = await fetch("/.netlify/functions/subscribe", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && data.ok){
+        setSubscribed(true);
+        setShowSubModal(false);
+      } else {
+        // surface the real reason instead of silently "succeeding"
+        const msg = data?.beehiiv ? (typeof data.beehiiv==="string"?data.beehiiv:JSON.stringify(data.beehiiv)) : (data?.error || "Subscription failed. Please try again.");
+        setSubError(msg);
+        console.error("Subscribe failed:", data);
+      }
+    } catch(e) {
+      setSubError("Network error — please try again.");
+      console.error("Subscribe error", e);
+    }
+    setSubBusy(false);
+  }, [subEmail]);
   const [videoData, setVideoData]       = useState([]);
   const [videosLoading, setVideosLoading] = useState(false);
   const [ytdLive, setYtdLive]           = useState({});
@@ -1709,7 +1738,7 @@ export default function App() {
             <div style={{ ...SERIF, fontSize:19, color:"#B07A08", fontWeight:700 }}>Advertise with Juniorstocks.com</div>
             <div style={{ fontSize:12, color:"#6A6A5A", marginTop:4 }}>Reach 10,000+ active uranium and junior mining investors.</div>
           </div>
-          <a href="mailto:advertise@juniorstocks.com" style={{ textDecoration:"none", flexShrink:0 }}>
+          <a href="mailto:admin@juniorstocks.com" style={{ textDecoration:"none", flexShrink:0 }}>
             <button style={{ ...S.btn(), padding:"10px 22px", fontSize:12 }}>Advertise</button>
           </a>
         </div>
@@ -3743,7 +3772,7 @@ export default function App() {
               © 2026 Juniorstocks.com · All rights reserved.
             </p>
           </div>
-          <a href="mailto:advertise@juniorstocks.com" style={{ textDecoration:"none", flexShrink:0 }}>
+          <a href="mailto:admin@juniorstocks.com" style={{ textDecoration:"none", flexShrink:0 }}>
             <button style={{
               padding:"8px 18px", borderRadius:6, fontSize:12, fontWeight:700, cursor:"pointer",
               background:"transparent", color:"#B07A08", border:"1px solid #E8A02066",
@@ -3781,27 +3810,21 @@ export default function App() {
               type="email"
               placeholder="your@email.com"
               value={subEmail}
-              onChange={e=>setSubEmail(e.target.value)}
-              onKeyDown={e=>{ if(e.key==="Enter" && subEmail.includes("@")){ fetch("/.netlify/functions/subscribe",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email:subEmail}) }).catch(()=>{}).finally(()=>{ setSubscribed(true); setShowSubModal(false); }); }}}
-              style={{ width:"100%", padding:"12px 14px", border:"1px solid #D8D0C4", borderRadius:6, fontSize:14, outline:"none", boxSizing:"border-box", marginBottom:10, fontFamily:"'Helvetica Neue',Helvetica,Arial,sans-serif", color:"#1A1A14" }}
+              onChange={e=>{ setSubEmail(e.target.value); if(subError) setSubError(""); }}
+              onKeyDown={e=>{ if(e.key==="Enter") submitSubscribe(); }}
+              style={{ width:"100%", padding:"12px 14px", border:`1px solid ${subError?"#C01818":"#D8D0C4"}`, borderRadius:6, fontSize:14, outline:"none", boxSizing:"border-box", marginBottom:subError?6:10, fontFamily:"'Helvetica Neue',Helvetica,Arial,sans-serif", color:"#1A1A14" }}
             />
+
+            {subError && (
+              <div style={{ fontSize:11, color:"#C01818", marginBottom:10, lineHeight:1.4 }}>{subError}</div>
+            )}
 
             {/* Submit */}
             <button
-              onClick={async ()=>{
-                if(!subEmail.includes("@")) return;
-                try {
-                  await fetch("/.netlify/functions/subscribe", {
-                    method:"POST",
-                    headers:{ "Content-Type":"application/json" },
-                    body: JSON.stringify({ email: subEmail }),
-                  });
-                } catch(e) { console.error("Subscribe error", e); }
-                setSubscribed(true);
-                setShowSubModal(false);
-              }}
-              style={{ width:"100%", padding:"13px", background:"#B07A08", color:"#FFFFFF", border:"none", borderRadius:6, fontSize:14, fontWeight:700, cursor:"pointer", letterSpacing:"0.04em" }}>
-              Get Free Access
+              onClick={submitSubscribe}
+              disabled={subBusy}
+              style={{ width:"100%", padding:"13px", background:subBusy?"#C8A858":"#B07A08", color:"#FFFFFF", border:"none", borderRadius:6, fontSize:14, fontWeight:700, cursor:subBusy?"default":"pointer", letterSpacing:"0.04em" }}>
+              {subBusy ? "Subscribing…" : "Get Free Access"}
             </button>
 
             {/* Disclaimer */}
