@@ -2361,101 +2361,92 @@ export default function App() {
                 (bcmType==="All"   || e.type===bcmType) &&
                 (bcmRegion==="All" || e.region===bcmRegion)
               );
-              const byType = {
-                "Bought Deal":  filtered.filter(e=>e.type==="Bought Deal"),
-                "Joint Venture":filtered.filter(e=>e.type==="Joint Venture"),
-                "Insider Buy":  filtered.filter(e=>e.type==="Insider Buy"),
-              };
               const totalDeployed = filtered.reduce((s,e)=>s+e.amount,0);
               const momentum = filtered.length===0?"—":filtered.reduce((s,e)=>s+e.momentum,0)/filtered.length>80?"High":filtered.reduce((s,e)=>s+e.momentum,0)/filtered.length>65?"Moderate":"Developing";
-
-              const BubbleShape = (props) => {
-                const { cx, cy, payload } = props;
-                const r = Math.max(14, Math.min(46, Math.sqrt(payload.amount) * 10));
-                const col = TYPE_COLORS[payload.type] || "#B07A08";
-                return (
-                  <g style={{ cursor:"pointer" }}>
-                    <circle cx={cx} cy={cy} r={r} fill={col} fillOpacity={0.75} stroke={col} strokeWidth={1.5}/>
-                    <text x={cx} y={cy+4} textAnchor="middle" fontSize={9} fontWeight={700} fill="#FFFFFF">{payload.ticker}</text>
-                  </g>
-                );
-              };
-
-              const CustomTooltip = ({ active, payload }) => {
-                if (!active||!payload?.length) return null;
-                const d = payload[0]?.payload;
-                if (!d) return null;
-                return (
-                  <div style={{ background:"#FFFFFF", border:"1px solid #D8D0C4", borderRadius:8, padding:"10px 14px", fontSize:11, maxWidth:240, boxShadow:"0 2px 8px rgba(0,0,0,0.1)" }}>
-                    <div style={{ fontWeight:700, color:"#1A1A14", marginBottom:4 }}>{d.company} <span style={{ color:TYPE_COLORS[d.type], fontWeight:600 }}>({d.type})</span></div>
-                    <div style={{ color:"#6A6A5A", marginBottom:2 }}>{d.headline}</div>
-                    <div style={{ display:"flex", gap:12, marginTop:6 }}>
-                      <span style={{ fontWeight:700, color:"#1A7A44" }}>{d.amountLabel}</span>
-                      <span style={{ color:"#B07A08" }}>{d.proximity}</span>
-                    </div>
-                    <div style={{ color:"#9A9A8A", marginTop:4 }}>{d.date} · Momentum {d.momentum}%</div>
-                  </div>
-                );
-              };
 
               return (
                 <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:20 }}>
 
-                  {/* LEFT — Chart 2/3, flex column so chart fills space */}
-                  <div style={{ display:"flex", flexDirection:"column" }}>
-                    <div style={{ display:"flex", gap:12, marginBottom:10, flexWrap:"wrap" }}>
+                  {/* LEFT — Regional insight bands */}
+                  <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                    {/* Legend + filters */}
+                    <div style={{ display:"flex", gap:12, alignItems:"center", flexWrap:"wrap" }}>
                       {Object.entries(TYPE_COLORS).map(([label,color])=>(
                         <div key={label} style={{ display:"flex", alignItems:"center", gap:5 }}>
                           <div style={{ width:10, height:10, borderRadius:"50%", background:color }}/>
                           <span style={{ fontSize:11, color:"#6A6A5A" }}>{label}</span>
                         </div>
                       ))}
-                      <span style={{ fontSize:10, color:"#9A9A8A", marginLeft:"auto" }}>Bubble size = amount</span>
-                    </div>
-                    <div style={{ flex:1, minHeight:300, background:"#F8F6F1", borderRadius:8, padding:"4px", border:"1px solid #E8E4DE", display:"flex", flexDirection:"column" }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ScatterChart margin={{ top:16, right:12, bottom:20, left:8 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#E0DAD0" strokeOpacity={0.8}/>
-                          <XAxis type="number" dataKey="momentum" domain={[40,100]} tickFormatter={v=>`${v}%`} tick={{ fontSize:10, fill:"#6A6A5A" }}
-                            label={{ value:"Relative Market Momentum →", position:"insideBottom", offset:-8, fontSize:9, fill:"#9A9A8A" }}/>
-                          <YAxis type="number" dataKey="regionY" domain={[-0.8,2.8]} ticks={[0,1,2]} width={90}
-                            tickFormatter={v=>["Basin Margins","Eastern Basin","Western Basin"][v]||""} tick={{ fontSize:10, fill:"#6A6A5A" }}/>
-                          <ZAxis dataKey="amount" range={[300,3000]}/>
-                          <Tooltip content={<CustomTooltip/>}/>
-                          {Object.entries(byType).map(([type,data])=>(
-                            <Scatter key={type} data={data} fill={TYPE_COLORS[type]} shape={<BubbleShape/>}/>
-                          ))}
-                        </ScatterChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:0, margin:"12px 0", border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
-                      {[["Transactions",filtered.length],[`Deployed`,`C$${totalDeployed.toFixed(0)}M`],["Momentum",momentum]].map(([label,val])=>(
-                        <div key={label} style={{ padding:"8px 10px", borderRight:"1px solid #D8D0C4", textAlign:"center" }}>
-                          <div style={{ fontSize:10, color:"#9A9A8A", marginBottom:2 }}>{label}</div>
-                          <div style={{ fontSize:13, fontWeight:800, color:"#1A1A14" }}>{val}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display:"flex", gap:10 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                        <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600 }}>Type</span>
+                      <div style={{ marginLeft:"auto", display:"flex", gap:8 }}>
                         <select value={bcmType} onChange={e=>setBcmType(e.target.value)}
-                          style={{ padding:"4px 8px", fontSize:11, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14" }}>
+                          style={{ padding:"3px 7px", fontSize:10.5, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14" }}>
                           {["All","Bought Deal","Joint Venture","Insider Buy"].map(t=><option key={t}>{t}</option>)}
                         </select>
-                      </div>
-                      <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                        <span style={{ fontSize:11, color:"#6A6A5A", fontWeight:600 }}>Region</span>
                         <select value={bcmRegion} onChange={e=>setBcmRegion(e.target.value)}
-                          style={{ padding:"4px 8px", fontSize:11, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14" }}>
+                          style={{ padding:"3px 7px", fontSize:10.5, border:"1px solid #D8D0C4", borderRadius:6, background:"#FFFFFF", color:"#1A1A14" }}>
                           {["All","Western Basin","Eastern Basin","Basin Margins"].map(r=><option key={r}>{r}</option>)}
                         </select>
+                      </div>
+                    </div>
+
+                    {/* Three regional bands */}
+                    {[
+                      { key:"Western Basin", title:"Western Region Insights",  short:"WESTERN BASIN",  region:[[0.50,0.30],[0.72,0.28],[0.78,0.52],[0.62,0.66],[0.46,0.54]] },
+                      { key:"Eastern Basin", title:"Eastern Region Insights",  short:"EASTERN BASIN",  region:[[0.30,0.34],[0.46,0.30],[0.50,0.50],[0.40,0.62],[0.26,0.52]] },
+                      { key:"Basin Margins", title:"Basin Margin Insights",    short:"BASIN MARGINS",  region:[[0.40,0.60],[0.56,0.58],[0.60,0.74],[0.46,0.82],[0.34,0.72]] },
+                    ].map(band=>{
+                      const evts = filtered.filter(e=>e.region===band.key).sort((a,b)=>b.amount-a.amount);
+                      const maxAmt = Math.max(...evts.map(e=>e.amount), 1);
+                      return (
+                        <div key={band.key} style={{ display:"grid", gridTemplateColumns:"112px 1fr", border:"1px solid #E8E4DE", borderRadius:8, overflow:"hidden", background:"#FBFAF6" }}>
+                          {/* Mini-map cell */}
+                          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 6px", background:"#F4F1EA", borderRight:"1px solid #E8E4DE", position:"relative" }}>
+                            <div style={{ position:"absolute", left:6, top:0, bottom:0, display:"flex", alignItems:"center" }}>
+                              <span style={{ fontSize:7.5, fontWeight:800, color:"#A89A80", letterSpacing:"0.5px", writingMode:"vertical-rl", transform:"rotate(180deg)" }}>{band.short}</span>
+                            </div>
+                            <svg width="58" height="48" viewBox="0 0 100 88">
+                              {/* AB/SK province silhouette */}
+                              <path d="M10,12 L46,12 L46,4 L62,4 L62,12 L90,12 L90,80 L10,80 Z" fill="#E4DECF" stroke="#CFC6B2" strokeWidth="1.5"/>
+                              {/* highlighted region */}
+                              <polygon points={band.region.map(([px,py])=>`${px*100},${py*88}`).join(" ")} fill="#C8881A" fillOpacity="0.55" stroke="#B07A08" strokeWidth="1"/>
+                            </svg>
+                            <span style={{ ...SERIF, fontSize:10.5, fontWeight:700, color:"#1A1A14", textAlign:"center", lineHeight:1.2 }}>{band.title}</span>
+                          </div>
+                          {/* Bars cell */}
+                          <div style={{ padding:"12px 14px", display:"flex", flexDirection:"column", justifyContent:"center", gap:8 }}>
+                            {evts.length===0 ? (
+                              <div style={{ fontSize:11, color:"#9A9A8A", fontStyle:"italic", textAlign:"center" }}>No activity matches filters in this region.</div>
+                            ) : evts.map((e,i)=>(
+                              <div key={i} style={{ display:"flex", alignItems:"center", gap:8 }}>
+                                <span style={{ ...MONO, fontSize:9.5, fontWeight:700, color:TYPE_COLORS[e.type], width:46, flexShrink:0, textAlign:"right" }}>{e.ticker}</span>
+                                <div style={{ flex:1, position:"relative", height:18, background:"#EFEAE0", borderRadius:3, overflow:"hidden" }}>
+                                  <div title={e.headline} style={{ width:`${Math.max(6,(e.amount/maxAmt)*100)}%`, height:"100%", background:TYPE_COLORS[e.type], borderRadius:3, transition:"width .3s" }}/>
+                                </div>
+                                <span style={{ fontSize:10, color:"#1A1A14", fontWeight:700, flexShrink:0, whiteSpace:"nowrap" }}>{e.amountLabel}</span>
+                                <span style={{ fontSize:9, color:"#9A9A8A", flexShrink:0, width:60, whiteSpace:"nowrap" }}>{e.momentum}% Mom.</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Summary row */}
+                    <div style={{ border:"1px solid #E8E4DE", borderRadius:8, background:"#FBFAF6", padding:"12px 16px" }}>
+                      <div style={{ ...SERIF, fontSize:13, fontWeight:700, color:"#1A1A14", marginBottom:8 }}>Summary</div>
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:0 }}>
+                        {[["Total Transactions",filtered.length],["Capital Deployed",`C$${totalDeployed.toFixed(0)}M`],["Market Momentum",momentum]].map(([label,val],i)=>(
+                          <div key={label} style={{ textAlign:"center", borderRight:i<2?"1px solid #E8E4DE":"none", padding:"2px 8px" }}>
+                            <div style={{ fontSize:10, color:"#9A9A8A", marginBottom:4 }}>{label}</div>
+                            <div style={{ ...SERIF, fontSize:24, fontWeight:800, color:"#1A1A14" }}>{val}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
 
                   {/* RIGHT — Insider Activity 1/3 */}
-                  <div style={{ borderLeft:"1px solid #D8D0C4", paddingLeft:18 }}>
+                  <div style={{ borderLeft:"1px solid #D8D0C4", paddingLeft:18, display:"flex", flexDirection:"column" }}>
                     {/* Tab toggle */}
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
                       <div style={{ display:"flex", border:"1px solid #D8D0C4", borderRadius:6, overflow:"hidden" }}>
@@ -2466,6 +2457,7 @@ export default function App() {
                     </div>
                     <div style={{ fontSize:10, color:"#9A9A8A", marginBottom:12 }}>Last updated: {INSIDER_BUYS_UPDATED}</div>
 
+                    <div style={{ flex:1, minHeight:0, maxHeight:480, overflowY:"auto", paddingRight:8, marginRight:-8 }}>
                     {insiderView==="buys" ? (
                       INSIDER_BUYS.map((buy,i)=>{
                         const co = COMPANIES.find(c=>c.ticker===buy.ticker||c.altTicker===buy.ticker||c.name.toLowerCase().includes(buy.company.split(" ")[0].toLowerCase()));
@@ -2503,6 +2495,7 @@ export default function App() {
                         );
                       })
                     )}
+                    </div>
                   </div>
 
                 </div>
