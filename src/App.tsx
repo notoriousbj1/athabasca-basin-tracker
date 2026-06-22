@@ -2347,7 +2347,7 @@ export default function App() {
                     <div style={{ ...hCell }} onClick={()=>sortBy("grade")}>Intercept (Grade / Thickness)<Arrow col="grade"/></div>
                     <div style={{ ...hCell, justifyContent:"flex-end" }} onClick={()=>sortBy("gt")}>G × T<Arrow col="gt"/></div>
                     <div style={{ ...hCell }} onClick={()=>sortBy("date")}>Release Date<Arrow col="date"/></div>
-                    <div style={{ textAlign:"center" }}>PR Link</div>
+                    <div style={{ textAlign:"center" }}>Source</div>
                   </div>
                   {/* Rows */}
                   {sorted.map((r,i)=>{
@@ -2380,22 +2380,20 @@ export default function App() {
                         {/* PR link */}
                         <div style={{ textAlign:"center" }}>
                           {r.url ? (
-                            <a href={r.url} target="_blank" rel="noopener noreferrer" title={`Confidence: ${r.confidence||"n/a"}`}
+                            <a href={r.url} target="_blank" rel="noopener noreferrer"
+                              title={r.seed ? "Opens the company's news page (specific release not deep-linked)" : `Verified release · confidence: ${r.confidence||"n/a"}`}
                               style={{ textDecoration:"none", fontSize:10.5, fontWeight:600, color:conf[r.confidence]||"#9A9A8A", whiteSpace:"nowrap" }}>
-                              PR ↗
+                              {r.seed ? "News ↗" : "PR ↗"}
                             </a>
-                          ) : <span style={{ color:"#D8D0C4" }}>—</span>}
+                          ) : <span style={{ color:"#D8D0C4" }} title="No verified source link available">—</span>}
                         </div>
                       </div>
                     );
                   })}
                   {/* Footer */}
                   <div style={{ padding:"10px 16px", borderTop:"1px solid #EDE8E0", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8, fontSize:9.5, color:"#9A9A8A" }}>
-                    <div style={{ display:"flex", gap:12, alignItems:"center" }}>
-                      <span style={{ fontWeight:700 }}>PR link colour = confidence:</span>
-                      <span style={{ color:"#1A7A44" }}>High</span>
-                      <span style={{ color:"#B07A08" }}>Medium</span>
-                      <span style={{ color:"#9A9A8A" }}>Low</span>
+                    <div style={{ display:"flex", gap:12, alignItems:"center", flexWrap:"wrap" }}>
+                      <span><strong style={{ color:"#6A6A5A" }}>PR ↗</strong> = verified release link · <strong style={{ color:"#6A6A5A" }}>News ↗</strong> = company news page · colour = AI confidence (<span style={{ color:"#1A7A44" }}>high</span>/<span style={{ color:"#B07A08" }}>med</span>/<span style={{ color:"#9A9A8A" }}>low</span>)</span>
                     </div>
                     {drillGenAt && <span>Updated {new Date(drillGenAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span>}
                   </div>
@@ -2405,7 +2403,7 @@ export default function App() {
           </div>
           {/* Disclaimer */}
           <div style={{ marginTop:12, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10, color:"#9A9A8A", lineHeight:1.6 }}>
-            <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> Drill intercepts are <strong>automatically extracted by AI</strong> from public press releases and may contain errors, omissions, or misread figures. Grade × thickness is a simple ranking metric, not a resource estimate, and intervals are not necessarily true widths. Always confirm against the official company release (tap ↗) and NI 43-101 disclosures before relying on any number. Not investment advice.
+            <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> Drill intercepts are <strong>automatically extracted by AI</strong> from public press releases and may contain errors, omissions, or misread figures. "PR ↗" links are verified against the source news feed; "News ↗" links open the company's news page rather than a specific release. Grade × thickness is a simple ranking metric, not a resource estimate, and intervals are not necessarily true widths. Always confirm against the official company release and NI 43-101 disclosures before relying on any number. Not investment advice.
           </div>
         </div>
 
