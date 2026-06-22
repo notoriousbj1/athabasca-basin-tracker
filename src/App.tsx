@@ -3851,7 +3851,7 @@ export default function App() {
                  hay.includes(c.name.toLowerCase());
         }).slice(0,3);
 
-        // Generate seeded 30-day price series
+        // Generate seeded 30-day price series with real dates (counting back from today)
         const gen30Day = (price, seed) => {
           let s = seed.split("").reduce((a,b)=>a+b.charCodeAt(0),0);
           const pts = [price];
@@ -3860,7 +3860,16 @@ export default function App() {
             const r=s/233280;
             pts.unshift(Math.max(0.001, pts[0]*(1-(r-0.5)*0.05)));
           }
-          return pts.map((v,i)=>({ d:i+1, price:Math.round(v*1000)/1000 }));
+          const today = new Date();
+          return pts.map((v,i)=>{
+            const dt = new Date(today);
+            dt.setDate(today.getDate() - (29 - i));
+            return {
+              d: i+1,
+              date: dt.toLocaleDateString("en-US",{ month:"short", day:"numeric" }),
+              price: Math.round(v*1000)/1000,
+            };
+          });
         };
         const chart30 = gen30Day(p, c.ticker);
         const chartMin = Math.min(...chart30.map(d=>d.price))*0.995;
@@ -3913,7 +3922,10 @@ export default function App() {
                         </linearGradient>
                       </defs>
                       <YAxis domain={[chartMin, chartMax]} hide/>
-                      <Tooltip formatter={(v)=>[`${fmtP(v)}`,"Price"]} contentStyle={{ background:"#FFFFFF", border:"1px solid #D8D0C4", fontSize:11, borderRadius:4 }}/>
+                      <Tooltip
+                        formatter={(v)=>[`${fmtP(v)}`,"Price"]}
+                        labelFormatter={(d,payload)=>payload?.[0]?.payload?.date || ""}
+                        contentStyle={{ background:"#FFFFFF", border:"1px solid #D8D0C4", fontSize:11, borderRadius:4 }}/>
                       <Area type="monotone" dataKey="price" stroke={c.color||"#B07A08"} strokeWidth={1.5} fill="url(#coGrad)" dot={false}/>
                     </AreaChart>
                   </ResponsiveContainer>
