@@ -8,9 +8,9 @@
 // so the tracker always shows meaningful data. Flagged seed:true and clearly labeled in UI.
 const SEED_RESULTS = [
   { company:"NexGen Energy",     ticker:"NXE", project:"Arrow (Rook I)",       hole:"RK-24-227", thickness_m:42.0, grade_pct:1.15, interval_text:"42.0 m @ 1.15% U₃O₈", depth_m:null, date:"2025", url:"https://www.nexgenenergy.ca/news/", confidence:"high", seed:true },
-  { company:"Fission Uranium",   ticker:"FCU", project:"Triple R (PLS)",       hole:"PLS-23-180",thickness_m:38.0, grade_pct:0.88, interval_text:"38.0 m @ 0.88% U₃O₈", depth_m:null, date:"2024", url:"https://fissionuranium.com/news/", confidence:"high", seed:true },
-  { company:"Denison Mines",     ticker:"DML", project:"Phoenix (Wheeler)",    hole:"WR-733",    thickness_m:22.0, grade_pct:1.05, interval_text:"22.0 m @ 1.05% U₃O₈", depth_m:null, date:"2024", url:"https://www.denisonmines.com/news/", confidence:"high", seed:true },
-  { company:"IsoEnergy",         ticker:"ISO", project:"Hurricane (Larocque)", hole:"LE-23-145", thickness_m:30.0, grade_pct:0.52, interval_text:"30.0 m @ 0.52% U₃O₈", depth_m:null, date:"2024", url:"https://www.isoenergy.ca/news/", confidence:"medium", seed:true },
+  { company:"Fission Uranium",   ticker:"FCU", project:"Triple R (PLS)",       hole:"PLS-23-180",thickness_m:38.0, grade_pct:0.88, interval_text:"38.0 m @ 0.88% U₃O₈", depth_m:null, date:"2024", url:"https://fissionuranium.com/news-releases/", confidence:"high", seed:true },
+  { company:"Denison Mines",     ticker:"DML", project:"Phoenix (Wheeler)",    hole:"WR-733",    thickness_m:22.0, grade_pct:1.05, interval_text:"22.0 m @ 1.05% U₃O₈", depth_m:null, date:"2024", url:"https://www.denisonmines.com/news-releases/", confidence:"high", seed:true },
+  { company:"IsoEnergy",         ticker:"ISO", project:"Hurricane (Larocque)", hole:"LE-23-145", thickness_m:30.0, grade_pct:0.52, interval_text:"30.0 m @ 0.52% U₃O₈", depth_m:null, date:"2024", url:"https://www.isoenergy.ca/news-media/news-releases/", confidence:"medium", seed:true },
   { company:"Purepoint Uranium", ticker:"PTU", project:"Hook Lake JV",         hole:"HK-24-09",  thickness_m:65.0, grade_pct:0.25, interval_text:"65.0 m @ 0.25% U₃O₈", depth_m:null, date:"2024", url:"https://www.purepoint.ca/news/", confidence:"medium", seed:true },
   { company:"F3 Uranium",        ticker:"FUU", project:"PLN (JR Zone)",        hole:"PLN24-178", thickness_m:18.0, grade_pct:1.40, interval_text:"18.0 m @ 1.40% U₃O₈", depth_m:null, date:"2024", url:"https://www.f3uranium.com/news/", confidence:"medium", seed:true },
 ];
@@ -90,13 +90,30 @@ exports.handler = async () => {
     try { parsed = JSON.parse(clean); }
     catch { parsed = { results: [] }; }
 
+    // Set of real URLs from the news feed — used to validate AI-supplied links
+    const validUrls = new Set((news || []).map(n => (n.url || "").trim()).filter(Boolean));
+    const validHosts = new Set();
+    validUrls.forEach(u => { try { validHosts.add(new URL(u).hostname.replace(/^www\./,"")); } catch {} });
+
     const results = (parsed.results || [])
       .filter(r => r.thickness_m != null && r.grade_pct != null)
-      .map(r => ({
-        ...r,
-        // grade-thickness score (standard intercept-ranking metric)
-        gt: +(Number(r.thickness_m) * Number(r.grade_pct)).toFixed(1),
-      }))
+      .map(r => {
+        // URL guard: only keep the AI's url if it exactly matches a real news-feed URL.
+        // Otherwise null it out (UI will show no link rather than a fabricated one).
+        let url = (r.url || "").trim();
+        let urlVerified = false;
+        if (url && validUrls.has(url)) {
+          urlVerified = true;                       // exact match to a real release URL
+        } else {
+          url = null;                               // discard unverified / hallucinated link
+        }
+        return {
+          ...r,
+          url,
+          urlVerified,
+          gt: +(Number(r.thickness_m) * Number(r.grade_pct)).toFixed(1),
+        };
+      })
       .sort((a, b) => b.gt - a.gt);
 
     // Fall back to seed data when the live feed yields no fresh assays
