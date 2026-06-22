@@ -479,6 +479,15 @@ const URANIUM_TRENDS = [
   { name:"Key Lake Trend",                     pts:[[-105.8,57.4],[-105.4,57.2],[-105.0,57.0]] },
 ];
 
+// Northern service hubs / settlements (approximate) — human & logistics context
+const BASIN_SETTLEMENTS = [
+  { name:"Uranium City",         lat:59.57, lng:-108.61, kind:"town" },
+  { name:"Stony Rapids",         lat:59.26, lng:-105.84, kind:"town" },
+  { name:"Black Lake",           lat:59.13, lng:-105.30, kind:"town" },
+  { name:"Wollaston Lake (Hatchet Lake)", lat:58.11, lng:-103.17, kind:"town" },
+  { name:"Points North Landing", lat:58.28, lng:-104.08, kind:"airstrip" },
+];
+
 const SMART_MONEY_EVENTS = [
   { company:"NexGen",      ticker:"NXE",    type:"Insider Buy",  amount:2.1,  amountLabel:"C$2.1M",  date:"May 2026", momentum:98, regionY:2, region:"Western Basin",  headline:"CEO & Directors add $2.1M in open market purchases post-permitting update", proximity:"Arrow Deposit"            },
   { company:"Denison",     ticker:"DML.TO", type:"Joint Venture", amount:25,  amountLabel:"C$25M",   date:"Jun 2026", momentum:90, regionY:2, region:"Western Basin",  headline:"Denison expands Russell Lake JV with Skyharbour — 3 new targets adjacent to Arrow", proximity:"4.2km from Arrow" },
@@ -1854,8 +1863,38 @@ export default function App() {
                     <div style={{ position:"relative", background:"#EFEAE0" }}>
                       <svg width="100%" viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ display:"block" }}
                         onMouseLeave={()=>setBmtHover(null)}>
+                        <defs>
+                          <radialGradient id="basinFill" cx="50%" cy="45%" r="65%">
+                            <stop offset="0%" stopColor="#F0E2C0" stopOpacity="0.75"/>
+                            <stop offset="70%" stopColor="#E8D6AE" stopOpacity="0.55"/>
+                            <stop offset="100%" stopColor="#DBC79A" stopOpacity="0.5"/>
+                          </radialGradient>
+                        </defs>
                         {/* land bg */}
                         <rect x={0} y={0} width={SVG_W} height={SVG_H} fill="#EAE3D5"/>
+
+                        {/* Coordinate graticule — faint lat/lng grid behind everything */}
+                        {(()=>{
+                          const lines=[];
+                          // longitude lines every 2°
+                          for(let lng=-112; lng<=-102; lng+=2){
+                            const [x1,y1]=toSVG(60.5,lng); const [x2,y2]=toSVG(55.0,lng);
+                            lines.push(<line key={`vg${lng}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#D2C7B2" strokeWidth={0.5} strokeOpacity={0.6}/>);
+                            lines.push(<text key={`vt${lng}`} x={x1} y={MAP_PT-6} textAnchor="middle" fontSize={6.5} fill="#A89A80">{Math.abs(lng)}°W</text>);
+                          }
+                          // latitude lines every 1°
+                          for(let lat=56; lat<=60; lat++){
+                            const [x1,y1]=toSVG(lat,-112.5); const [x2,y2]=toSVG(lat,-101.0);
+                            lines.push(<line key={`hg${lat}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#D2C7B2" strokeWidth={0.5} strokeOpacity={0.6}/>);
+                            lines.push(<text key={`ht${lat}`} x={MAP_PL-6} y={y1+2} textAnchor="end" fontSize={6.5} fill="#A89A80">{lat}°N</text>);
+                          }
+                          return lines;
+                        })()}
+
+                        {/* Geopolitical labels */}
+                        {(()=>{ const [x,y]=toSVG(57.0,-111.4); return <text x={x} y={y} textAnchor="middle" fontSize={9} fontWeight={700} fill="#9A8A6A" opacity={0.55} letterSpacing="2" transform={`rotate(-90 ${x} ${y})`}>ALBERTA</text>; })()}
+                        {(()=>{ const [x,y]=toSVG(56.4,-108.5); return <text x={x} y={y} textAnchor="middle" fontSize={9} fontWeight={700} fill="#9A8A6A" opacity={0.55} letterSpacing="3">SASKATCHEWAN</text>; })()}
+                        {(()=>{ const [x,y]=toSVG(60.3,-106.5); return <text x={x} y={y} textAnchor="middle" fontSize={7.5} fontWeight={700} fill="#9A8A6A" opacity={0.45} letterSpacing="2">NORTHWEST TERRITORIES</text>; })()}
                         {/* Major lakes — simplified shorelines */}
                         {BASIN_LAKES.map((lake,i)=>{
                           const d = lake.pts.map(([lng,lat],j)=>{ const [x,y]=toSVG(lat,lng); return `${j===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ")+" Z";
@@ -1871,9 +1910,18 @@ export default function App() {
                           );
                         })}
 
-                        {/* Basin boundary */}
-                        <path d={BASIN_BOUNDARY.map(([lng,lat],i)=>{ const [x,y]=toSVG(lat,lng); return `${i===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ")+" Z"}
-                          fill="#E4D4B0" fillOpacity={0.4} stroke="#B07A08" strokeWidth={1.5} strokeOpacity={0.5}/>
+                        {/* Basin boundary — gradient fill + soft inner edge for a carved sedimentary-basin look */}
+                        {(()=>{
+                          const path = BASIN_BOUNDARY.map(([lng,lat],i)=>{ const [x,y]=toSVG(lat,lng); return `${i===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ")+" Z";
+                          return (
+                            <g>
+                              <path d={path} fill="url(#basinFill)" stroke="none"/>
+                              {/* soft inner shadow: a blurred inner stroke */}
+                              <path d={path} fill="none" stroke="#9A7A30" strokeWidth={6} strokeOpacity={0.18} style={{ filter:"blur(4px)" }}/>
+                              <path d={path} fill="none" stroke="#B07A08" strokeWidth={1.5} strokeOpacity={0.6}/>
+                            </g>
+                          );
+                        })()}
                         <text x={toSVG(58.6,-107.0)[0]} y={toSVG(58.6,-107.0)[1]} textAnchor="middle" fontSize={11} fontWeight={700} fill="#B07A08" opacity={0.3} letterSpacing="2">ATHABASCA BASIN</text>
 
                         {/* Uranium trend corridors */}
@@ -1910,6 +1958,26 @@ export default function App() {
                               <path d={d} fill="none" stroke="#FFFFFF" strokeWidth={3.5} strokeOpacity={0.7} strokeLinecap="round"/>
                               <path d={d} fill="none" stroke="#C8881A" strokeWidth={1.6} strokeDasharray="6,4" strokeLinecap="round"/>
                               <text x={mx+4} y={my} fontSize={7} fontWeight={700} fill="#8A6A1A" style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={2} strokeLinejoin="round">{h.name}</text>
+                            </g>
+                          );
+                        })}
+
+                        {/* Northern settlements & logistics hubs */}
+                        {BASIN_SETTLEMENTS.map((s,i)=>{
+                          const [x,y]=toSVG(s.lat,s.lng);
+                          const isAir = s.kind==="airstrip";
+                          return (
+                            <g key={`set-${i}`}>
+                              {isAir ? (
+                                <g>
+                                  <rect x={x-3} y={y-3} width={6} height={6} fill="#7A7A6E" stroke="#FFFFFF" strokeWidth={0.8}/>
+                                  <text x={x} y={y+2.4} textAnchor="middle" fontSize={5} fill="#FFFFFF" fontWeight={900}>✈</text>
+                                </g>
+                              ) : (
+                                <rect x={x-2.2} y={y-2.2} width={4.4} height={4.4} fill="#8A8A7E" stroke="#FFFFFF" strokeWidth={0.7}/>
+                              )}
+                              <text x={x} y={y-5} textAnchor="middle" fontSize={6.5} fontWeight={600} fill="#5A5A4A" opacity={0.85}
+                                style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={1.6} strokeLinejoin="round">{s.name}</text>
                             </g>
                           );
                         })}
@@ -1986,7 +2054,7 @@ export default function App() {
                                 <circle cx={x} cy={y} r={r} fill={col} stroke="#FFFFFF" strokeWidth={1.5}/>
                               )}
                               {p.drilling && <text x={x} y={y+2.6} textAnchor="middle" fontSize={7} fill="#FFFFFF" fontWeight={900}>▲</text>}
-                              {(p.stage==="Producer"||hov) && (
+                              {(p.stage==="Producer"||p.type==="Processing"||hov) && (
                                 <text x={x+r+3} y={y+3} fontSize={8} fontWeight={700} fill="#1A1A14" style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={2.5} strokeLinejoin="round">{p.name}</text>
                               )}
                             </g>
