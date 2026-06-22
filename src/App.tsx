@@ -423,9 +423,9 @@ const BASIN_BOUNDARY = [
 const BASIN_PROJECTS = [
   { name:"Cigar Lake",       company:"Cameco / Orano",     ticker:"CCO",   lat:58.06, lng:-104.53, stage:"Producer", grade:"~14.7% U₃O₈", gradePct:14.7, resourceMlb:230, drilling:false, type:"Unconformity",        info:"World's highest-grade producing uranium mine." },
   { name:"McArthur River",   company:"Cameco",             ticker:"CCO",   lat:57.77, lng:-105.04, stage:"Producer", grade:"~6.9% U₃O₈",  gradePct:6.9,  resourceMlb:390, drilling:false, type:"Unconformity",        info:"Largest high-grade uranium mine; restarted 2022." },
-  { name:"Key Lake Mill",    company:"Cameco",             ticker:"CCO",   lat:57.20, lng:-105.62, stage:"Producer", grade:"Mill",        gradePct:null, resourceMlb:null,drilling:false, type:"Processing",          info:"Processes McArthur River ore." },
-  { name:"Rabbit Lake",      company:"Cameco",             ticker:"CCO",   lat:58.22, lng:-103.68, stage:"Producer", status:"Care & Maintenance", grade:"~1.0–1.6% U₃O₈ (historical)", gradePct:1.3, resourceMlb:60,  drilling:false, type:"Unconformity",      info:"Historic mill & mine complex, on care & maintenance since 2016." },
-  { name:"McClean Lake",     company:"Orano",              ticker:"—",     lat:58.30, lng:-103.83, stage:"Producer", grade:"Mill",        gradePct:null, resourceMlb:null,drilling:false, type:"Processing",          info:"Processes Cigar Lake ore." },
+  { name:"Key Lake Mill",    company:"Cameco",             ticker:"CCO",   lat:57.20, lng:-105.62, stage:"Producer", labelDir:"up", grade:"Mill",        gradePct:null, resourceMlb:null,drilling:false, type:"Processing",          info:"Processes McArthur River ore." },
+  { name:"Rabbit Lake",      company:"Cameco",             ticker:"CCO",   lat:58.22, lng:-103.68, stage:"Producer", status:"Care & Maintenance", labelDir:"down", grade:"~1.0–1.6% U₃O₈ (historical)", gradePct:1.3, resourceMlb:60,  drilling:false, type:"Unconformity",      info:"Historic mill & mine complex, on care & maintenance since 2016." },
+  { name:"McClean Lake",     company:"Orano",              ticker:"—",     lat:58.30, lng:-103.83, stage:"Producer", labelDir:"up", grade:"Mill (JEB / SABRE)", gradePct:null, resourceMlb:null,drilling:false, type:"Processing",          info:"Orano's JEB mill — tolls Cigar Lake ore; SABRE mining operations." },
   { name:"Arrow / Rook I",   company:"NexGen Energy",      ticker:"NXE",   lat:58.12, lng:-109.68, stage:"Developer",grade:"~2.4% U₃O₈",  gradePct:2.4,  resourceMlb:340, drilling:false, type:"Basement-hosted",     info:"FS complete; flagship development, undergoing permitting. SW of Patterson Lake South." },
   { name:"Wheeler River",    company:"Denison Mines",      ticker:"DML",   lat:57.95, lng:-104.55, stage:"Developer",grade:"~3.5% U₃O₈",  gradePct:3.5,  resourceMlb:130, drilling:false, type:"Unconformity",        info:"Phoenix ISR + Gryphon deposits; FEED stage." },
   { name:"Triple R",         company:"Fission Uranium",    ticker:"FCU",   lat:58.10, lng:-109.50, stage:"Developer",grade:"~1.6% U₃O₈",  gradePct:1.6,  resourceMlb:130, drilling:false, type:"Basement / shallow",  info:"Patterson Lake South; FS-stage development." },
@@ -476,7 +476,7 @@ const BASIN_LAKES = [
 const URANIUM_TRENDS = [
   { name:"Patterson Lake Corridor",            pts:[[-110.0,58.5],[-109.2,58.2],[-108.6,57.9]] },
   { name:"Wollaston–Mudjatik Transition Zone", pts:[[-104.8,58.4],[-104.3,58.0],[-103.6,57.5],[-103.3,57.1]] },
-  { name:"Key Lake Trend",                     pts:[[-105.8,57.4],[-105.4,57.2],[-105.0,57.0]] },
+  { name:"Key Lake Trend",                     pts:[[-106.0,57.35],[-105.6,57.12],[-105.2,56.92]] },
 ];
 
 // Northern service hubs / settlements (approximate) — human & logistics context
@@ -484,7 +484,7 @@ const BASIN_SETTLEMENTS = [
   { name:"Uranium City",         lat:59.57, lng:-108.61, kind:"town" },
   { name:"Stony Rapids",         lat:59.26, lng:-105.84, kind:"town" },
   { name:"Black Lake",           lat:59.13, lng:-105.30, kind:"town" },
-  { name:"Wollaston Lake (Hatchet Lake)", lat:58.11, lng:-103.17, kind:"town" },
+  { name:"Hatchet Lake",         lat:58.11, lng:-103.17, kind:"town" },
   { name:"Points North Landing", lat:58.28, lng:-104.08, kind:"airstrip" },
 ];
 
@@ -2054,9 +2054,15 @@ export default function App() {
                                 <circle cx={x} cy={y} r={r} fill={col} stroke="#FFFFFF" strokeWidth={1.5}/>
                               )}
                               {p.drilling && <text x={x} y={y+2.6} textAnchor="middle" fontSize={7} fill="#FFFFFF" fontWeight={900}>▲</text>}
-                              {(p.stage==="Producer"||p.type==="Processing"||hov) && (
-                                <text x={x+r+3} y={y+3} fontSize={8} fontWeight={700} fill="#1A1A14" style={{ paintOrder:"stroke" }} stroke="#EFEAE0" strokeWidth={3} strokeLinejoin="round" strokeOpacity={0.92}>{p.name}</text>
-                              )}
+                              {(p.stage==="Producer"||p.type==="Processing"||hov) && (()=>{
+                                const dir = p.labelDir || "right";
+                                const lx = dir==="left" ? x-r-4 : dir==="right" ? x+r+4 : x;
+                                const ly = dir==="up" ? y-r-5 : dir==="down" ? y+r+9 : y+3;
+                                const anchor = dir==="left" ? "end" : dir==="right" ? "start" : "middle";
+                                return (
+                                  <text x={lx} y={ly} textAnchor={anchor} fontSize={8} fontWeight={700} fill="#1A1A14" style={{ paintOrder:"stroke" }} stroke="#EFEAE0" strokeWidth={3} strokeLinejoin="round" strokeOpacity={0.92}>{p.name}</text>
+                                );
+                              })()}
                             </g>
                           );
                         })}
