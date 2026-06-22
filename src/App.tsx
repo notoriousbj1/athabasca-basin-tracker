@@ -424,7 +424,7 @@ const BASIN_PROJECTS = [
   { name:"Cigar Lake",       company:"Cameco / Orano",     ticker:"CCO",   lat:58.06, lng:-104.53, stage:"Producer", grade:"~14.7% U₃O₈", gradePct:14.7, resourceMlb:230, drilling:false, type:"Unconformity",        info:"World's highest-grade producing uranium mine." },
   { name:"McArthur River",   company:"Cameco",             ticker:"CCO",   lat:57.77, lng:-105.04, stage:"Producer", grade:"~6.9% U₃O₈",  gradePct:6.9,  resourceMlb:390, drilling:false, type:"Unconformity",        info:"Largest high-grade uranium mine; restarted 2022." },
   { name:"Key Lake Mill",    company:"Cameco",             ticker:"CCO",   lat:57.20, lng:-105.62, stage:"Producer", grade:"Mill",        gradePct:null, resourceMlb:null,drilling:false, type:"Processing",          info:"Processes McArthur River ore." },
-  { name:"Rabbit Lake",      company:"Cameco",             ticker:"CCO",   lat:58.22, lng:-103.68, stage:"Producer", grade:"Care & maint.", gradePct:0.7, resourceMlb:60,  drilling:false, type:"Unconformity",      info:"Historic mill, on care & maintenance." },
+  { name:"Rabbit Lake",      company:"Cameco",             ticker:"CCO",   lat:58.22, lng:-103.68, stage:"Producer", status:"Care & Maintenance", grade:"~1.0–1.6% U₃O₈ (historical)", gradePct:1.3, resourceMlb:60,  drilling:false, type:"Unconformity",      info:"Historic mill & mine complex, on care & maintenance since 2016." },
   { name:"McClean Lake",     company:"Orano",              ticker:"—",     lat:58.30, lng:-103.83, stage:"Producer", grade:"Mill",        gradePct:null, resourceMlb:null,drilling:false, type:"Processing",          info:"Processes Cigar Lake ore." },
   { name:"Arrow / Rook I",   company:"NexGen Energy",      ticker:"NXE",   lat:58.12, lng:-109.68, stage:"Developer",grade:"~2.4% U₃O₈",  gradePct:2.4,  resourceMlb:340, drilling:false, type:"Basement-hosted",     info:"FS complete; flagship development, undergoing permitting. SW of Patterson Lake South." },
   { name:"Wheeler River",    company:"Denison Mines",      ticker:"DML",   lat:57.95, lng:-104.55, stage:"Developer",grade:"~3.5% U₃O₈",  gradePct:3.5,  resourceMlb:130, drilling:false, type:"Unconformity",        info:"Phoenix ISR + Gryphon deposits; FEED stage." },
@@ -1692,6 +1692,17 @@ export default function App() {
 
               // Match top drill results to known coordinates (project name or company name)
               const norm = (s)=> (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+              // Known acquisitions / stale registry names -> current owner
+              const OWNER_ALIASES = [
+                { match:/\buex\b/i,            to:"Uranium Energy Corp (UEC)" }, // UEX acquired by UEC (2022)
+              ];
+              // Brand-casing fixes applied after title-casing (industry-standard capitalization)
+              const BRAND_FIXES = [
+                [/\bCanalaska\b/g, "CanAlaska"],
+                [/\bNexgen\b/g,    "NexGen"],
+                [/\bIsoenergy\b/g, "IsoEnergy"],
+                [/\bCansask\b/g,   "CanSask"],
+              ];
               // Tidy raw claim-owner strings: drop ownership %, title-case, shorten suffixes
               const cleanOwner = (raw) => {
                 if (!raw) return "Unknown holder";
@@ -1716,6 +1727,17 @@ export default function App() {
                   .replace(/\bUranium\b/gi, "U")
                   .replace(/\s{2,}/g, " ")
                   .trim();
+                // Industry-standard brand capitalization
+                for (const [re, fix] of BRAND_FIXES) s = s.replace(re, fix);
+                // Remap acquired / stale names to current owner. For JVs, swap the stale
+                // partner in place rather than replacing the whole string.
+                for (const a of OWNER_ALIASES) {
+                  if (a.match.test(s)) {
+                    s = /\/|&| and /i.test(s)
+                      ? s.replace(/\bue?x\b[^/&]*/i, "UEC ").replace(/\s{2,}/g," ").trim()
+                      : a.to;
+                  }
+                }
                 return s || "Unknown holder";
               };
               const locateHit = (r) => {
@@ -1756,7 +1778,7 @@ export default function App() {
                         </button>
                       ))}
                       <span style={{ display:"flex", alignItems:"center", gap:5, padding:"4px 8px", fontSize:10.5, color:"#6A6A5A" }} title="Mill / ore-processing facility">
-                        <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="6" width="10" height="5" rx="0.5" fill="#1A5AA8"/><path d="M1,6 L4,3 L4,6 L7,3 L7,6 L10,3 L10,6 Z" fill="#1A5AA8"/><rect x="7.5" y="1.5" width="1.6" height="2.5" fill="#1A5AA8"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="6" width="10" height="5" rx="0.5" fill="#3B3B7A"/><path d="M1,6 L4,3 L4,6 L7,3 L7,6 L10,3 L10,6 Z" fill="#3B3B7A"/><rect x="7.5" y="1.5" width="1.6" height="2.5" fill="#3B3B7A"/></svg>
                         Mill / processing
                       </span>
                       <button onClick={()=>setBmtTrends(v=>!v)} style={{
@@ -1910,9 +1932,12 @@ export default function App() {
                         {/* Project markers (curated) */}
                         {visible.map((p,i)=>{
                           const [x,y]=toSVG(p.lat,p.lng);
-                          // Color: by grade spectrum (if grade mode) else by stage
+                          const MILL_COL = "#3B3B7A"; // dark indigo for mills / processing (matches legend)
+                          // Color: by grade spectrum (grade mode) → else mill indigo for processing → else stage
                           const gradeColor = (g)=> g==null?"#9A9A8A" : g>=15?"#7C1D6F" : g>=6?"#C01818" : g>=2?"#E8730C" : "#E8A020";
-                          const col = bmtSizeMode==="grade" ? gradeColor(p.gradePct) : STAGE_COL[p.stage];
+                          const col = bmtSizeMode==="grade"
+                            ? gradeColor(p.gradePct)
+                            : (p.type==="Processing" ? MILL_COL : STAGE_COL[p.stage]);
                           // Size: by resource (if resource mode), by grade (grade mode), else by stage
                           let r;
                           if (bmtSizeMode==="resource") {
@@ -2023,7 +2048,7 @@ export default function App() {
                             <>
                               <div style={{ display:"grid", gap:3 }}>
                                 <div><span style={{ color:"#9A9A8A" }}>Company: </span><strong style={{ color:"#1A1A14" }}>{bmtHover.company}</strong> {bmtHover.ticker!=="—" && <span style={{ ...MONO, color:STAGE_COL[bmtHover.stage], fontWeight:700, fontSize:10 }}>{bmtHover.ticker}</span>}</div>
-                                <div><span style={{ color:"#9A9A8A" }}>Stage: </span><strong style={{ color:STAGE_COL[bmtHover.stage] }}>{STAGE_LBL[bmtHover.stage]}</strong></div>
+                                <div><span style={{ color:"#9A9A8A" }}>Stage: </span><strong style={{ color:STAGE_COL[bmtHover.stage] }}>{STAGE_LBL[bmtHover.stage]}</strong>{bmtHover.status && <span style={{ color:"#C01818", fontWeight:600 }}> · {bmtHover.status}</span>}</div>
                                 <div><span style={{ color:"#9A9A8A" }}>Grade: </span><strong style={{ color:"#1A7A44" }}>{bmtHover.grade}</strong></div>
                                 <div><span style={{ color:"#9A9A8A" }}>Type: </span><strong style={{ color:"#1A1A14" }}>{bmtHover.type}</strong></div>
                                 {bmtHover.resourceMlb && <div><span style={{ color:"#9A9A8A" }}>Resource: </span><strong style={{ color:"#B07A08" }}>~{bmtHover.resourceMlb} Mlb U₃O₈ <span style={{ fontWeight:400, fontStyle:"italic" }}>(approx.)</span></strong></div>}
