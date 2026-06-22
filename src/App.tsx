@@ -1711,7 +1711,7 @@ export default function App() {
               return (
                 <div key={i} style={{ paddingBottom:10, marginBottom:10, borderBottom:"1px solid #D8D0C4" }}>
                   <div style={{ display:"flex", gap:5, alignItems:"center", marginBottom:5, flexWrap:"wrap" }}>
-                    <span style={{ fontSize:12, color:up?"#1A7A44":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
+                    <span className={up?"up-arrow":""} style={{ fontSize:12, color:up?"#16C44A":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
                     <span style={{ fontSize:12, fontWeight:700, color:"#1A1A14" }}>{n.company}</span>
                     <span style={{ ...MONO, fontSize:10, fontWeight:600, color:co?.color||"#B07A08" }}>{n.ticker}</span>
                     <span style={{ ...S.badge("gray"), fontSize:9 }}>{n.type}</span>
