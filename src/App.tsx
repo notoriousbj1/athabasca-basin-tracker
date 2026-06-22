@@ -1017,6 +1017,9 @@ export default function App() {
   const [basinClaims,   setBasinClaims]   = useState([]);
   const [claimOwners,   setClaimOwners]   = useState([]);
   const [showClaims,    setShowClaims]    = useState(false);
+  const [drillResults,  setDrillResults]  = useState([]);
+  const [drillLoading,  setDrillLoading]  = useState(false);
+  const [drillGenAt,    setDrillGenAt]    = useState(null);
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
   const [basinTopStory, setBasinTopStory] = useState(null);
@@ -1103,6 +1106,17 @@ export default function App() {
     } catch(e) { console.error("Basin claims fetch failed", e); }
   }, []);
 
+  const fetchDrillResults = useCallback(async () => {
+    setDrillLoading(true);
+    try {
+      const res = await fetch("/.netlify/functions/drill-results");
+      const data = await res.json();
+      if (Array.isArray(data?.results)) setDrillResults(data.results);
+      if (data?.generatedAt) setDrillGenAt(data.generatedAt);
+    } catch(e) { console.error("Drill results fetch failed", e); }
+    setDrillLoading(false);
+  }, []);
+
   const fetchVideoData = useCallback(async () => {
     setVideosLoading(true);
     try {
@@ -1146,7 +1160,7 @@ export default function App() {
     setRefresh(false);
   }, []);
 
-  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); fetchSmdiDeposits(); fetchBasinClaims(); },[]);
+  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); fetchSmdiDeposits(); fetchBasinClaims(); fetchDrillResults(); },[]);
 
   const gP   = (c) => prices[c.id]?.price ?? c.price;
   const gCh  = (c) => prices[c.id]?.changePct ?? c.changePct;
@@ -1850,6 +1864,91 @@ export default function App() {
           <div style={{ marginTop:12, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10, color:"#9A9A8A", lineHeight:1.6 }}>
             <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> The larger labelled markers are curated company projects — positions and grades are approximate, from public disclosures, and may be out of date. The small dark-red dots (SMDI Occurrences) are real uranium occurrence locations from the <strong>Saskatchewan Mineral Deposit Index</strong>. The purple squares (Mineral Claims) are real active mineral dispositions from <strong>Saskatchewan Mineral Tenure</strong>, shown at claim centroids and coloured brighter where the registered owner matches a tracked company; claims cover all minerals, not only uranium, and owner names are as-registered. The basin outline and "uranium trend" corridors are simplified schematics, not survey-grade geology. Verify everything with official sources before making decisions. Not investment advice.
         </div>
+        </div>
+
+        {/* Drill Result Tracker */}
+        <div style={{ marginBottom:48, marginTop:24 }}>
+          <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
+            <div>
+              <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Drill Result Tracker</div>
+              <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Latest assay intercepts from basin press releases, ranked by grade × thickness</div>
+            </div>
+            <button onClick={fetchDrillResults} disabled={drillLoading}
+              style={{ ...S.btn("s"), fontSize:10, padding:"4px 10px", marginBottom:8 }}>
+              {drillLoading ? "Analyzing…" : "↻ Refresh"}
+            </button>
+          </div>
+          <div style={{ ...S.card, padding:0, overflow:"hidden" }}>
+            {drillLoading && drillResults.length===0 ? (
+              <div style={{ padding:"40px 24px", textAlign:"center", color:"#9A9A8A", fontSize:13 }}>
+                Scanning recent press releases for drill assays…
+              </div>
+            ) : drillResults.length===0 ? (
+              <div style={{ padding:"40px 24px", textAlign:"center", color:"#9A9A8A", fontSize:13 }}>
+                No drill assays found in the latest releases. Check back after the next batch of results, or hit Refresh.
+              </div>
+            ) : (() => {
+              const maxGT = Math.max(...drillResults.map(r=>r.gt||0), 1);
+              const conf = { high:"#1A7A44", medium:"#B07A08", low:"#9A9A8A" };
+              return (
+                <>
+                  {/* Header row */}
+                  <div style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 0.8fr 0.8fr 1.2fr 60px", gap:0, padding:"10px 16px", borderBottom:"2px solid #D8D0C4", background:"#FAF8F3", fontSize:9.5, fontWeight:800, color:"#6A6A5A", textTransform:"uppercase", letterSpacing:"0.06em" }}>
+                    <div>Company / Project</div>
+                    <div>Intercept</div>
+                    <div style={{ textAlign:"right" }}>Thick.</div>
+                    <div style={{ textAlign:"right" }}>Grade</div>
+                    <div style={{ paddingLeft:12 }}>Grade × Thickness</div>
+                    <div style={{ textAlign:"center" }}>Source</div>
+                  </div>
+                  {/* Rows */}
+                  {drillResults.map((r,i)=>{
+                    const gtPct = ((r.gt||0)/maxGT)*100;
+                    return (
+                      <div key={i} style={{ display:"grid", gridTemplateColumns:"1.4fr 1fr 0.8fr 0.8fr 1.2fr 60px", gap:0, padding:"11px 16px", borderBottom:i<drillResults.length-1?"1px solid #EDE8E0":"none", alignItems:"center", fontSize:12, background:i===0?"#F4FAF5":"transparent" }}>
+                        <div style={{ minWidth:0 }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                            <span style={{ fontWeight:700, color:"#1A1A14", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.company||"—"}</span>
+                            {r.ticker && <span style={{ ...MONO, fontSize:9.5, color:"#B07A08", fontWeight:700, flexShrink:0 }}>{r.ticker}</span>}
+                            {i===0 && <span style={{ ...S.badge("green"), fontSize:8, flexShrink:0 }}>TOP HIT</span>}
+                          </div>
+                          <div style={{ fontSize:10, color:"#9A9A8A", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.project||""}{r.hole?` · ${r.hole}`:""}</div>
+                        </div>
+                        <div style={{ ...MONO, fontSize:11, color:"#1A1A14", fontWeight:600 }}>{r.interval_text || `${r.thickness_m}m @ ${r.grade_pct}%`}</div>
+                        <div style={{ ...MONO, textAlign:"right", color:"#1A1A14" }}>{r.thickness_m!=null?`${r.thickness_m}m`:"—"}</div>
+                        <div style={{ ...MONO, textAlign:"right", fontWeight:700, color:"#1A7A44" }}>{r.grade_pct!=null?`${r.grade_pct}%`:"—"}</div>
+                        <div style={{ paddingLeft:12, display:"flex", alignItems:"center", gap:8 }}>
+                          <div style={{ flex:1, height:7, background:"#EDE8E0", borderRadius:4, overflow:"hidden", minWidth:40 }}>
+                            <div style={{ width:`${gtPct}%`, height:"100%", background:"linear-gradient(90deg,#1A7A44,#16C44A)", borderRadius:4 }}/>
+                          </div>
+                          <span style={{ ...MONO, fontSize:11, fontWeight:800, color:"#1A1A14", flexShrink:0, minWidth:32, textAlign:"right" }}>{r.gt}</span>
+                        </div>
+                        <div style={{ textAlign:"center" }}>
+                          {r.url ? (
+                            <a href={r.url} target="_blank" rel="noopener noreferrer" title={`Confidence: ${r.confidence||"n/a"}`} style={{ textDecoration:"none", fontSize:14, color:conf[r.confidence]||"#9A9A8A" }}>↗</a>
+                          ) : <span style={{ color:"#D8D0C4" }}>—</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {/* Footer */}
+                  <div style={{ padding:"10px 16px", borderTop:"1px solid #EDE8E0", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8, fontSize:9.5, color:"#9A9A8A" }}>
+                    <div style={{ display:"flex", gap:12, alignItems:"center" }}>
+                      <span style={{ fontWeight:700 }}>Confidence:</span>
+                      <span style={{ display:"flex", alignItems:"center", gap:4 }}><span style={{ color:"#1A7A44" }}>↗</span> High</span>
+                      <span style={{ display:"flex", alignItems:"center", gap:4 }}><span style={{ color:"#B07A08" }}>↗</span> Medium</span>
+                      <span style={{ display:"flex", alignItems:"center", gap:4 }}><span style={{ color:"#9A9A8A" }}>↗</span> Low</span>
+                    </div>
+                    {drillGenAt && <span>Updated {new Date(drillGenAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span>}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+          {/* Disclaimer */}
+          <div style={{ marginTop:12, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10, color:"#9A9A8A", lineHeight:1.6 }}>
+            <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> Drill intercepts are <strong>automatically extracted by AI</strong> from public press releases and may contain errors, omissions, or misread figures. Grade × thickness is a simple ranking metric, not a resource estimate, and intervals are not necessarily true widths. Always confirm against the official company release (tap ↗) and NI 43-101 disclosures before relying on any number. Not investment advice.
+          </div>
         </div>
 
         {/* Basin Capital Monitor */}
