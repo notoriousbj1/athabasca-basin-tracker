@@ -1053,6 +1053,9 @@ export default function App() {
   const [sortCol, setSortCol]         = useState("chg");
   const [sortDir, setSortDir]         = useState("desc");
   const [coSort,  setCoSort]          = useState("today");
+  const coListRef = useRef(null);
+  const newsColRef = useRef(null);
+  const [coFillRows, setCoFillRows] = useState(3);
   const [coStageFilter, setCoStageFilter] = useState("All");
   const [sdEndYear,     setSdEndYear]     = useState(2030);
   const [sdHighlight,   setSdHighlight]   = useState("Global Reactor Buildout");
@@ -1220,6 +1223,22 @@ export default function App() {
   }, []);
 
   useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); fetchSmdiDeposits(); fetchBasinClaims(); fetchDrillResults(); },[]);
+
+  // Match left company list height to the news column by adding blurred filler rows
+  useEffect(()=>{
+    const measure = () => {
+      const left = coListRef.current, right = newsColRef.current;
+      if(!left || !right) return;
+      const gap = right.offsetHeight - left.offsetHeight;
+      if(gap > 30){
+        const ROW_H = 58; // approx blurred row height incl border
+        setCoFillRows(prev => Math.max(3, Math.min(12, prev + Math.round(gap/ROW_H))));
+      }
+    };
+    const t = setTimeout(measure, 150);
+    window.addEventListener("resize", measure);
+    return ()=>{ clearTimeout(t); window.removeEventListener("resize", measure); };
+  }, [news, prices, coSort, ytdLive]);
 
   const gP   = (c) => prices[c.id]?.price ?? c.price;
   const gCh  = (c) => prices[c.id]?.changePct ?? c.changePct;
@@ -1475,7 +1494,7 @@ export default function App() {
         {/* Companies + News 2-col */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1px 284px", gap:"0 18px", marginBottom:20 }}>
           {/* Left: Companies */}
-          <div>
+          <div ref={coListRef}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
               <div style={{ ...S.lbl, letterSpacing:"0.15em" }}>TOP PERFORMING COMPANIES</div>
               <div style={{ display:"flex", border:"1px solid #D8D0C4", borderRadius:6, overflow:"hidden" }}>
@@ -1586,15 +1605,19 @@ export default function App() {
             ) : (
               <div style={{ position:"relative", overflow:"hidden", marginTop:2 }}>
                 <div style={{ filter:"blur(3px)", opacity:0.32, pointerEvents:"none" }}>
-                  {[...COMPANIES].filter(c=>c.id!=="canu")
-                    .sort((a,b)=>coSort==="ytd"?getYTD(b)-getYTD(a):gCh(b)-gCh(a))
-                    .slice(5,8)
-                    .map((c,i)=>{
+                  {(()=>{
+                    const pool = [...COMPANIES].filter(c=>c.id!=="canu")
+                      .sort((a,b)=>coSort==="ytd"?getYTD(b)-getYTD(a):gCh(b)-gCh(a))
+                      .slice(5);
+                    if(pool.length===0) return null;
+                    // repeat the pool to fill the requested number of rows
+                    const rows = Array.from({length:coFillRows}, (_,i)=>pool[i % pool.length]);
+                    return rows.map((c,i)=>{
                       const p=gP(c), ch=gCh(c), ytd=getYTD(c);
-                      const up=ch>=0, ytdUp=ytd>=0;
+                      const up=ch>=0;
                       const barW=Math.min(100,Math.abs(ytd)*1.5);
                       return (
-                        <div key={c.id} style={{ padding:"10px 0", borderBottom:"1px solid #D8D0C4" }}>
+                        <div key={i} style={{ padding:"10px 0", borderBottom:"1px solid #D8D0C4" }}>
                           <div style={{ display:"flex", alignItems:"center", gap:12 }}>
                             <span style={{ fontSize:11, color:"#9A9A8A", width:16, flexShrink:0, textAlign:"center" }}>{i+6}</span>
                             <div style={{ flex:1, minWidth:0 }}>
@@ -1604,9 +1627,9 @@ export default function App() {
                               </div>
                               <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:4 }}>
                                 <div style={{ width:60, height:4, background:"#EDE8E0", borderRadius:2, overflow:"hidden" }}>
-                                  <div style={{ width:`${barW}%`, height:"100%", background:ytdUp?"#1A7A44":"#C01818", borderRadius:2 }}/>
+                                  <div style={{ width:`${barW}%`, height:"100%", background:ytd>=0?"#1A7A44":"#C01818", borderRadius:2 }}/>
                                 </div>
-                                <span style={{ ...MONO, fontSize:10, fontWeight:700, color:ytdUp?"#1A7A44":"#C01818" }}>YTD {ytdUp?"+":""}{ytd.toFixed(1)}%</span>
+                                <span style={{ ...MONO, fontSize:10, fontWeight:700, color:ytd>=0?"#1A7A44":"#C01818" }}>YTD {ytd>=0?"+":""}{ytd.toFixed(1)}%</span>
                               </div>
                             </div>
                             <span style={{ ...MONO, fontWeight:700, fontSize:15, color:"#1A1A14", flexShrink:0 }}>{fmtP(p)}</span>
@@ -1618,7 +1641,8 @@ export default function App() {
                           </div>
                         </div>
                       );
-                    })}
+                    });
+                  })()}
                 </div>
                 <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
                   <button onClick={()=>setShowSubModal(true)} style={{ ...S.btn(), fontSize:11, padding:"6px 16px" }}>
@@ -1631,7 +1655,7 @@ export default function App() {
           {/* Divider */}
           <div style={{ background:"#D8D0C4" }}/>
           {/* Right: News */}
-          <div>
+          <div ref={newsColRef}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
             <div style={{ ...S.lbl, letterSpacing:"0.15em" }}>LATEST RELEASES</div>
             <button onClick={fetchNews} disabled={newsLoading}
@@ -1785,24 +1809,10 @@ export default function App() {
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 220px", gap:0 }}>
                   {/* MAP */}
                   <div style={{ position:"relative", borderRight:"1px solid #D8D0C4" }}>
-                    {/* Legend + toggles bar */}
+                    {/* Data-layer toggles bar */}
                     <div style={{ display:"flex", flexWrap:"wrap", gap:8, padding:"12px 14px", borderBottom:"1px solid #EDE8E0", alignItems:"center" }}>
-                      {Object.keys(STAGE_COL).map(k=>(
-                        <button key={k} onClick={()=>toggle(k)} style={{
-                          display:"flex", alignItems:"center", gap:6, padding:"4px 10px", borderRadius:20, cursor:"pointer",
-                          border:`1px solid ${bmtFilters[k]?STAGE_COL[k]:"#D8D0C4"}`,
-                          background:bmtFilters[k]?`${STAGE_COL[k]}14`:"#F5F3EE", opacity:bmtFilters[k]?1:0.5,
-                        }}>
-                          <span style={{ width:9, height:9, borderRadius:"50%", background:STAGE_COL[k] }}/>
-                          <span style={{ fontSize:11, fontWeight:600, color:"#1A1A14" }}>{STAGE_LBL[k]}</span>
-                        </button>
-                      ))}
-                      <span style={{ display:"flex", alignItems:"center", gap:5, padding:"4px 8px", fontSize:10.5, color:"#6A6A5A" }} title="Mill / ore-processing facility">
-                        <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="6" width="10" height="5" rx="0.5" fill="#3B3B7A"/><path d="M1,6 L4,3 L4,6 L7,3 L7,6 L10,3 L10,6 Z" fill="#3B3B7A"/><rect x="7.5" y="1.5" width="1.6" height="2.5" fill="#3B3B7A"/></svg>
-                        Mill / processing
-                      </span>
                       <button onClick={()=>setBmtTrends(v=>!v)} style={{
-                        display:"flex", alignItems:"center", gap:6, padding:"4px 10px", borderRadius:20, cursor:"pointer", marginLeft:"auto",
+                        display:"flex", alignItems:"center", gap:6, padding:"4px 10px", borderRadius:20, cursor:"pointer",
                         border:`1px solid ${bmtTrends?"#B07A08":"#D8D0C4"}`, background:bmtTrends?"#B07A0814":"#F5F3EE", opacity:bmtTrends?1:0.5,
                       }}>
                         <span style={{ width:14, height:8, borderRadius:3, background:"linear-gradient(90deg,#E8C870,#B07A08)" }}/>
@@ -2217,6 +2227,26 @@ export default function App() {
                       <div style={{ ...S.lbl, marginBottom:4 }}>U₃O₈ SPOT</div>
                       <div style={{ ...SERIF, fontSize:26, fontWeight:800, color:"#B07A08", lineHeight:1 }}>{spotLoading?"—":`$${spot.price?.toFixed(2)}`}</div>
                       <div style={{ fontSize:10, color:spotWoW>=0?"#16C44A":"#C01818", fontWeight:700, marginTop:3 }}>{spotWoW>=0?"▲":"▼"} {Math.abs(spotWoW).toFixed(2)} WoW</div>
+                    </div>
+                    {/* Stage filter — moved from top bar */}
+                    <div style={{ padding:"14px", borderBottom:"1px solid #EDE8E0" }}>
+                      <div style={{ ...S.lbl, marginBottom:8 }}>FILTER BY STAGE</div>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                        {Object.keys(STAGE_COL).map(k=>(
+                          <button key={k} onClick={()=>toggle(k)} style={{
+                            display:"flex", alignItems:"center", gap:5, padding:"3px 9px", borderRadius:20, cursor:"pointer",
+                            border:`1px solid ${bmtFilters[k]?STAGE_COL[k]:"#D8D0C4"}`,
+                            background:bmtFilters[k]?`${STAGE_COL[k]}14`:"#F5F3EE", opacity:bmtFilters[k]?1:0.5,
+                          }}>
+                            <span style={{ width:8, height:8, borderRadius:"50%", background:STAGE_COL[k] }}/>
+                            <span style={{ fontSize:10.5, fontWeight:600, color:"#1A1A14" }}>{STAGE_LBL[k]}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div style={{ display:"flex", alignItems:"center", gap:5, marginTop:8, fontSize:10, color:"#6A6A5A" }} title="Mill / ore-processing facility">
+                        <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="6" width="10" height="5" rx="0.5" fill="#3B3B7A"/><path d="M1,6 L4,3 L4,6 L7,3 L7,6 L10,3 L10,6 Z" fill="#3B3B7A"/><rect x="7.5" y="1.5" width="1.6" height="2.5" fill="#3B3B7A"/></svg>
+                        Mill / processing facility
+                      </div>
                     </div>
                     {/* Active companies */}
                     <div style={{ padding:"14px", borderBottom:"1px solid #EDE8E0", flex:1 }}>
