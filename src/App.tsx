@@ -395,14 +395,25 @@ const toSVG = (lat, lng) => [
   ((LAT_MAX - lat) / LAT_RANGE) * MAP_H + MAP_PT,
 ];
 
+// Athabasca Basin — approximate Athabasca Group sandstone margin (simplified from real geology).
+// Distinctive features: flatter southern margin, eastern notch near Wollaston/Mudjatik,
+// western extension toward Alberta, irregular northern shore along Lake Athabasca.
 const BASIN_BOUNDARY = [
-  [-111.5,59.0],[-110.8,59.3],[-110.2,59.5],[-109.5,59.8],
-  [-108.5,60.0],[-107.5,60.1],[-106.5,60.2],[-105.5,60.0],
-  [-104.5,59.8],[-103.8,59.5],[-103.0,59.0],[-102.5,58.5],
-  [-102.2,58.0],[-102.2,57.5],[-102.5,57.0],[-103.0,56.5],
-  [-103.8,56.0],[-105.0,55.8],[-106.0,55.5],[-107.5,55.3],
-  [-109.0,55.5],[-110.0,55.8],[-110.5,56.0],[-111.0,56.5],
-  [-111.5,57.5],[-112.0,58.0],[-111.8,58.5],[-111.5,59.0],
+  // Northwest corner — western extension reaching toward Alberta
+  [-111.6,58.55],[-111.2,58.95],[-110.6,59.20],
+  // Northern shore — irregular, following south of Lake Athabasca
+  [-109.9,59.30],[-109.1,59.15],[-108.4,59.30],[-107.6,59.25],
+  [-106.9,59.05],[-106.2,59.15],[-105.6,59.00],
+  // Northeast — steps down toward the eastern notch
+  [-105.0,58.70],[-104.6,58.40],
+  // Eastern notch — the distinctive indentation near Wollaston/Mudjatik
+  [-104.0,58.25],[-103.6,58.45],[-103.2,58.20],[-103.4,57.80],
+  [-103.9,57.55],[-104.3,57.25],
+  // Southern margin — relatively flat
+  [-105.0,57.10],[-105.8,57.00],[-106.6,57.05],[-107.4,57.00],
+  [-108.2,57.10],[-109.0,57.20],
+  // Southwest — rounding up the western side into Alberta
+  [-109.8,57.45],[-110.5,57.85],[-111.2,58.15],[-111.6,58.55],
 ];
 
 // ─────────────────────────────────────────────
@@ -435,6 +446,30 @@ const BASIN_PROJECTS = [
 const BASIN_HIGHWAYS = [
   { name:"Highway 905", pts:[[-103.30,56.20],[-103.50,57.00],[-103.70,57.80],[-103.85,58.30],[-104.00,58.80]] },
   { name:"Highway 914", pts:[[-105.55,56.10],[-105.60,56.70],[-105.62,57.20]] },
+];
+
+// Major lakes — simplified shorelines [lng,lat], approximate real geography
+const BASIN_LAKES = [
+  { name:"Lake Athabasca", label:[-108.6,59.25], pts:[
+    [-111.0,59.30],[-110.0,59.40],[-109.0,59.45],[-108.0,59.40],[-107.0,59.35],[-106.2,59.25],
+    [-105.6,59.10],[-105.9,58.95],[-106.6,58.95],[-107.4,59.00],[-108.3,59.05],[-109.2,59.05],
+    [-110.0,59.05],[-110.8,59.10],[-111.3,59.18],[-111.0,59.30],
+  ]},
+  { name:"Wollaston Lake", label:[-103.3,58.25], pts:[
+    [-103.6,58.70],[-103.2,58.65],[-102.9,58.45],[-102.7,58.20],[-102.8,57.90],[-103.1,57.70],
+    [-103.5,57.65],[-103.8,57.80],[-103.7,58.05],[-103.9,58.30],[-103.8,58.55],[-103.6,58.70],
+  ]},
+  { name:"Reindeer Lake", label:[-102.5,57.30], pts:[
+    [-102.6,57.80],[-102.3,57.60],[-102.2,57.30],[-102.3,57.00],[-102.6,56.80],[-102.8,57.05],
+    [-102.7,57.40],[-102.8,57.65],[-102.6,57.80],
+  ]},
+  { name:"Cree Lake", label:[-106.6,57.50], pts:[
+    [-107.0,57.75],[-106.5,57.80],[-106.1,57.65],[-106.0,57.40],[-106.3,57.20],[-106.8,57.20],
+    [-107.1,57.40],[-107.1,57.60],[-107.0,57.75],
+  ]},
+  { name:"Black Lake", label:[-105.3,59.15], pts:[
+    [-105.6,59.20],[-105.2,59.22],[-104.9,59.12],[-105.0,58.98],[-105.4,58.96],[-105.7,59.06],[-105.6,59.20],
+  ]},
 ];
 
 // Stylised prospective "uranium trend" corridors (illustrative — not survey geology)
@@ -1764,13 +1799,18 @@ export default function App() {
                         onMouseLeave={()=>setBmtHover(null)}>
                         {/* land bg */}
                         <rect x={0} y={0} width={SVG_W} height={SVG_H} fill="#EAE3D5"/>
-                        {/* faint lakes */}
-                        {[[-110.3,59.0,30,12],[-106.0,59.6,40,16],[-103.5,58.0,26,20],[-108.0,56.3,34,14],[-105.0,56.0,22,10]].map(([lng,lat,rx,ry],i)=>{
-                          const [x,y]=toSVG(lat,lng);
-                          return <ellipse key={i} cx={x} cy={y} rx={rx} ry={ry} fill="#C8D6DC" opacity={0.55}/>;
+                        {/* Major lakes — simplified shorelines */}
+                        {BASIN_LAKES.map((lake,i)=>{
+                          const d = lake.pts.map(([lng,lat],j)=>{ const [x,y]=toSVG(lat,lng); return `${j===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ")+" Z";
+                          const [lx,ly]=toSVG(lake.label[1],lake.label[0]);
+                          return (
+                            <g key={i}>
+                              <path d={d} fill="#AECBDA" fillOpacity={0.75} stroke="#6E96AC" strokeWidth={0.6}/>
+                              <text x={lx} y={ly} textAnchor="middle" fontSize={7} fill="#3E6478" fontStyle="italic" opacity={0.9}
+                                style={{ paintOrder:"stroke" }} stroke="#AECBDA" strokeWidth={1.6} strokeLinejoin="round">{lake.name}</text>
+                            </g>
+                          );
                         })}
-                        {/* Lake Athabasca label area */}
-                        {(()=>{ const [x,y]=toSVG(59.3,-109.0); return <text x={x} y={y} fontSize={8} fill="#7A90A0" fontStyle="italic" opacity={0.8}>Lake Athabasca</text>; })()}
 
                         {/* Basin boundary */}
                         <path d={BASIN_BOUNDARY.map(([lng,lat],i)=>{ const [x,y]=toSVG(lat,lng); return `${i===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ")+" Z"}
