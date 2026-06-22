@@ -2362,56 +2362,79 @@ export default function App() {
                 if(av>bv) return dir==="asc"?1:-1;
                 return 0;
               });
-              const topGT = Math.max(...drillResults.map(r=>r.gt||0));
+              const topGT = Math.max(...drillResults.map(r=>r.gt||0), 1);
               const sortBy = (col)=> setDrillSort(s=> s.col===col ? { col, dir:s.dir==="asc"?"desc":"asc" } : { col, dir: col==="company"?"asc":"desc" });
-              const Arrow = ({col}) => drillSort.col===col ? <span style={{ fontSize:8, marginLeft:3 }}>{drillSort.dir==="asc"?"▲":"▼"}</span> : <span style={{ fontSize:8, marginLeft:3, opacity:0.3 }}>⇅</span>;
-              const COLS = "44px 1.5fr 1.3fr 0.9fr 1fr 90px";
+              const Arrow = ({col}) => drillSort.col===col ? <span style={{ fontSize:8, marginLeft:4 }}>{drillSort.dir==="asc"?"▲":"▼"}</span> : <span style={{ fontSize:8, marginLeft:4, opacity:0.3 }}>⇅</span>;
+              const COLS = "52px 1.6fr 1.4fr 1.15fr 0.85fr 84px";
               const hCell = { cursor:"pointer", userSelect:"none", display:"flex", alignItems:"center" };
+              // medal palette for top-3 (only meaningful when sorted by rank/G×T descending)
+              const rankSorted = drillSort.col==="gt" && drillSort.dir==="desc";
+              const MEDALS = [
+                { tint:"#FBF6E8", bar:"#C9A227", rank:"#9A7A12", glyph:"👑" }, // gold
+                { tint:"#F6F5F3", bar:"#A6A6A6", rank:"#7A7A7A", glyph:"🥈" }, // silver
+                { tint:"#F8F1E9", bar:"#B07A4A", rank:"#8A5A2E", glyph:"🥉" }, // bronze
+              ];
               return (
                 <>
                   {/* Header row */}
-                  <div style={{ display:"grid", gridTemplateColumns:COLS, gap:0, padding:"10px 16px", borderBottom:"2px solid #D8D0C4", background:"#FAF8F3", fontSize:9.5, fontWeight:800, color:"#6A6A5A", textTransform:"uppercase", letterSpacing:"0.06em" }}>
+                  <div style={{ display:"grid", gridTemplateColumns:COLS, gap:0, padding:"11px 18px", borderBottom:"2px solid #D8D0C4", background:"#FAF8F3", fontSize:9.5, fontWeight:800, color:"#6A6A5A", textTransform:"uppercase", letterSpacing:"0.07em" }}>
                     <div style={{ ...hCell }} onClick={()=>sortBy("gt")}>Rank</div>
                     <div style={{ ...hCell }} onClick={()=>sortBy("company")}>Company / Project<Arrow col="company"/></div>
-                    <div style={{ ...hCell }} onClick={()=>sortBy("grade")}>Intercept (Grade / Thickness)<Arrow col="grade"/></div>
-                    <div style={{ ...hCell, justifyContent:"flex-end" }} onClick={()=>sortBy("gt")}>G × T<Arrow col="gt"/></div>
-                    <div style={{ ...hCell }} onClick={()=>sortBy("date")}>Release Date<Arrow col="date"/></div>
+                    <div style={{ ...hCell }} onClick={()=>sortBy("grade")}>Intercept<Arrow col="grade"/></div>
+                    <div style={{ ...hCell }} onClick={()=>sortBy("gt")}>Grade × Thickness<Arrow col="gt"/></div>
+                    <div style={{ ...hCell, paddingLeft:10 }} onClick={()=>sortBy("date")}>Date<Arrow col="date"/></div>
                     <div style={{ textAlign:"center" }}>Source</div>
                   </div>
                   {/* Rows */}
                   {sorted.map((r,i)=>{
-                    const isTop = (r.gt||0)===topGT && topGT>0;
+                    const medal = (rankSorted && i<3) ? MEDALS[i] : null;
+                    const gtPct = Math.max(4, ((r.gt||0)/topGT)*100);
+                    const barColor = medal ? medal.bar : "#C9C2B4";
+                    const zebra = i%2===1 ? "#FCFBF8" : "#FFFFFF";
+                    const rowBg = medal ? medal.tint : zebra;
                     return (
-                      <div key={i} style={{ display:"grid", gridTemplateColumns:COLS, gap:0, padding:"12px 16px", borderBottom:i<sorted.length-1?"1px solid #EDE8E0":"none", alignItems:"center", fontSize:12, background:isTop?"#F4FAF5":"transparent" }}>
+                      <div key={i} className="drill-row" style={{ display:"grid", gridTemplateColumns:COLS, gap:0, padding:"13px 18px", borderBottom:i<sorted.length-1?"1px solid #EDE8E0":"none", alignItems:"center", fontSize:12, background:rowBg, borderLeft:medal?`3px solid ${medal.bar}`:"3px solid transparent" }}>
                         {/* Rank */}
-                        <div style={{ display:"flex", alignItems:"center", gap:4 }}>
-                          {isTop && <span style={{ fontSize:13 }}>👑</span>}
-                          <span style={{ ...MONO, fontWeight:700, color:isTop?"#1A7A44":"#9A9A8A" }}>{i+1}</span>
+                        <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+                          {medal
+                            ? <span style={{ fontSize:14 }}>{medal.glyph}</span>
+                            : <span style={{ ...MONO, fontWeight:700, color:"#B8AE9C", fontSize:12, width:18, textAlign:"center" }}>{i+1}</span>}
+                          {medal && <span style={{ ...MONO, fontWeight:800, color:medal.rank, fontSize:12 }}>{i+1}</span>}
                         </div>
                         {/* Company / Project */}
-                        <div style={{ minWidth:0, paddingRight:8 }}>
+                        <div style={{ minWidth:0, paddingRight:10 }}>
                           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                            <span style={{ fontWeight:700, color:"#1A1A14", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.company||"—"}</span>
+                            <span style={{ fontWeight:700, color:"#1A1A14", fontSize:13, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.company||"—"}</span>
                             {r.ticker && <span style={{ ...MONO, fontSize:9.5, color:"#B07A08", fontWeight:700, flexShrink:0 }}>{r.ticker}</span>}
                           </div>
-                          {r.project && <div style={{ fontSize:10, color:"#9A9A8A", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.project}{r.hole?` · ${r.hole}`:""}</div>}
+                          {r.project && <div style={{ fontSize:10, color:"#9A9A8A", marginTop:1, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.project}{r.hole?` · ${r.hole}`:""}</div>}
                         </div>
-                        {/* Intercept (grade / thickness) */}
-                        <div style={{ ...MONO, fontSize:11.5, color:"#1A1A14", fontWeight:600, paddingRight:8 }}>
-                          {r.grade_pct!=null && r.thickness_m!=null
-                            ? <>{r.grade_pct}% U₃O₈ <span style={{ color:"#9A9A8A" }}>/</span> {r.thickness_m}m</>
-                            : (r.interval_text || "—")}
+                        {/* Intercept — grade emphasized */}
+                        <div style={{ ...MONO, fontSize:11.5, paddingRight:10, whiteSpace:"nowrap" }}>
+                          {r.grade_pct!=null && r.thickness_m!=null ? (
+                            <>
+                              <span style={{ fontWeight:800, color:"#1A7A44" }}>{r.grade_pct}%</span>
+                              <span style={{ color:"#9A9A8A", fontSize:9.5 }}> U₃O₈</span>
+                              <span style={{ color:"#C8C0B4", margin:"0 3px" }}>/</span>
+                              <span style={{ fontWeight:700, color:"#1A1A14" }}>{r.thickness_m}m</span>
+                            </>
+                          ) : <span style={{ color:"#1A1A14", fontWeight:600 }}>{r.interval_text || "—"}</span>}
                         </div>
-                        {/* G x T */}
-                        <div style={{ ...MONO, textAlign:"right", fontWeight:800, fontSize:13, color:isTop?"#1A7A44":"#1A1A14", paddingRight:4 }}>{r.gt}</div>
+                        {/* G × T — hero metric with gauge bar */}
+                        <div style={{ display:"flex", alignItems:"center", gap:8, paddingRight:8 }}>
+                          <div style={{ flex:1, height:7, background:"#ECE7DD", borderRadius:4, overflow:"hidden", minWidth:30 }}>
+                            <div style={{ width:`${gtPct}%`, height:"100%", background:barColor, borderRadius:4, transition:"width .3s" }}/>
+                          </div>
+                          <span style={{ ...MONO, fontWeight:800, fontSize:14, color:medal?medal.rank:"#1A1A14", flexShrink:0, minWidth:34, textAlign:"right" }}>{r.gt}</span>
+                        </div>
                         {/* Release date */}
-                        <div style={{ fontSize:11, color:"#6A6A5A" }}>{r.date||"—"}</div>
-                        {/* PR link */}
+                        <div style={{ fontSize:11, color:"#6A6A5A", paddingLeft:10 }}>{r.date||"—"}</div>
+                        {/* Source link */}
                         <div style={{ textAlign:"center" }}>
                           {r.url ? (
                             <a href={r.url} target="_blank" rel="noopener noreferrer"
                               title={r.seed ? "Opens the company's news page (specific release not deep-linked)" : `Verified release · confidence: ${r.confidence||"n/a"}`}
-                              style={{ textDecoration:"none", fontSize:10.5, fontWeight:600, color:conf[r.confidence]||"#9A9A8A", whiteSpace:"nowrap" }}>
+                              style={{ textDecoration:"none", fontSize:10.5, fontWeight:700, color:conf[r.confidence]||"#9A9A8A", whiteSpace:"nowrap", padding:"3px 8px", borderRadius:5, border:`1px solid ${(conf[r.confidence]||"#9A9A8A")}33` }}>
                               {r.seed ? "News ↗" : "PR ↗"}
                             </a>
                           ) : <span style={{ color:"#D8D0C4" }} title="No verified source link available">—</span>}
@@ -2420,9 +2443,9 @@ export default function App() {
                     );
                   })}
                   {/* Footer */}
-                  <div style={{ padding:"10px 16px", borderTop:"1px solid #EDE8E0", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8, fontSize:9.5, color:"#9A9A8A" }}>
+                  <div style={{ padding:"11px 18px", borderTop:"1px solid #EDE8E0", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8, fontSize:9.5, color:"#9A9A8A" }}>
                     <div style={{ display:"flex", gap:12, alignItems:"center", flexWrap:"wrap" }}>
-                      <span><strong style={{ color:"#6A6A5A" }}>PR ↗</strong> = verified release link · <strong style={{ color:"#6A6A5A" }}>News ↗</strong> = company news page · colour = AI confidence (<span style={{ color:"#1A7A44" }}>high</span>/<span style={{ color:"#B07A08" }}>med</span>/<span style={{ color:"#9A9A8A" }}>low</span>)</span>
+                      <span><strong style={{ color:"#6A6A5A" }}>PR ↗</strong> verified release · <strong style={{ color:"#6A6A5A" }}>News ↗</strong> company news page · bar = relative G×T · colour = AI confidence (<span style={{ color:"#1A7A44" }}>high</span>/<span style={{ color:"#B07A08" }}>med</span>/<span style={{ color:"#9A9A8A" }}>low</span>)</span>
                     </div>
                     {drillGenAt && <span>Updated {new Date(drillGenAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span>}
                   </div>
@@ -3660,7 +3683,7 @@ export default function App() {
   return (
     <div style={S.root}>
       {/* Font + animation */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');@keyframes tkr{from{transform:translateX(0)}to{transform:translateX(-50%)}}.tkr-track{animation:tkr 55s linear infinite}.tkr-track:hover{animation-play-state:paused}@keyframes card-glow{0%,100%{box-shadow:0 0 0 0 rgba(176,122,8,0)}50%{box-shadow:0 0 28px 6px rgba(176,122,8,0.12)}}.spot-glow{animation:card-glow 3s ease-in-out infinite}@keyframes upPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.06)}}.up-arrow{display:inline-block;animation:upPulse 2.2s ease-in-out infinite;color:#16C44A}@keyframes rigPulse{0%,100%{opacity:0.3;transform:scale(1)}50%{opacity:0.75;transform:scale(1.8)}}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');@keyframes tkr{from{transform:translateX(0)}to{transform:translateX(-50%)}}.tkr-track{animation:tkr 55s linear infinite}.tkr-track:hover{animation-play-state:paused}@keyframes card-glow{0%,100%{box-shadow:0 0 0 0 rgba(176,122,8,0)}50%{box-shadow:0 0 28px 6px rgba(176,122,8,0.12)}}.spot-glow{animation:card-glow 3s ease-in-out infinite}@keyframes upPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.06)}}.up-arrow{display:inline-block;animation:upPulse 2.2s ease-in-out infinite;color:#16C44A}@keyframes rigPulse{0%,100%{opacity:0.3;transform:scale(1)}50%{opacity:0.75;transform:scale(1.8)}}.drill-row{transition:background 0.12s ease}.drill-row:hover{background:#F0EDE5 !important}`}</style>
       <div style={{ background:"#FFFFFF", borderBottom:"2px solid #1A1A14", overflow:"hidden", height:28, display:"flex", alignItems:"center" }}>
         <div className="tkr-track" style={{ display:"inline-flex", alignItems:"center", whiteSpace:"nowrap", gap:0 }}>
           {[0,1].map(loop=>(
