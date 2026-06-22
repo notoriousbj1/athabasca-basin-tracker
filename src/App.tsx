@@ -455,7 +455,7 @@ const BASIN_LAKES = [
     [-105.6,59.10],[-105.9,58.95],[-106.6,58.95],[-107.4,59.00],[-108.3,59.05],[-109.2,59.05],
     [-110.0,59.05],[-110.8,59.10],[-111.3,59.18],[-111.0,59.30],
   ]},
-  { name:"Wollaston Lake", label:[-103.3,58.25], pts:[
+  { name:"Wollaston Lake", label:[-103.0,57.95], pts:[
     [-103.6,58.70],[-103.2,58.65],[-102.9,58.45],[-102.7,58.20],[-102.8,57.90],[-103.1,57.70],
     [-103.5,57.65],[-103.8,57.80],[-103.7,58.05],[-103.9,58.30],[-103.8,58.55],[-103.6,58.70],
   ]},
@@ -1879,14 +1879,14 @@ export default function App() {
                           // longitude lines every 2°
                           for(let lng=-112; lng<=-102; lng+=2){
                             const [x1,y1]=toSVG(60.5,lng); const [x2,y2]=toSVG(55.0,lng);
-                            lines.push(<line key={`vg${lng}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#D2C7B2" strokeWidth={0.5} strokeOpacity={0.6}/>);
-                            lines.push(<text key={`vt${lng}`} x={x1} y={MAP_PT-6} textAnchor="middle" fontSize={6.5} fill="#A89A80">{Math.abs(lng)}°W</text>);
+                            lines.push(<line key={`vg${lng}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#D2C7B2" strokeWidth={0.5} strokeOpacity={0.35}/>);
+                            lines.push(<text key={`vt${lng}`} x={x1} y={MAP_PT-6} textAnchor="middle" fontSize={6.5} fill="#B8AC94">{Math.abs(lng)}°W</text>);
                           }
                           // latitude lines every 1°
                           for(let lat=56; lat<=60; lat++){
                             const [x1,y1]=toSVG(lat,-112.5); const [x2,y2]=toSVG(lat,-101.0);
-                            lines.push(<line key={`hg${lat}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#D2C7B2" strokeWidth={0.5} strokeOpacity={0.6}/>);
-                            lines.push(<text key={`ht${lat}`} x={MAP_PL-6} y={y1+2} textAnchor="end" fontSize={6.5} fill="#A89A80">{lat}°N</text>);
+                            lines.push(<line key={`hg${lat}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#D2C7B2" strokeWidth={0.5} strokeOpacity={0.35}/>);
+                            lines.push(<text key={`ht${lat}`} x={MAP_PL-6} y={y1+2} textAnchor="end" fontSize={6.5} fill="#B8AC94">{lat}°N</text>);
                           }
                           return lines;
                         })()}
@@ -1905,7 +1905,7 @@ export default function App() {
                               <path d={d} fill="#AECBDA" fillOpacity={0.75} stroke="#6E96AC" strokeWidth={0.6}/>
                               <text x={lx} y={ly} textAnchor="middle" fontSize={major?8.5:7} fontWeight={major?700:400}
                                 fill="#2E5468" fontStyle="italic" opacity={major?1:0.9}
-                                style={{ paintOrder:"stroke" }} stroke="#AECBDA" strokeWidth={major?2.2:1.6} strokeLinejoin="round">{lake.name}</text>
+                                style={{ paintOrder:"stroke" }} stroke="#C4D8E2" strokeWidth={major?2.8:1.8} strokeLinejoin="round">{lake.name}</text>
                             </g>
                           );
                         })}
@@ -2055,7 +2055,7 @@ export default function App() {
                               )}
                               {p.drilling && <text x={x} y={y+2.6} textAnchor="middle" fontSize={7} fill="#FFFFFF" fontWeight={900}>▲</text>}
                               {(p.stage==="Producer"||p.type==="Processing"||hov) && (
-                                <text x={x+r+3} y={y+3} fontSize={8} fontWeight={700} fill="#1A1A14" style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={2.5} strokeLinejoin="round">{p.name}</text>
+                                <text x={x+r+3} y={y+3} fontSize={8} fontWeight={700} fill="#1A1A14" style={{ paintOrder:"stroke" }} stroke="#EFEAE0" strokeWidth={3} strokeLinejoin="round" strokeOpacity={0.92}>{p.name}</text>
                               )}
                             </g>
                           );
@@ -2081,6 +2081,37 @@ export default function App() {
                             </g>
                           );
                         })}
+
+                        {/* Scale bar (bottom-left) — at ~58°N, 100km ≈ 1.70° lng */}
+                        {(()=>{
+                          const kmPerDeg = 111.32 * Math.cos(58*Math.PI/180); // ~58.98 km/°lng
+                          const pxPerDeg = MAP_W / LNG_RANGE;
+                          const px100 = (100/kmPerDeg) * pxPerDeg;
+                          const px50  = px100/2;
+                          const x0 = MAP_PL + 8, yb = MAP_PT + MAP_H - 6;
+                          return (
+                            <g>
+                              <line x1={x0} y1={yb} x2={x0+px100} y2={yb} stroke="#5A5A4A" strokeWidth={1.5}/>
+                              <line x1={x0} y1={yb-3} x2={x0} y2={yb+3} stroke="#5A5A4A" strokeWidth={1.5}/>
+                              <line x1={x0+px50} y1={yb-2.5} x2={x0+px50} y2={yb+2.5} stroke="#5A5A4A" strokeWidth={1.2}/>
+                              <line x1={x0+px100} y1={yb-3} x2={x0+px100} y2={yb+3} stroke="#5A5A4A" strokeWidth={1.5}/>
+                              <text x={x0} y={yb-6} fontSize={6.5} fill="#5A5A4A" textAnchor="middle">0</text>
+                              <text x={x0+px50} y={yb-6} fontSize={6.5} fill="#5A5A4A" textAnchor="middle">50</text>
+                              <text x={x0+px100} y={yb-6} fontSize={6.5} fill="#5A5A4A" textAnchor="middle">100 km</text>
+                            </g>
+                          );
+                        })()}
+
+                        {/* North arrow (above the scale bar) */}
+                        {(()=>{
+                          const cx = MAP_PL + 18, cy = MAP_PT + MAP_H - 44;
+                          return (
+                            <g>
+                              <polygon points={`${cx},${cy-11} ${cx-5},${cy+5} ${cx},${cy+1} ${cx+5},${cy+5}`} fill="#5A5A4A" stroke="#FFFFFF" strokeWidth={0.6}/>
+                              <text x={cx} y={cy-13} fontSize={7} fontWeight={800} fill="#5A5A4A" textAnchor="middle">N</text>
+                            </g>
+                          );
+                        })()}
                       </svg>
 
                       {/* Hover tooltip */}
