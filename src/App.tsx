@@ -3037,13 +3037,19 @@ export default function App() {
               "linear-gradient(150deg,#1A0A2A 0%,#4A1A5A 100%)",
               "linear-gradient(150deg,#0A1828 0%,#1A3A58 100%)",
             ];
-            // Build a unified list: match each influencer to its latest video
+            // Build a unified list: match each influencer to its latest video.
+            // Match on the YouTube CHANNEL name (inf.channel), since the feed returns channel names,
+            // not the person's name (inf.name). Fall back to handle and loose contains.
+            const normCh = (s)=> (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
             const items = INFLUENCERS.map((inf,i)=>{
-              const vd = videoData.find(v =>
-                v.channel===inf.name ||
-                (v.channel||"").toLowerCase().includes(inf.name.split(" ")[0].toLowerCase()) ||
-                inf.name.toLowerCase().includes((v.channel||"").split(" ")[0].toLowerCase())
-              );
+              const target = normCh(inf.channel);
+              const handle = normCh(inf.handle);
+              const vd = videoData.find(v =>{
+                const vc = normCh(v.channel);
+                if(!vc) return false;
+                return vc===target || handle.includes(vc) || vc.includes(target) || target.includes(vc) ||
+                       vc===normCh(inf.name) || vc.includes(normCh(inf.name.split(" ")[0]));
+              });
               return {
                 inf, grad:THUMBS[i]||THUMBS[0],
                 href: vd?.videoUrl || inf.url,
@@ -3101,7 +3107,11 @@ export default function App() {
                           {v.thumb && (
                             <img src={v.thumb} alt={v.inf.name}
                               style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
-                              onError={e=>{ e.target.style.display="none"; }}
+                              onError={e=>{
+                                const mq = v.thumb.replace("hqdefault","mqdefault");
+                                if(e.target.src!==mq && !e.target.dataset.tried){ e.target.dataset.tried="1"; e.target.src=mq; }
+                                else { e.target.style.display="none"; }
+                              }}
                             />
                           )}
                           <div style={{ position:"absolute", inset:0, background:"linear-gradient(to right, transparent 40%, rgba(0,0,0,0.2) 100%)" }}/>
