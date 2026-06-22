@@ -1014,6 +1014,9 @@ export default function App() {
   const [bmtHover,      setBmtHover]      = useState(null);
   const [smdiDeposits,  setSmdiDeposits]  = useState([]);
   const [showSmdi,      setShowSmdi]      = useState(true);
+  const [basinClaims,   setBasinClaims]   = useState([]);
+  const [claimOwners,   setClaimOwners]   = useState([]);
+  const [showClaims,    setShowClaims]    = useState(false);
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
   const [basinTopStory, setBasinTopStory] = useState(null);
@@ -1091,6 +1094,15 @@ export default function App() {
     } catch(e) { console.error("SMDI deposits fetch failed", e); }
   }, []);
 
+  const fetchBasinClaims = useCallback(async () => {
+    try {
+      const res = await fetch("/.netlify/functions/basin-claims");
+      const data = await res.json();
+      if (Array.isArray(data?.claims)) setBasinClaims(data.claims);
+      if (Array.isArray(data?.topOwners)) setClaimOwners(data.topOwners);
+    } catch(e) { console.error("Basin claims fetch failed", e); }
+  }, []);
+
   const fetchVideoData = useCallback(async () => {
     setVideosLoading(true);
     try {
@@ -1134,7 +1146,7 @@ export default function App() {
     setRefresh(false);
   }, []);
 
-  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); fetchSmdiDeposits(); },[]);
+  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); fetchSmdiDeposits(); fetchBasinClaims(); },[]);
 
   const gP   = (c) => prices[c.id]?.price ?? c.price;
   const gCh  = (c) => prices[c.id]?.changePct ?? c.changePct;
@@ -1650,6 +1662,13 @@ export default function App() {
                         <span style={{ width:7, height:7, borderRadius:"50%", background:"#8A1818" }}/>
                         <span style={{ fontSize:11, fontWeight:600, color:"#1A1A14" }}>SMDI Occurrences {smdiDeposits.length>0 && `(${smdiDeposits.length})`}</span>
                       </button>
+                      <button onClick={()=>setShowClaims(v=>!v)} title="Active mineral claims from Saskatchewan Mineral Tenure (Crown Dispositions)" style={{
+                        display:"flex", alignItems:"center", gap:6, padding:"4px 10px", borderRadius:20, cursor:"pointer",
+                        border:`1px solid ${showClaims?"#6B4FA0":"#D8D0C4"}`, background:showClaims?"#6B4FA014":"#F5F3EE", opacity:showClaims?1:0.5,
+                      }}>
+                        <span style={{ width:8, height:8, borderRadius:2, background:"#6B4FA0", opacity:0.6 }}/>
+                        <span style={{ fontSize:11, fontWeight:600, color:"#1A1A14" }}>Mineral Claims {basinClaims.length>0 && `(${basinClaims.length})`}</span>
+                      </button>
                     </div>
 
                     {/* SVG map */}
@@ -1685,6 +1704,23 @@ export default function App() {
                         {/* AB/SK border */}
                         {(()=>{ const [x1,y1]=toSVG(60.5,-110.0); const [x2,y2]=toSVG(55.0,-110.0); return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#9A9A8A" strokeWidth={1} strokeDasharray="4,4" opacity={0.5}/>; })()}
 
+                        {/* Mineral claims (active dispositions) — real tenure data, bottom layer */}
+                        {showClaims && basinClaims.map((c,i)=>{
+                          if(c.lat<55||c.lat>61||c.lng<-113||c.lng>-101) return null;
+                          const [x,y]=toSVG(c.lat,c.lng);
+                          // Highlight claims whose owner matches a tracked company name
+                          const ownerLc = (c.owner||"").toLowerCase();
+                          const tracked = COMPANIES.some(co => ownerLc.includes(co.name.split(" ")[0].toLowerCase()) && co.name.split(" ")[0].length>3);
+                          const hov = bmtHover?.isClaim && bmtHover?.id===c.id;
+                          return (
+                            <rect key={`claim-${i}`} x={x-2.5} y={y-2.5} width={5} height={5} rx={1}
+                              fill={tracked?"#6B4FA0":"#9A86C0"} fillOpacity={hov?0.9:(tracked?0.55:0.3)}
+                              stroke={hov?"#FFFFFF":"none"} strokeWidth={0.8}
+                              style={{ cursor:"pointer" }}
+                              onMouseEnter={()=>setBmtHover({ ...c, isClaim:true, name:c.id })}/>
+                          );
+                        })}
+
                         {/* SMDI uranium occurrences — real geological reference data */}
                         {showSmdi && smdiDeposits.map((d,i)=>{
                           if(d.lat<55||d.lat>61||d.lng<-113||d.lng>-101) return null;
@@ -1719,12 +1755,24 @@ export default function App() {
 
                       {/* Hover tooltip */}
                       {bmtHover && (
-                        <div style={{ position:"absolute", top:12, left:12, width:236, background:"#FFFFFF", border:`1px solid ${bmtHover.isSmdi?"#8A1818":STAGE_COL[bmtHover.stage]}`, borderRadius:10, padding:"12px 14px", boxShadow:"0 4px 16px rgba(0,0,0,0.15)", fontSize:11 }}>
+                        <div style={{ position:"absolute", top:12, left:12, width:236, background:"#FFFFFF", border:`1px solid ${bmtHover.isClaim?"#6B4FA0":bmtHover.isSmdi?"#8A1818":STAGE_COL[bmtHover.stage]}`, borderRadius:10, padding:"12px 14px", boxShadow:"0 4px 16px rgba(0,0,0,0.15)", fontSize:11 }}>
                           <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
-                            <span style={{ width:9, height:9, borderRadius:"50%", background:bmtHover.isSmdi?"#8A1818":STAGE_COL[bmtHover.stage] }}/>
-                            <span style={{ fontSize:13, fontWeight:800, color:"#1A1A14" }}>{bmtHover.name}</span>
+                            <span style={{ width:9, height:9, borderRadius:bmtHover.isClaim?2:"50%", background:bmtHover.isClaim?"#6B4FA0":bmtHover.isSmdi?"#8A1818":STAGE_COL[bmtHover.stage] }}/>
+                            <span style={{ fontSize:13, fontWeight:800, color:"#1A1A14" }}>{bmtHover.isClaim?`Claim ${bmtHover.name}`:bmtHover.name}</span>
                           </div>
-                          {bmtHover.isSmdi ? (
+                          {bmtHover.isClaim ? (
+                            <>
+                              <div style={{ display:"grid", gap:3 }}>
+                                <div><span style={{ color:"#9A9A8A" }}>Owner: </span><strong style={{ color:"#6B4FA0" }}>{bmtHover.owner}</strong></div>
+                                {bmtHover.id        && <div><span style={{ color:"#9A9A8A" }}>Disposition #: </span><strong style={{ ...MONO, color:"#1A1A14", fontSize:10 }}>{bmtHover.id}</strong></div>}
+                                {bmtHover.effective && <div><span style={{ color:"#9A9A8A" }}>Effective: </span><strong style={{ color:"#1A1A14" }}>{bmtHover.effective}</strong></div>}
+                                {bmtHover.goodUntil && <div><span style={{ color:"#9A9A8A" }}>Good standing to: </span><strong style={{ color:"#1A7A44" }}>{bmtHover.goodUntil}</strong></div>}
+                              </div>
+                              <div style={{ marginTop:6, paddingTop:6, borderTop:"1px solid #EDE8E0", color:"#9A9A8A", fontSize:9.5, fontStyle:"italic" }}>
+                                Source: Saskatchewan Mineral Tenure — Crown Dispositions
+                              </div>
+                            </>
+                          ) : bmtHover.isSmdi ? (
                             <>
                               <div style={{ display:"grid", gap:3 }}>
                                 {bmtHover.status     && <div><span style={{ color:"#9A9A8A" }}>Status: </span><strong style={{ color:"#8A1818" }}>{bmtHover.status}</strong></div>}
@@ -1775,11 +1823,24 @@ export default function App() {
                       ))}
                     </div>
                     {/* Regional spend */}
-                    <div style={{ padding:"14px" }}>
+                    <div style={{ padding:"14px", borderBottom:claimOwners.length>0?"1px solid #EDE8E0":"none" }}>
                       <div style={{ ...S.lbl, marginBottom:4 }}>EST. EXPLORATION SPEND</div>
                       <div style={{ ...SERIF, fontSize:22, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>~C$240M</div>
                       <div style={{ fontSize:9, color:"#9A9A8A", marginTop:3, fontStyle:"italic" }}>2026E basin-wide · model estimate</div>
                     </div>
+                    {/* Top claim holders (real tenure data) */}
+                    {claimOwners.length>0 && (
+                      <div style={{ padding:"14px" }}>
+                        <div style={{ ...S.lbl, marginBottom:8 }}>TOP CLAIM HOLDERS</div>
+                        {claimOwners.slice(0,8).map((o,i)=>(
+                          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 0", borderBottom:i<7?"1px solid #F0EDE8":"none", gap:8 }}>
+                            <span style={{ fontSize:10, color:"#1A1A14", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{o.owner}</span>
+                            <span style={{ ...MONO, fontSize:10, fontWeight:700, color:"#6B4FA0", flexShrink:0 }}>{o.count}</span>
+                          </div>
+                        ))}
+                        <div style={{ fontSize:8.5, color:"#9A9A8A", marginTop:6, fontStyle:"italic" }}>Active dispositions · Sask. Mineral Tenure</div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -1787,7 +1848,7 @@ export default function App() {
           </div>
           {/* Disclaimer */}
           <div style={{ marginTop:12, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10, color:"#9A9A8A", lineHeight:1.6 }}>
-            <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> The larger labelled markers are curated company projects — their positions and grades are approximate, drawn from public disclosures, and may be out of date. The small dark-red dots (SMDI Occurrences) are real uranium occurrence locations from the <strong>Saskatchewan Mineral Deposit Index</strong>, an official Saskatchewan Geological Survey database, shown for geographic reference. The basin outline and "uranium trend" corridors are simplified schematics, not survey-grade geology. Verify everything with official sources (SEDAR+, company filings, SMDI) before making decisions. Not investment advice.
+            <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> The larger labelled markers are curated company projects — positions and grades are approximate, from public disclosures, and may be out of date. The small dark-red dots (SMDI Occurrences) are real uranium occurrence locations from the <strong>Saskatchewan Mineral Deposit Index</strong>. The purple squares (Mineral Claims) are real active mineral dispositions from <strong>Saskatchewan Mineral Tenure</strong>, shown at claim centroids and coloured brighter where the registered owner matches a tracked company; claims cover all minerals, not only uranium, and owner names are as-registered. The basin outline and "uranium trend" corridors are simplified schematics, not survey-grade geology. Verify everything with official sources before making decisions. Not investment advice.
         </div>
         </div>
 
