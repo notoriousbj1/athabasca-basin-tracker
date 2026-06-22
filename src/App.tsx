@@ -405,6 +405,39 @@ const BASIN_BOUNDARY = [
   [-111.5,57.5],[-112.0,58.0],[-111.8,58.5],[-111.5,59.0],
 ];
 
+// ─────────────────────────────────────────────
+// BASIN MAP TRACKER — projects with real coordinates
+// stage: Producer | Developer | Explorer | Royalty
+// ─────────────────────────────────────────────
+const BASIN_PROJECTS = [
+  { name:"Cigar Lake",       company:"Cameco / Orano",     ticker:"CCO",   lat:58.06, lng:-104.53, stage:"Producer", grade:"~14.7% U₃O₈", type:"Unconformity",        info:"World's highest-grade producing uranium mine." },
+  { name:"McArthur River",   company:"Cameco",             ticker:"CCO",   lat:57.77, lng:-105.04, stage:"Producer", grade:"~6.9% U₃O₈",  type:"Unconformity",        info:"Largest high-grade uranium mine; restarted 2022." },
+  { name:"Key Lake Mill",    company:"Cameco",             ticker:"CCO",   lat:57.20, lng:-105.62, stage:"Producer", grade:"Mill",        type:"Processing",          info:"Processes McArthur River ore." },
+  { name:"Rabbit Lake",      company:"Cameco",             ticker:"CCO",   lat:58.22, lng:-103.68, stage:"Producer", grade:"Care & maint.", type:"Unconformity",      info:"Historic mill, on care & maintenance." },
+  { name:"McClean Lake",     company:"Orano",              ticker:"—",     lat:58.30, lng:-103.83, stage:"Producer", grade:"Mill",        type:"Processing",          info:"Processes Cigar Lake ore." },
+  { name:"Arrow / Rook I",   company:"NexGen Energy",      ticker:"NXE",   lat:58.18, lng:-103.45, stage:"Developer",grade:"~2.4% U₃O₈",  type:"Basement-hosted",     info:"FS complete; flagship development, undergoing permitting." },
+  { name:"Wheeler River",    company:"Denison Mines",      ticker:"DML",   lat:57.95, lng:-104.55, stage:"Developer",grade:"~3.5% U₃O₈",  type:"Unconformity",        info:"Phoenix ISR + Gryphon deposits; FEED stage." },
+  { name:"Triple R",         company:"Fission Uranium",    ticker:"FCU",   lat:58.10, lng:-109.50, stage:"Developer",grade:"~1.6% U₃O₈",  type:"Basement / shallow",  info:"Patterson Lake South; FS-stage development." },
+  { name:"Hurricane",        company:"IsoEnergy",          ticker:"ISO",   lat:58.35, lng:-103.60, stage:"Developer",grade:"~34% U₃O₈",   type:"Unconformity",        info:"World's highest-grade indicated U deposit." },
+  { name:"Patterson Lake N", company:"F3 Uranium",         ticker:"FUU",   lat:58.30, lng:-109.10, stage:"Explorer", grade:"~5–10% U₃O₈ (disc.)", type:"Basement-hosted", info:"JR Zone high-grade discovery; active drilling." },
+  { name:"Moore / Russell",  company:"Skyharbour Res.",    ticker:"SYH",   lat:57.70, lng:-104.85, stage:"Explorer", grade:"~6% U₃O₈ (zones)", type:"Unconformity",     info:"Maverick zone; flagship + JV portfolio." },
+  { name:"CMB Package",      company:"Atha Energy",        ticker:"SASK",  lat:58.50, lng:-103.20, stage:"Explorer", grade:"Early-stage",  type:"Multiple targets",    info:"One of the largest basin land packages." },
+  { name:"West McArthur",    company:"CanAlaska",          ticker:"CVV",   lat:57.85, lng:-105.30, stage:"Explorer", grade:"~6% U₃O₈ (disc.)", type:"Unconformity",     info:"Pike Zone discovery; Cameco JV." },
+  { name:"Hook Lake JV",     company:"Purepoint Uranium",  ticker:"PTU",   lat:58.22, lng:-103.95, stage:"Explorer", grade:"Spitfire zone", type:"Unconformity",       info:"Cameco & Orano joint venture." },
+  { name:"Davidson River",   company:"Standard Uranium",   ticker:"STND",  lat:58.05, lng:-109.30, stage:"Explorer", grade:"Drill target", type:"Basement-hosted",     info:"Western basin, near PLS trend." },
+  { name:"ACKIO / Hook",     company:"Baselode / Geiger",  ticker:"FIND",  lat:57.55, lng:-104.40, stage:"Explorer", grade:"Near-surface",  type:"Basement, shallow",  info:"Near-surface ACKIO discovery." },
+  { name:"Key Lake area",    company:"Canadian Uranium",   ticker:"CANU",  lat:57.30, lng:-105.40, stage:"Explorer", grade:"Drill-ready",   type:"Unconformity",       info:"Projects adjacent to Key Lake infrastructure." },
+  { name:"East Preston",     company:"Azincourt Energy",   ticker:"AAZ",   lat:58.00, lng:-109.70, stage:"Explorer", grade:"Drill target",  type:"Basement-hosted",    info:"JV with Skyharbour; western basin." },
+  { name:"Royalty Portfolio",company:"Uranium Royalty",    ticker:"URC",   lat:57.50, lng:-106.20, stage:"Royalty",  grade:"Multiple",      type:"Royalties + physical",info:"Royalties across basin assets + physical U₃O₈." },
+];
+
+// Stylised prospective "uranium trend" corridors (illustrative — not survey geology)
+const URANIUM_TRENDS = [
+  { name:"Patterson Lake Corridor", pts:[[-110.0,58.5],[-109.2,58.2],[-108.6,57.9]] },
+  { name:"Athabasca Eastern Trend", pts:[[-104.8,58.4],[-104.3,58.0],[-103.6,57.5],[-103.3,57.1]] },
+  { name:"Key Lake Trend",          pts:[[-105.8,57.4],[-105.4,57.2],[-105.0,57.0]] },
+];
+
 const SMART_MONEY_EVENTS = [
   { company:"NexGen",      ticker:"NXE",    type:"Insider Buy",  amount:2.1,  amountLabel:"C$2.1M",  date:"May 2026", momentum:98, regionY:2, region:"Western Basin",  headline:"CEO & Directors add $2.1M in open market purchases post-permitting update", proximity:"Arrow Deposit"            },
   { company:"Denison",     ticker:"DML.TO", type:"Joint Venture", amount:25,  amountLabel:"C$25M",   date:"Jun 2026", momentum:90, regionY:2, region:"Western Basin",  headline:"Denison expands Russell Lake JV with Skyharbour — 3 new targets adjacent to Arrow", proximity:"4.2km from Arrow" },
@@ -976,6 +1009,11 @@ export default function App() {
   const [erStage,       setErStage]       = useState("All");
   const [erGuide,       setErGuide]       = useState(true);
   const [globeTarget,   setGlobeTarget]   = useState({ lng:null, token:0 });
+  const [bmtFilters,    setBmtFilters]    = useState({ Producer:true, Developer:true, Explorer:true, Royalty:true });
+  const [bmtTrends,     setBmtTrends]     = useState(true);
+  const [bmtHover,      setBmtHover]      = useState(null);
+  const [smdiDeposits,  setSmdiDeposits]  = useState([]);
+  const [showSmdi,      setShowSmdi]      = useState(true);
   const [globalNews, setGlobalNews]   = useState([]);
   const [globalNewsLoading, setGNL]   = useState(false);
   const [basinTopStory, setBasinTopStory] = useState(null);
@@ -1045,6 +1083,14 @@ export default function App() {
     } catch(e) { console.error("Basin satellite fetch failed", e); }
   }, []);
 
+  const fetchSmdiDeposits = useCallback(async () => {
+    try {
+      const res = await fetch("/.netlify/functions/basin-deposits");
+      const data = await res.json();
+      if (Array.isArray(data?.deposits)) setSmdiDeposits(data.deposits);
+    } catch(e) { console.error("SMDI deposits fetch failed", e); }
+  }, []);
+
   const fetchVideoData = useCallback(async () => {
     setVideosLoading(true);
     try {
@@ -1088,7 +1134,7 @@ export default function App() {
     setRefresh(false);
   }, []);
 
-  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); },[]);
+  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); fetchSmdiDeposits(); },[]);
 
   const gP   = (c) => prices[c.id]?.price ?? c.price;
   const gCh  = (c) => prices[c.id]?.changePct ?? c.changePct;
@@ -1554,6 +1600,195 @@ export default function App() {
           <a href="mailto:advertise@juniorstocks.com" style={{ textDecoration:"none", flexShrink:0 }}>
             <button style={{ ...S.btn(), padding:"10px 22px", fontSize:12 }}>Advertise</button>
           </a>
+        </div>
+
+        {/* Basin Map Tracker */}
+        <div style={{ marginBottom:48, marginTop:24 }}>
+          <div style={{ ...RuleH }}>
+            <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Athabasca Basin Map Tracker</div>
+            <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Interactive deposit map — toggle by stage, hover any project for details</div>
+          </div>
+          <div style={{ ...S.card, padding:0, overflow:"hidden" }}>
+            {(()=>{
+              const STAGE_COL = { Producer:"#1A5AA8", Developer:"#B07A08", Explorer:"#1A7A44", Royalty:"#8B5CF6" };
+              const STAGE_LBL = { Producer:"Producing", Developer:"Development", Explorer:"Exploration", Royalty:"Royalty" };
+              const visible = BASIN_PROJECTS.filter(p=>bmtFilters[p.stage]);
+              const toggle = (k)=> setBmtFilters(f=>({...f,[k]:!f[k]}));
+
+              // Recently active (by a pseudo activity score)
+              const active = [...BASIN_PROJECTS]
+                .filter(p=>p.stage!=="Royalty")
+                .slice(0,6);
+
+              return (
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 220px", gap:0 }}>
+                  {/* MAP */}
+                  <div style={{ position:"relative", borderRight:"1px solid #D8D0C4" }}>
+                    {/* Legend + toggles bar */}
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:8, padding:"12px 14px", borderBottom:"1px solid #EDE8E0", alignItems:"center" }}>
+                      {Object.keys(STAGE_COL).map(k=>(
+                        <button key={k} onClick={()=>toggle(k)} style={{
+                          display:"flex", alignItems:"center", gap:6, padding:"4px 10px", borderRadius:20, cursor:"pointer",
+                          border:`1px solid ${bmtFilters[k]?STAGE_COL[k]:"#D8D0C4"}`,
+                          background:bmtFilters[k]?`${STAGE_COL[k]}14`:"#F5F3EE", opacity:bmtFilters[k]?1:0.5,
+                        }}>
+                          <span style={{ width:9, height:9, borderRadius:"50%", background:STAGE_COL[k] }}/>
+                          <span style={{ fontSize:11, fontWeight:600, color:"#1A1A14" }}>{STAGE_LBL[k]}</span>
+                        </button>
+                      ))}
+                      <button onClick={()=>setBmtTrends(v=>!v)} style={{
+                        display:"flex", alignItems:"center", gap:6, padding:"4px 10px", borderRadius:20, cursor:"pointer", marginLeft:"auto",
+                        border:`1px solid ${bmtTrends?"#B07A08":"#D8D0C4"}`, background:bmtTrends?"#B07A0814":"#F5F3EE", opacity:bmtTrends?1:0.5,
+                      }}>
+                        <span style={{ width:14, height:8, borderRadius:3, background:"linear-gradient(90deg,#E8C870,#B07A08)" }}/>
+                        <span style={{ fontSize:11, fontWeight:600, color:"#1A1A14" }}>Uranium Trends</span>
+                      </button>
+                      <button onClick={()=>setShowSmdi(v=>!v)} title="Real occurrence data from the Saskatchewan Mineral Deposit Index" style={{
+                        display:"flex", alignItems:"center", gap:6, padding:"4px 10px", borderRadius:20, cursor:"pointer",
+                        border:`1px solid ${showSmdi?"#8A1818":"#D8D0C4"}`, background:showSmdi?"#8A181814":"#F5F3EE", opacity:showSmdi?1:0.5,
+                      }}>
+                        <span style={{ width:7, height:7, borderRadius:"50%", background:"#8A1818" }}/>
+                        <span style={{ fontSize:11, fontWeight:600, color:"#1A1A14" }}>SMDI Occurrences {smdiDeposits.length>0 && `(${smdiDeposits.length})`}</span>
+                      </button>
+                    </div>
+
+                    {/* SVG map */}
+                    <div style={{ position:"relative", background:"#EFEAE0" }}>
+                      <svg width="100%" viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ display:"block" }}
+                        onMouseLeave={()=>setBmtHover(null)}>
+                        {/* land bg */}
+                        <rect x={0} y={0} width={SVG_W} height={SVG_H} fill="#EAE3D5"/>
+                        {/* faint lakes */}
+                        {[[-110.3,59.0,30,12],[-106.0,59.6,40,16],[-103.5,58.0,26,20],[-108.0,56.3,34,14],[-105.0,56.0,22,10]].map(([lng,lat,rx,ry],i)=>{
+                          const [x,y]=toSVG(lat,lng);
+                          return <ellipse key={i} cx={x} cy={y} rx={rx} ry={ry} fill="#C8D6DC" opacity={0.55}/>;
+                        })}
+                        {/* Lake Athabasca label area */}
+                        {(()=>{ const [x,y]=toSVG(59.3,-109.0); return <text x={x} y={y} fontSize={8} fill="#7A90A0" fontStyle="italic" opacity={0.8}>Lake Athabasca</text>; })()}
+
+                        {/* Basin boundary */}
+                        <path d={BASIN_BOUNDARY.map(([lng,lat],i)=>{ const [x,y]=toSVG(lat,lng); return `${i===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ")+" Z"}
+                          fill="#E4D4B0" fillOpacity={0.4} stroke="#B07A08" strokeWidth={1.5} strokeOpacity={0.5}/>
+                        <text x={toSVG(58.6,-107.0)[0]} y={toSVG(58.6,-107.0)[1]} textAnchor="middle" fontSize={11} fontWeight={700} fill="#B07A08" opacity={0.3} letterSpacing="2">ATHABASCA BASIN</text>
+
+                        {/* Uranium trend corridors */}
+                        {bmtTrends && URANIUM_TRENDS.map((t,i)=>{
+                          const d = t.pts.map(([lng,lat],j)=>{ const [x,y]=toSVG(lat,lng); return `${j===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)}`; }).join(" ");
+                          return (
+                            <g key={i}>
+                              <path d={d} fill="none" stroke="#E8B84B" strokeWidth={26} strokeLinecap="round" strokeOpacity={0.28} style={{ filter:"blur(5px)" }}/>
+                              <path d={d} fill="none" stroke="#B07A08" strokeWidth={12} strokeLinecap="round" strokeOpacity={0.22} style={{ filter:"blur(3px)" }}/>
+                            </g>
+                          );
+                        })}
+
+                        {/* AB/SK border */}
+                        {(()=>{ const [x1,y1]=toSVG(60.5,-110.0); const [x2,y2]=toSVG(55.0,-110.0); return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#9A9A8A" strokeWidth={1} strokeDasharray="4,4" opacity={0.5}/>; })()}
+
+                        {/* SMDI uranium occurrences — real geological reference data */}
+                        {showSmdi && smdiDeposits.map((d,i)=>{
+                          if(d.lat<55||d.lat>61||d.lng<-113||d.lng>-101) return null;
+                          const [x,y]=toSVG(d.lat,d.lng);
+                          const hov = bmtHover?.smdi===d.smdi;
+                          return (
+                            <circle key={`smdi-${i}`} cx={x} cy={y} r={hov?4:2.2}
+                              fill="#8A1818" fillOpacity={hov?0.85:0.4} stroke={hov?"#FFFFFF":"none"} strokeWidth={1}
+                              style={{ cursor:"pointer" }}
+                              onMouseEnter={()=>setBmtHover({ ...d, isSmdi:true })}/>
+                          );
+                        })}
+
+                        {/* Project markers (curated) */}
+                        {visible.map((p,i)=>{
+                          const [x,y]=toSVG(p.lat,p.lng);
+                          const col=STAGE_COL[p.stage];
+                          const r = p.stage==="Producer"?7 : p.stage==="Developer"?6.5 : 5.5;
+                          const hov = bmtHover?.name===p.name;
+                          return (
+                            <g key={i} style={{ cursor:"pointer" }}
+                              onMouseEnter={()=>setBmtHover(p)} onClick={()=>setBmtHover(p)}>
+                              <circle cx={x} cy={y} r={r+(hov?5:3)} fill={col} fillOpacity={0.2}/>
+                              <circle cx={x} cy={y} r={r} fill={col} stroke="#FFFFFF" strokeWidth={1.5}/>
+                              {(p.stage==="Producer"||hov) && (
+                                <text x={x+r+3} y={y+3} fontSize={8} fontWeight={700} fill="#1A1A14" style={{ paintOrder:"stroke" }} stroke="#EAE3D5" strokeWidth={2.5} strokeLinejoin="round">{p.name}</text>
+                              )}
+                            </g>
+                          );
+                        })}
+                      </svg>
+
+                      {/* Hover tooltip */}
+                      {bmtHover && (
+                        <div style={{ position:"absolute", top:12, left:12, width:236, background:"#FFFFFF", border:`1px solid ${bmtHover.isSmdi?"#8A1818":STAGE_COL[bmtHover.stage]}`, borderRadius:10, padding:"12px 14px", boxShadow:"0 4px 16px rgba(0,0,0,0.15)", fontSize:11 }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
+                            <span style={{ width:9, height:9, borderRadius:"50%", background:bmtHover.isSmdi?"#8A1818":STAGE_COL[bmtHover.stage] }}/>
+                            <span style={{ fontSize:13, fontWeight:800, color:"#1A1A14" }}>{bmtHover.name}</span>
+                          </div>
+                          {bmtHover.isSmdi ? (
+                            <>
+                              <div style={{ display:"grid", gap:3 }}>
+                                {bmtHover.status     && <div><span style={{ color:"#9A9A8A" }}>Status: </span><strong style={{ color:"#8A1818" }}>{bmtHover.status}</strong></div>}
+                                {bmtHover.discovery  && <div><span style={{ color:"#9A9A8A" }}>Discovery: </span><strong style={{ color:"#1A1A14" }}>{bmtHover.discovery}</strong></div>}
+                                {bmtHover.production && <div><span style={{ color:"#9A9A8A" }}>Production: </span><strong style={{ color:"#1A1A14" }}>{bmtHover.production}</strong></div>}
+                                {bmtHover.resources  && <div><span style={{ color:"#9A9A8A" }}>Resources: </span><strong style={{ color:"#1A7A44" }}>{bmtHover.resources}</strong></div>}
+                                {bmtHover.smdi       && <div><span style={{ color:"#9A9A8A" }}>SMDI #: </span><strong style={{ ...MONO, color:"#1A1A14", fontSize:10 }}>{bmtHover.smdi}</strong></div>}
+                              </div>
+                              <div style={{ marginTop:6, paddingTop:6, borderTop:"1px solid #EDE8E0", color:"#9A9A8A", fontSize:9.5, fontStyle:"italic" }}>
+                                Source: Saskatchewan Mineral Deposit Index{bmtHover.weblink && <> · <a href={bmtHover.weblink} target="_blank" rel="noopener noreferrer" style={{ color:"#8A1818" }}>view record ↗</a></>}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ display:"grid", gap:3 }}>
+                                <div><span style={{ color:"#9A9A8A" }}>Company: </span><strong style={{ color:"#1A1A14" }}>{bmtHover.company}</strong> {bmtHover.ticker!=="—" && <span style={{ ...MONO, color:STAGE_COL[bmtHover.stage], fontWeight:700, fontSize:10 }}>{bmtHover.ticker}</span>}</div>
+                                <div><span style={{ color:"#9A9A8A" }}>Stage: </span><strong style={{ color:STAGE_COL[bmtHover.stage] }}>{STAGE_LBL[bmtHover.stage]}</strong></div>
+                                <div><span style={{ color:"#9A9A8A" }}>Grade: </span><strong style={{ color:"#1A7A44" }}>{bmtHover.grade}</strong></div>
+                                <div><span style={{ color:"#9A9A8A" }}>Type: </span><strong style={{ color:"#1A1A14" }}>{bmtHover.type}</strong></div>
+                              </div>
+                              <div style={{ marginTop:6, paddingTop:6, borderTop:"1px solid #EDE8E0", color:"#4A4A3A", lineHeight:1.45 }}>{bmtHover.info}</div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* SIDE PANELS */}
+                  <div style={{ display:"flex", flexDirection:"column" }}>
+                    {/* Spot price */}
+                    <div style={{ padding:"14px", borderBottom:"1px solid #EDE8E0" }}>
+                      <div style={{ ...S.lbl, marginBottom:4 }}>U₃O₈ SPOT</div>
+                      <div style={{ ...SERIF, fontSize:26, fontWeight:800, color:"#B07A08", lineHeight:1 }}>{spotLoading?"—":`$${spot.price?.toFixed(2)}`}</div>
+                      <div style={{ fontSize:10, color:spotWoW>=0?"#16C44A":"#C01818", fontWeight:700, marginTop:3 }}>{spotWoW>=0?"▲":"▼"} {Math.abs(spotWoW).toFixed(2)} WoW</div>
+                    </div>
+                    {/* Active companies */}
+                    <div style={{ padding:"14px", borderBottom:"1px solid #EDE8E0", flex:1 }}>
+                      <div style={{ ...S.lbl, marginBottom:8 }}>ACTIVE PROJECTS</div>
+                      {active.map((p,i)=>(
+                        <div key={i} onMouseEnter={()=>setBmtHover(p)} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"5px 0", borderBottom:i<active.length-1?"1px solid #F0EDE8":"none", cursor:"pointer" }}>
+                          <div style={{ minWidth:0 }}>
+                            <div style={{ fontSize:11, fontWeight:700, color:"#1A1A14", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{p.name}</div>
+                            <div style={{ fontSize:9, color:"#9A9A8A" }}>{p.company}</div>
+                          </div>
+                          <span style={{ ...S.badge(p.stage==="Producer"?"blue":p.stage==="Developer"?"amber":"green"), fontSize:8, flexShrink:0, marginLeft:6 }}>{STAGE_LBL[p.stage]}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Regional spend */}
+                    <div style={{ padding:"14px" }}>
+                      <div style={{ ...S.lbl, marginBottom:4 }}>EST. EXPLORATION SPEND</div>
+                      <div style={{ ...SERIF, fontSize:22, fontWeight:800, color:"#1A1A14", lineHeight:1 }}>~C$240M</div>
+                      <div style={{ fontSize:9, color:"#9A9A8A", marginTop:3, fontStyle:"italic" }}>2026E basin-wide · model estimate</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+          {/* Disclaimer */}
+          <div style={{ marginTop:12, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10, color:"#9A9A8A", lineHeight:1.6 }}>
+            <strong style={{ color:"#6A6A5A" }}>Disclaimer:</strong> The larger labelled markers are curated company projects — their positions and grades are approximate, drawn from public disclosures, and may be out of date. The small dark-red dots (SMDI Occurrences) are real uranium occurrence locations from the <strong>Saskatchewan Mineral Deposit Index</strong>, an official Saskatchewan Geological Survey database, shown for geographic reference. The basin outline and "uranium trend" corridors are simplified schematics, not survey-grade geology. Verify everything with official sources (SEDAR+, company filings, SMDI) before making decisions. Not investment advice.
+        </div>
         </div>
 
         {/* Basin Capital Monitor */}
