@@ -91,24 +91,45 @@ async function tryRSS(co) {
   return null;
 }
 
+// Phrases that signal generic securities-litigation / promo spam, not real company news.
+const SPAM_PATTERNS = /(rosen|law firm|class action|investor alert|investors? (who|that|are|with)|shareholder alert|lawsuit|deadline reminder|encourages? .* investors|pomerantz|levi & korsinsky|bragar|kahn swick|robbins|investigation .* on behalf)/i;
+
+// Build a set of distinctive name tokens for a company (drop generic words).
+function nameTokens(co) {
+  const generic = new Set(["energy","uranium","resources","mining","corp","corporation","inc","ltd","group","metals","royalty","the","and"]);
+  return co.name.toLowerCase().replace(/[.,]/g,"").split(/\s+/).filter(w => w.length>2 && !generic.has(w));
+}
+
+// Does this release slug genuinely belong to the company (and isn't spam)?
+function slugMatchesCompany(slug, co) {
+  const s = slug.toLowerCase().replace(/-/g," ");
+  if (SPAM_PATTERNS.test(s)) return false;          // reject litigation/promo spam
+  const tokens = nameTokens(co);
+  if (tokens.length && tokens.some(t => s.includes(t))) return true;
+  // also accept if the ticker root appears
+  const tk = (co.ticker||"").toLowerCase();
+  if (tk && s.includes(tk)) return true;
+  return false;
+}
+
 // Collect up to 5 Newsfile releases from listing HTML, pairing each with a nearby date.
-// Newsfile listings render dates as "Month D, YYYY" near each release link.
 function collectNewsfileReleases(html, co, sourceLabel) {
   const seen = new Set();
   const out = [];
-  const nameKey = co.name.split(" ")[0].toLowerCase();
-  // Match each release link AND capture a window of HTML after it to look for a date
+  const isSearch = sourceLabel.includes("search");
   const re = /href="(\/release\/(\d+)\/([^"]+))"([\s\S]{0,400}?)(?=href="\/release\/|$)/g;
   let m;
   while ((m = re.exec(html)) !== null) {
     const [, path, id, slug, tail] = m;
     if (seen.has(id)) continue;
-    // For the search endpoint, only keep releases whose slug mentions the company
-    if (sourceLabel.includes("search") && nameKey && !slug.toLowerCase().includes(nameKey)) continue;
+    const slugText = slug.toLowerCase().replace(/-/g," ");
+    // Always reject obvious spam, even on a company's own page
+    if (SPAM_PATTERNS.test(slugText)) continue;
+    // On the search endpoint, require a genuine company match
+    if (isSearch && !slugMatchesCompany(slug, co)) continue;
     seen.add(id);
     const url = `https://www.newsfilecorp.com${path}`;
     const headline = decodeHtml(slug.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()));
-    // Look for a date in the slug-adjacent HTML (e.g. "May 27, 2026" or "2026-05-27")
     const dm = tail.match(/([A-Z][a-z]+ \d{1,2},\s*\d{4})/) || tail.match(/(\d{4}-\d{2}-\d{2})/);
     const pd = dm ? parseDate(dm[1]) : null;
     out.push({
@@ -147,16 +168,8 @@ async function tryNewsfileSearch(co) {
     });
     if (!res.ok) return null;
     const html = await res.text();
-    let out = collectNewsfileReleases(html, co, "Newsfile Corp (search)");
-    // If name-filtering removed everything, fall back to the single most recent listed
-    if (!out.length) {
-      const first = html.match(/href="(\/release\/(\d+)\/([^"]+))"/);
-      if (first) {
-        out = [{ headline:decodeHtml(first[3].replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase())),
-                 url:`https://www.newsfilecorp.com${first[1]}`, date:"Recent", dateMs:Date.now(),
-                 summary:"", company:co.name, ticker:co.ticker, source:"Newsfile Corp (search)", type:"Press Release" }];
-      }
-    }
+    const out = collectNewsfileReleases(html, co, "Newsfile Corp (search)");
+    // If nothing genuinely matches the company, return nothing — never a wrong article.
     return out.length ? out : null;
   } catch(e) { return null; }
 }
