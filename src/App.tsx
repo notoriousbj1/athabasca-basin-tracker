@@ -3875,7 +3875,7 @@ export default function App() {
           return (nt && (nt===coRoot || nt===coAlt)) ||
                  (firstWord.length>3 && hay.includes(firstWord)) ||
                  hay.includes(c.name.toLowerCase());
-        }).slice(0,3);
+        }).slice(0,5);
 
         // Generate seeded 30-day price series with real dates (counting back from today)
         const gen30Day = (price, seed) => {
