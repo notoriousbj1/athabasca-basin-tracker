@@ -91,6 +91,37 @@ async function tryRSS(co) {
   return null;
 }
 
+// Collect up to 5 Newsfile releases from listing HTML, pairing each with a nearby date.
+// Newsfile listings render dates as "Month D, YYYY" near each release link.
+function collectNewsfileReleases(html, co, sourceLabel) {
+  const seen = new Set();
+  const out = [];
+  const nameKey = co.name.split(" ")[0].toLowerCase();
+  // Match each release link AND capture a window of HTML after it to look for a date
+  const re = /href="(\/release\/(\d+)\/([^"]+))"([\s\S]{0,400}?)(?=href="\/release\/|$)/g;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    const [, path, id, slug, tail] = m;
+    if (seen.has(id)) continue;
+    // For the search endpoint, only keep releases whose slug mentions the company
+    if (sourceLabel.includes("search") && nameKey && !slug.toLowerCase().includes(nameKey)) continue;
+    seen.add(id);
+    const url = `https://www.newsfilecorp.com${path}`;
+    const headline = decodeHtml(slug.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()));
+    // Look for a date in the slug-adjacent HTML (e.g. "May 27, 2026" or "2026-05-27")
+    const dm = tail.match(/([A-Z][a-z]+ \d{1,2},\s*\d{4})/) || tail.match(/(\d{4}-\d{2}-\d{2})/);
+    const pd = dm ? parseDate(dm[1]) : null;
+    out.push({
+      headline, url,
+      date: pd ? pd.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}) : "Recent",
+      dateMs: pd ? pd.getTime() : (Date.now() - out.length*86400000),
+      summary:"", company:co.name, ticker:co.ticker, source:sourceLabel, type:"Press Release",
+    });
+    if (out.length>=5) break;
+  }
+  return out;
+}
+
 async function tryNewsfile(co) {
   if (!co.newsfile) return null;
   try {
@@ -100,23 +131,7 @@ async function tryNewsfile(co) {
     });
     if (!res.ok) return null;
     const html = await res.text();
-
-    // Look for release links: href="/release/12345/..."
-    const releaseLinks = [...html.matchAll(/href="(\/release\/(\d+)\/([^"]+))"/g)];
-    if (!releaseLinks.length) return null;
-
-    // Collect up to 5 unique recent releases
-    const seen = new Set();
-    const out = [];
-    for (const [,path,id,slug] of releaseLinks) {
-      if (seen.has(id)) continue;
-      seen.add(id);
-      const url = `https://www.newsfilecorp.com${path}`;
-      const headline = decodeHtml(slug.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()));
-      out.push({headline,url,date:null,dateMs:Date.now()-out.length*86400000,
-                summary:"",company:co.name,ticker:co.ticker,source:"Newsfile Corp",type:"Press Release"});
-      if (out.length>=5) break;
-    }
+    const out = collectNewsfileReleases(html, co, "Newsfile Corp");
     return out.length ? out : null;
   } catch(e) { return null; }
 }
@@ -132,23 +147,15 @@ async function tryNewsfileSearch(co) {
     });
     if (!res.ok) return null;
     const html = await res.text();
-    const releaseLinks = [...html.matchAll(/href="(\/release\/(\d+)\/([^"]+))"/g)];
-    if (!releaseLinks.length) return null;
-
-    // Collect up to 5 releases that mention the company (avoid false matches)
-    const nameKey = co.name.split(" ")[0].toLowerCase();
-    const matches = releaseLinks.filter(m => m[3].toLowerCase().includes(nameKey));
-    const use = matches.length ? matches : releaseLinks.slice(0,1);
-    const seen = new Set();
-    const out = [];
-    for (const [,path,id,slug] of use) {
-      if (seen.has(id)) continue;
-      seen.add(id);
-      const url = `https://www.newsfilecorp.com${path}`;
-      const headline = decodeHtml(slug.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()));
-      out.push({headline,url,date:null,dateMs:Date.now()-out.length*86400000,
-                summary:"",company:co.name,ticker:co.ticker,source:"Newsfile Corp (search)",type:"Press Release"});
-      if (out.length>=5) break;
+    let out = collectNewsfileReleases(html, co, "Newsfile Corp (search)");
+    // If name-filtering removed everything, fall back to the single most recent listed
+    if (!out.length) {
+      const first = html.match(/href="(\/release\/(\d+)\/([^"]+))"/);
+      if (first) {
+        out = [{ headline:decodeHtml(first[3].replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase())),
+                 url:`https://www.newsfilecorp.com${first[1]}`, date:"Recent", dateMs:Date.now(),
+                 summary:"", company:co.name, ticker:co.ticker, source:"Newsfile Corp (search)", type:"Press Release" }];
+      }
     }
     return out.length ? out : null;
   } catch(e) { return null; }
