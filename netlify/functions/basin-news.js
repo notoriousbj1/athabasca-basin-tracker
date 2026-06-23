@@ -72,6 +72,7 @@ async function tryRSS(co) {
       const xml = await res.text();
       const items = [...(xml.match(/<item[\s\S]*?<\/item>/g)||[]),
                      ...(xml.match(/<entry[\s\S]*?<\/entry>/g)||[])];
+      const collected = [];
       for (const item of items) {
         const headline = decodeHtml(getField(item,"title"));
         const url = extractUrl(item);
@@ -80,9 +81,11 @@ async function tryRSS(co) {
         if (!pd||pd<CUTOFF) continue;
         const summary = decodeHtml((getField(item,"description")||getField(item,"summary")||"")
           .replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim().substring(0,220));
-        return {headline,url,date:pd.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
-                dateMs:pd.getTime(),summary,company:co.name,ticker:co.ticker,source:"Company IR",type:"Press Release"};
+        collected.push({headline,url,date:pd.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
+                dateMs:pd.getTime(),summary,company:co.name,ticker:co.ticker,source:"Company IR",type:"Press Release"});
+        if (collected.length>=5) break;
       }
+      if (collected.length) return collected;
     } catch(e) {continue;}
   }
   return null;
@@ -102,22 +105,19 @@ async function tryNewsfile(co) {
     const releaseLinks = [...html.matchAll(/href="(\/release\/(\d+)\/([^"]+))"/g)];
     if (!releaseLinks.length) return null;
 
-    // Get the first (most recent) release
-    const [,path,,slug] = releaseLinks[0];
-    const url = `https://www.newsfilecorp.com${path}`;
-
-    // Extract title from slug
-    const headline = decodeHtml(slug.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()));
-
-    // Try to find date near the link
-    const dateMatch = html.match(/(\w+ \d{1,2},\s*\d{4})/);
-    const pd = dateMatch ? parseDate(dateMatch[1]) : null;
-    const date = pd
-      ? pd.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})
-      : new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
-
-    return {headline,url,date,dateMs:pd?.getTime()||Date.now(),
-            summary:"",company:co.name,ticker:co.ticker,source:"Newsfile Corp",type:"Press Release"};
+    // Collect up to 5 unique recent releases
+    const seen = new Set();
+    const out = [];
+    for (const [,path,id,slug] of releaseLinks) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const url = `https://www.newsfilecorp.com${path}`;
+      const headline = decodeHtml(slug.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()));
+      out.push({headline,url,date:null,dateMs:Date.now()-out.length*86400000,
+                summary:"",company:co.name,ticker:co.ticker,source:"Newsfile Corp",type:"Press Release"});
+      if (out.length>=5) break;
+    }
+    return out.length ? out : null;
   } catch(e) { return null; }
 }
 
@@ -135,20 +135,22 @@ async function tryNewsfileSearch(co) {
     const releaseLinks = [...html.matchAll(/href="(\/release\/(\d+)\/([^"]+))"/g)];
     if (!releaseLinks.length) return null;
 
-    // Verify the first release actually mentions the company (avoid false matches)
+    // Collect up to 5 releases that mention the company (avoid false matches)
     const nameKey = co.name.split(" ")[0].toLowerCase();
-    const match = releaseLinks.find(m => m[3].toLowerCase().includes(nameKey)) || releaseLinks[0];
-    const [,path,,slug] = match;
-    const url = `https://www.newsfilecorp.com${path}`;
-    const headline = decodeHtml(slug.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()));
-    const dateMatch = html.match(/(\w+ \d{1,2},\s*\d{4})/);
-    const pd = dateMatch ? parseDate(dateMatch[1]) : null;
-    const date = pd
-      ? pd.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})
-      : new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
-
-    return {headline,url,date,dateMs:pd?.getTime()||Date.now(),
-            summary:"",company:co.name,ticker:co.ticker,source:"Newsfile Corp (search)",type:"Press Release"};
+    const matches = releaseLinks.filter(m => m[3].toLowerCase().includes(nameKey));
+    const use = matches.length ? matches : releaseLinks.slice(0,1);
+    const seen = new Set();
+    const out = [];
+    for (const [,path,id,slug] of use) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const url = `https://www.newsfilecorp.com${path}`;
+      const headline = decodeHtml(slug.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()));
+      out.push({headline,url,date:null,dateMs:Date.now()-out.length*86400000,
+                summary:"",company:co.name,ticker:co.ticker,source:"Newsfile Corp (search)",type:"Press Release"});
+      if (out.length>=5) break;
+    }
+    return out.length ? out : null;
   } catch(e) { return null; }
 }
 
@@ -162,10 +164,13 @@ async function fetchCompany(co) {
 
 exports.handler = async () => {
   try {
-    const results = (await Promise.all(COMPANIES.map(fetchCompany)))
+    const perCompany = await Promise.all(COMPANIES.map(fetchCompany));
+    const results = perCompany
+      .filter(Boolean)
+      .flat()                                  // each company now returns up to 5 items
       .filter(Boolean)
       .sort((a,b) => b.dateMs - a.dateMs)
-      .slice(0, 12)
+      .slice(0, 80)                            // 21 companies × up to 5 ≈ plenty; cap generously
       .map(({dateMs,...rest}) => rest);
 
     return {
