@@ -1124,6 +1124,8 @@ export default function App() {
     setSubBusy(false);
   }, [subEmail]);
   const [videoData, setVideoData]       = useState([]);
+  const [sentiment, setSentiment]       = useState(null);
+  const [sentLoading, setSentLoading]   = useState(false);
   const [videosLoading, setVideosLoading] = useState(false);
   const [ytdLive, setYtdLive]           = useState({});
 
@@ -1224,6 +1226,34 @@ export default function App() {
     setVideosLoading(false);
   }, []);
 
+  // Illustrative sample data shown (clearly labeled) until the live X-sentiment API key is configured.
+  const SENTIMENT_SAMPLE = {
+    ok:true, sample:true, score:67, label:"Bullish", volume:1840, volumeChangePct:38,
+    updatedAt:new Date().toISOString(),
+    tweets:[
+      { text:"Spot price ripping again — basin juniors about to follow. $NXE $FCU looking primed.", author:"@uraniumbull", score:82, tag:"Bullish", url:null, time:null },
+      { text:"NexGen Arrow numbers are just on another level vs peers. Generational deposit.", author:"@ccjwatcher", score:78, tag:"Bullish", url:null, time:null },
+      { text:"Careful chasing here, a lot of these explorers are cash-light and will dilute hard.", author:"@deepvaluemining", score:31, tag:"Bearish", url:null, time:null },
+      { text:"Denison Phoenix ISR is the most de-risked path to production in the basin imo.", author:"@isruranium", score:74, tag:"Bullish", url:null, time:null },
+      { text:"Volume on the junior names is exploding today. Something is brewing. $URNM", author:"@juniortrader", score:69, tag:"Bullish", url:null, time:null },
+      { text:"Spot pulled back a touch, expect some profit taking across the sector short term.", author:"@macrouranium", score:45, tag:"Neutral", url:null, time:null },
+    ],
+  };
+
+  const fetchSentiment = useCallback(async () => {
+    setSentLoading(true);
+    try {
+      const res = await fetch("/.netlify/functions/sentiment");
+      const data = await res.json().catch(()=>({}));
+      if (data?.ok) setSentiment(data);
+      else { setSentiment({ ...SENTIMENT_SAMPLE }); } // not configured yet → labeled sample
+    } catch(e) {
+      console.error("Sentiment fetch failed", e);
+      setSentiment({ ...SENTIMENT_SAMPLE });
+    }
+    setSentLoading(false);
+  }, []);
+
   const fetchYTD = useCallback(async () => {
     try {
       const symbols = COMPANIES.map(c => ({ id:c.id, ticker:cadTk(c) }));
@@ -1257,7 +1287,7 @@ export default function App() {
     setRefresh(false);
   }, []);
 
-  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); fetchSmdiDeposits(); fetchBasinClaims(); fetchDrillResults(); },[]);
+  useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); fetchSmdiDeposits(); fetchBasinClaims(); fetchDrillResults(); fetchSentiment(); },[]);
 
   // Match left company list height to the news column by adding blurred filler rows
   useEffect(()=>{
@@ -2882,6 +2912,107 @@ export default function App() {
               );
             })()}
           </div>
+        </div>
+
+        {/* Community Sentiment (X / social) */}
+        <div style={{ marginBottom:48, marginTop:24 }}>
+          <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
+            <div>
+              <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Community Sentiment</div>
+              <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>
+                Real-time mood of the uranium community on X — aggregated hourly
+                {sentiment?.sample && <span style={{ color:"#B07A08", fontWeight:600 }}> · showing sample data (live source not yet connected)</span>}
+              </div>
+            </div>
+            <button onClick={fetchSentiment} disabled={sentLoading} style={{ ...S.btn("s"), fontSize:11 }}>
+              {sentLoading ? "Refreshing…" : "↻ Refresh"}
+            </button>
+          </div>
+
+          {!sentiment ? (
+            <div style={{ ...S.card, padding:40, textAlign:"center", color:"#9A9A8A", fontSize:13 }}>Loading community sentiment…</div>
+          ) : (()=>{
+            const score = sentiment.score ?? 50;
+            // color by zone
+            const zone = score>=60 ? { c:"#16A34A", bg:"#F0FAF2", label:"Bullish" }
+                       : score<=40 ? { c:"#C01818", bg:"#FCF2F2", label:"Bearish" }
+                       : { c:"#B07A08", bg:"#FBF7EE", label:"Neutral" };
+            const tagColor = (t)=> t==="Bullish" ? "#16A34A" : t==="Bearish" ? "#C01818" : "#B07A08";
+            // gauge geometry — semicircle from -90° to +90°
+            const R=78, CX=100, CY=100;
+            const ang = Math.PI*(1 - score/100); // 0→π
+            const nx = CX + R*Math.cos(ang), ny = CY - R*Math.sin(ang);
+            return (
+              <div style={{ display:"grid", gridTemplateColumns:"320px 1fr", gap:20 }}>
+
+                {/* LEFT — gauge + volume */}
+                <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+                  {/* Sentiment gauge */}
+                  <div style={{ ...S.card, padding:20, marginBottom:0, textAlign:"center", background:zone.bg }}>
+                    <div style={{ ...S.lbl, marginBottom:8 }}>SENTIMENT SCORE</div>
+                    <svg viewBox="0 0 200 120" style={{ width:"100%", maxWidth:240, display:"block", margin:"0 auto" }}>
+                      {/* track */}
+                      <path d="M22,100 A78,78 0 0 1 178,100" fill="none" stroke="#E8E2D6" strokeWidth={14} strokeLinecap="round"/>
+                      {/* zones: red / amber / green arcs */}
+                      <path d="M22,100 A78,78 0 0 1 70.6,30.4" fill="none" stroke="#C01818" strokeWidth={14} strokeLinecap="round" strokeOpacity={0.25}/>
+                      <path d="M70.6,30.4 A78,78 0 0 1 129.4,30.4" fill="none" stroke="#B07A08" strokeWidth={14} strokeOpacity={0.25}/>
+                      <path d="M129.4,30.4 A78,78 0 0 1 178,100" fill="none" stroke="#16A34A" strokeWidth={14} strokeLinecap="round" strokeOpacity={0.25}/>
+                      {/* needle */}
+                      <line x1={CX} y1={CY} x2={nx} y2={ny} stroke={zone.c} strokeWidth={3} strokeLinecap="round"/>
+                      <circle cx={CX} cy={CY} r={6} fill={zone.c}/>
+                    </svg>
+                    <div style={{ ...SERIF, fontSize:44, fontWeight:800, color:zone.c, lineHeight:1, marginTop:-6 }}>{score}</div>
+                    <div style={{ fontSize:14, fontWeight:700, color:zone.c, marginTop:4 }}>{zone.label}</div>
+                    <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, color:"#9A9A8A", marginTop:10, padding:"0 6px" }}>
+                      <span>0 · Bearish</span><span>50</span><span>Bullish · 100</span>
+                    </div>
+                  </div>
+
+                  {/* Social volume */}
+                  <div style={{ ...S.card, padding:18, marginBottom:0 }}>
+                    <div style={{ ...S.lbl, marginBottom:8 }}>SOCIAL VOLUME (24H)</div>
+                    <div style={{ display:"flex", alignItems:"baseline", gap:10 }}>
+                      <span style={{ ...SERIF, fontSize:30, fontWeight:800, color:"#1A1A14" }}>{(sentiment.volume??0).toLocaleString()}</span>
+                      <span style={{ fontSize:12, color:"#6A6A5A" }}>posts</span>
+                      {sentiment.volumeChangePct!=null && (
+                        <span className={sentiment.volumeChangePct>=0?"up-arrow":""} style={{ marginLeft:"auto", fontSize:13, fontWeight:800, color:sentiment.volumeChangePct>=0?"#16C44A":"#C01818" }}>
+                          {sentiment.volumeChangePct>=0?"▲":"▼"} {Math.abs(sentiment.volumeChangePct)}%
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize:10, color:"#9A9A8A", marginTop:6, lineHeight:1.5 }}>
+                      Spikes in post volume often precede sharp moves in junior miners — watch for sudden surges.
+                    </div>
+                  </div>
+                </div>
+
+                {/* RIGHT — tagged posts */}
+                <div style={{ ...S.card, padding:0, marginBottom:0, display:"flex", flexDirection:"column" }}>
+                  <div style={{ padding:"14px 18px", borderBottom:"1px solid #EDE8E0", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                    <span style={{ ...S.lbl }}>WHAT THE COMMUNITY IS SAYING</span>
+                    <span style={{ fontSize:9.5, color:"#9A9A8A" }}>AI-tagged · filter the noise</span>
+                  </div>
+                  <div style={{ flex:1, maxHeight:420, overflowY:"auto" }}>
+                    {(sentiment.tweets||[]).map((t,i)=>(
+                      <a key={i} href={t.url||undefined} target={t.url?"_blank":undefined} rel="noopener noreferrer"
+                        style={{ textDecoration:"none", display:"block", padding:"12px 18px", borderBottom:i<(sentiment.tweets.length-1)?"1px solid #F0ECE4":"none", cursor:t.url?"pointer":"default" }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:5 }}>
+                          <span style={{ ...MONO, fontSize:11, fontWeight:700, color:"#1A5AA8" }}>{t.author}</span>
+                          <span style={{ marginLeft:"auto", fontSize:9.5, fontWeight:800, padding:"2px 8px", borderRadius:20, color:tagColor(t.tag), background:`${tagColor(t.tag)}14`, border:`1px solid ${tagColor(t.tag)}33` }}>
+                            {t.tag} · {t.score}
+                          </span>
+                        </div>
+                        <div style={{ fontSize:12.5, color:"#2A2A22", lineHeight:1.5 }}>{t.text}</div>
+                      </a>
+                    ))}
+                  </div>
+                  <div style={{ padding:"10px 18px", borderTop:"1px solid #EDE8E0", fontSize:9, color:"#9A9A8A", lineHeight:1.5 }}>
+                    Sentiment tags are generated by AI from public posts and may be inaccurate. Not investment advice. {sentiment.updatedAt && `Updated ${new Date(sentiment.updatedAt).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}.`}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Supply Deficit & Price Visualizer */}
