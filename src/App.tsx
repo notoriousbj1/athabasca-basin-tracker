@@ -1056,6 +1056,7 @@ export default function App() {
   const coListRef = useRef(null);
   const newsColRef = useRef(null);
   const [coFillRows, setCoFillRows] = useState(3);
+  const [coScrollMax, setCoScrollMax] = useState(900);
   const [coStageFilter, setCoStageFilter] = useState("All");
   const [sdEndYear,     setSdEndYear]     = useState(2030);
   const [sdHighlight,   setSdHighlight]   = useState("Global Reactor Buildout");
@@ -1289,12 +1290,22 @@ export default function App() {
 
   useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); fetchSmdiDeposits(); fetchBasinClaims(); fetchDrillResults(); fetchSentiment(); },[]);
 
-  // Match left company list height to the news column by adding blurred filler rows
+  // Match left company list height to the news column.
   useEffect(()=>{
     const measure = () => {
       const left = coListRef.current, right = newsColRef.current;
       if(!left || !right) return;
-      const gap = right.offsetHeight - left.offsetHeight;
+      const rightH = right.offsetHeight;
+      // When subscribed, cap the (scrollable) full list to the news column height.
+      if(subscribed){
+        // subtract the height of the content above the scroll area (featured row + toggle)
+        const headerH = (left.offsetHeight - (left.querySelector('[data-co-scroll]')?.offsetHeight || 0));
+        const target = rightH - Math.max(0, headerH);
+        setCoScrollMax(Math.max(420, target));
+        return;
+      }
+      // When locked, add blurred filler rows to fill any gap below the list.
+      const gap = rightH - left.offsetHeight;
       if(gap > 30){
         const ROW_H = 58; // approx blurred row height incl border
         setCoFillRows(prev => Math.max(3, Math.min(12, prev + Math.round(gap/ROW_H))));
@@ -1303,7 +1314,7 @@ export default function App() {
     const t = setTimeout(measure, 150);
     window.addEventListener("resize", measure);
     return ()=>{ clearTimeout(t); window.removeEventListener("resize", measure); };
-  }, [news, prices, coSort, ytdLive]);
+  }, [news, prices, coSort, ytdLive, subscribed]);
 
   const gP   = (c) => prices[c.id]?.price ?? c.price;
   const gCh  = (c) => prices[c.id]?.changePct ?? c.changePct;
@@ -1632,7 +1643,8 @@ export default function App() {
             })}
             {/* Subscribe CTA or unlocked companies */}
             {subscribed ? (
-              [...COMPANIES].filter(c=>c.id!=="canu")
+              <div data-co-scroll style={{ maxHeight:coScrollMax, overflowY:"auto", marginRight:-6, paddingRight:6 }}>
+              {[...COMPANIES].filter(c=>c.id!=="canu")
                 .sort((a,b)=>coSort==="ytd"?getYTD(b)-getYTD(a):gCh(b)-gCh(a))
                 .slice(5)
                 .map((c,i)=>{
@@ -1667,6 +1679,8 @@ export default function App() {
                     </div>
                   );
                 })
+              }
+              </div>
             ) : (
               <div style={{ position:"relative", overflow:"hidden", marginTop:2 }}>
                 <div style={{ filter:"blur(3px)", opacity:0.32, pointerEvents:"none" }}>
