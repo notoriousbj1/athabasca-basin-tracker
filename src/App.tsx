@@ -1089,7 +1089,9 @@ export default function App() {
   const [basinTopStory, setBasinTopStory] = useState(null);
   const [basinSat, setBasinSat] = useState(null);
   const [showSubModal, setShowSubModal] = useState(false);
-  const [subscribed, setSubscribed]     = useState(false);
+  const [subscribed, setSubscribed]     = useState(()=>{
+    try { return localStorage.getItem("ab_subscribed")==="1"; } catch { return false; }
+  });
   const [subEmail, setSubEmail]         = useState("");
   const [subBusy, setSubBusy]           = useState(false);
   const [subError, setSubError]         = useState("");
@@ -1108,6 +1110,7 @@ export default function App() {
       if(res.ok && data.ok){
         setSubscribed(true);
         setShowSubModal(false);
+        try { localStorage.setItem("ab_subscribed","1"); localStorage.setItem("ab_email", email); } catch {}
       } else {
         // surface the real reason instead of silently "succeeding"
         const msg = data?.beehiiv ? (typeof data.beehiiv==="string"?data.beehiiv:JSON.stringify(data.beehiiv)) : (data?.error || "Subscription failed. Please try again.");
