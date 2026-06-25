@@ -1125,6 +1125,7 @@ export default function App() {
   }, [subEmail]);
   const [videoData, setVideoData]       = useState([]);
   const [sentiment, setSentiment]       = useState(null);
+  const [sentPost, setSentPost]         = useState(null);
   const [sentLoading, setSentLoading]   = useState(false);
   const [videosLoading, setVideosLoading] = useState(false);
   const [ytdLive, setYtdLive]           = useState({});
@@ -2999,8 +3000,8 @@ export default function App() {
                   </div>
                   <div style={{ flex:1, maxHeight:420, overflowY:"auto" }}>
                     {(sentiment.tweets||[]).map((t,i)=>(
-                      <a key={i} href={t.url||undefined} target={t.url?"_blank":undefined} rel="noopener noreferrer"
-                        style={{ textDecoration:"none", display:"block", padding:"12px 18px", borderBottom:i<(sentiment.tweets.length-1)?"1px solid #F0ECE4":"none", cursor:t.url?"pointer":"default" }}>
+                      <div key={i} onClick={()=>setSentPost(t)}
+                        style={{ display:"block", padding:"12px 18px", borderBottom:i<(sentiment.tweets.length-1)?"1px solid #F0ECE4":"none", cursor:"pointer" }}>
                         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:5 }}>
                           <span style={{ ...MONO, fontSize:11, fontWeight:700, color:"#1A5AA8" }}>{t.author}</span>
                           {t.source && <span style={{ fontSize:8.5, fontWeight:700, color:"#9A9A8A", padding:"1px 6px", borderRadius:4, background:"#F0ECE4", textTransform:"uppercase", letterSpacing:"0.04em" }}>{t.source}</span>}
@@ -3009,7 +3010,7 @@ export default function App() {
                           </span>
                         </div>
                         <div style={{ fontSize:12.5, color:"#2A2A22", lineHeight:1.5 }}>{t.text}</div>
-                      </a>
+                      </div>
                     ))}
                   </div>
                   <div style={{ padding:"10px 18px", borderTop:"1px solid #EDE8E0", fontSize:9, color:"#9A9A8A", lineHeight:1.5 }}>
@@ -3946,6 +3947,58 @@ export default function App() {
           </a>
         </div>
       </footer>
+
+      {/* Sentiment post modal */}
+      {sentPost && (()=>{
+        const tc = sentPost.tag==="Bullish" ? "#16A34A" : sentPost.tag==="Bearish" ? "#C01818" : "#B07A08";
+        return (
+          <div onClick={()=>setSentPost(null)}
+            style={{ position:"fixed", inset:0, background:"rgba(26,26,20,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+            <div onClick={e=>e.stopPropagation()}
+              style={{ background:"#FFFFFF", borderRadius:12, padding:"28px 30px", width:"100%", maxWidth:480, boxShadow:"0 24px 64px rgba(0,0,0,0.18)", position:"relative" }}>
+              <button onClick={()=>setSentPost(null)}
+                style={{ position:"absolute", top:16, right:18, background:"none", border:"none", fontSize:22, color:"#9A9A8A", cursor:"pointer", lineHeight:1 }}>×</button>
+
+              {/* Header: author + source */}
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:4 }}>
+                <span style={{ ...MONO, fontSize:14, fontWeight:700, color:"#1A5AA8" }}>{sentPost.author}</span>
+                {sentPost.source && <span style={{ fontSize:9, fontWeight:700, color:"#6A6A5A", padding:"2px 8px", borderRadius:5, background:"#F0ECE4", textTransform:"uppercase", letterSpacing:"0.05em" }}>{sentPost.source}</span>}
+              </div>
+              <div style={{ ...S.lbl, marginBottom:16 }}>COMMUNITY POST</div>
+
+              {/* Full text */}
+              <div style={{ fontSize:15, color:"#1A1A14", lineHeight:1.6, marginBottom:18, whiteSpace:"pre-wrap" }}>{sentPost.text}</div>
+
+              {/* Sentiment tag/score */}
+              <div style={{ display:"flex", alignItems:"center", gap:10, padding:"12px 14px", background:`${tc}0E`, border:`1px solid ${tc}33`, borderRadius:8, marginBottom:18 }}>
+                <span style={{ fontSize:12, color:"#6A6A5A" }}>AI sentiment:</span>
+                <span style={{ fontSize:13, fontWeight:800, color:tc }}>{sentPost.tag}</span>
+                <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:8 }}>
+                  <div style={{ width:90, height:6, background:"#ECE7DD", borderRadius:3, overflow:"hidden" }}>
+                    <div style={{ width:`${sentPost.score}%`, height:"100%", background:tc, borderRadius:3 }}/>
+                  </div>
+                  <span style={{ ...MONO, fontSize:14, fontWeight:800, color:tc }}>{sentPost.score}</span>
+                </div>
+              </div>
+
+              {/* Link out */}
+              {sentPost.url ? (
+                <a href={sentPost.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+                  <button style={{ ...S.btn(), width:"100%", padding:"12px", fontSize:13 }}>
+                    View on {sentPost.source || "source"} ↗
+                  </button>
+                </a>
+              ) : (
+                <div style={{ fontSize:11, color:"#9A9A8A", textAlign:"center", padding:"8px" }}>Original post link unavailable.</div>
+              )}
+
+              <div style={{ fontSize:9.5, color:"#9A9A8A", textAlign:"center", marginTop:12, lineHeight:1.5 }}>
+                Sentiment is AI-estimated from the post text and may be inaccurate. Not investment advice.
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Subscribe modal */}
       {showSubModal && (
