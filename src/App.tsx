@@ -1272,39 +1272,18 @@ export default function App() {
   const fetchPrices = useCallback(async () => {
     setRefresh(true);
     try {
-      // Client-side Yahoo fetch: requests come from the visitor's (residential) IP,
-      // which Yahoo does not block the way it blocks Netlify's datacenter IPs.
-      // Yahoo doesn't send CORS headers, so we route through a CORS proxy.
-      const CORS_PROXY = "https://corsproxy.io/?url=";
-      const yahooChart = (sym) =>
-        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=1d&interval=1d`;
-
-      const fetchOne = async (sym) => {
-        try {
-          const res = await fetch(CORS_PROXY + encodeURIComponent(yahooChart(sym)), { signal: AbortSignal.timeout(9000) });
-          if (!res.ok) return null;
-          const data = await res.json();
-          const r = data?.chart?.result?.[0];
-          const meta = r?.meta;
-          if (!meta || typeof meta.regularMarketPrice !== "number") return null;
-          const prev = meta.chartPreviousClose ?? meta.previousClose;
-          const price = meta.regularMarketPrice;
-          const changePct = (typeof prev === "number" && prev) ? ((price - prev) / prev) * 100 : 0;
-          const volume = meta.regularMarketVolume
-            || r?.indicators?.quote?.[0]?.volume?.filter(Boolean).slice(-1)[0] || 0;
-          return { sym, price, changePct, volume };
-        } catch { return null; }
-      };
-
-      // Each company: try primary ticker, fall back to altTicker.
-      const results = await Promise.all(COMPANIES.map(async (c) => {
-        let hit = await fetchOne(c.ticker);
-        if (!hit && c.altTicker && c.altTicker !== c.ticker) hit = await fetchOne(c.altTicker);
-        return hit ? { id: c.id, ...hit } : null;
-      }));
-
+      const symbols = [...new Set(COMPANIES.flatMap(c => c.altTicker && c.altTicker !== c.ticker ? [c.ticker, c.altTicker] : [c.ticker]))];
+      const response = await fetch("/.netlify/functions/prices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbols })
+      });
+      const data = await response.json();
       const upd = {};
-      results.forEach(r => { if (r?.price) upd[r.id] = { price: r.price, changePct: r.changePct, volume: r.volume || 0 }; });
+      COMPANIES.forEach(c => {
+        const hit = data[c.ticker] || data[c.altTicker];
+        if (hit?.price) upd[c.id] = { price: hit.price, changePct: hit.changePct, volume: hit.volume || 0 };
+      });
       if (Object.keys(upd).length > 0) setPrices(upd);
     } catch(e) { console.error("Price fetch failed", e); }
     setRefresh(false);
