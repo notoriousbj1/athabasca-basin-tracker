@@ -79,6 +79,26 @@ function isBasinRelated(text) {
   return BASIN_KEYWORDS.some(k => text.toLowerCase().includes(k));
 }
 
+// Fetch an article page and extract its OpenGraph (or Twitter) image URL.
+async function fetchOgImage(url) {
+  try {
+    const res = await fetch(url, {
+      headers:{"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const pick = (re) => html.match(re)?.[1];
+    const img =
+      pick(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+      pick(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ||
+      pick(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i) ||
+      pick(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i);
+    if (img && img.startsWith("http")) return img;
+    return null;
+  } catch { return null; }
+}
+
 function relevanceScore(text) {
   const t = text.toLowerCase();
   let s = 0;
@@ -188,6 +208,13 @@ exports.handler = async () => {
       const rb = b.score + Math.max(0, 6 - (now - b.dateMs)/(24*3600*1000));
       return rb - ra;
     })[0];
+
+    // Enrich: if the winning story has no image from its RSS item, fetch the article
+    // page and pull its OpenGraph image (most articles have one for social previews).
+    if (best && !best.image && best.url) {
+      best.image = await fetchOgImage(best.url);
+    }
+
     const result = best ? (({ dateMs, score, ...rest }) => rest)(best) : null;
 
     return {
