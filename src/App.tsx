@@ -3967,14 +3967,14 @@ export default function App() {
           width: sidebarOpen ? 224 : 60, flexShrink:0,
           height:"100vh", overflowY:"auto", overflowX:"hidden",
           background:"#F5F3EE", borderRight:"1px solid #D8D0C4",
-          transition:"width 0.18s ease", paddingTop:12, paddingBottom:24,
+          transition:"width 0.18s ease", paddingTop:0, paddingBottom:24,
           display:"flex", flexDirection:"column", gap:2, zIndex:20,
         }}>
           {/* Collapse toggle */}
           <button onClick={()=>setSidebarOpen(o=>!o)}
             title={sidebarOpen?"Collapse":"Expand"}
             style={{ display:"flex", alignItems:"center", justifyContent:sidebarOpen?"flex-end":"center",
-              background:"none", border:"none", cursor:"pointer", color:"#9A9A8A", padding:"4px 14px 10px", marginBottom:4 }}>
+              background:"none", border:"none", cursor:"pointer", color:"#9A9A8A", padding:"14px 14px 10px", marginBottom:4 }}>
             {sidebarOpen ? <ChevronLeft size={18}/> : <Menu size={18}/>}
           </button>
 
