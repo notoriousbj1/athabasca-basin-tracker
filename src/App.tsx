@@ -1143,6 +1143,7 @@ export default function App() {
   const [sentiment, setSentiment]       = useState(null);
   const [sidebarOpen, setSidebarOpen]   = useState(true);
   const [activeSection, setActiveSection] = useState("top");
+  const [scrollPct, setScrollPct]       = useState(0);
   const [sentPost, setSentPost]         = useState(null);
   const [sentLoading, setSentLoading]   = useState(false);
   const [videosLoading, setVideosLoading] = useState(false);
@@ -1292,6 +1293,26 @@ export default function App() {
       setActiveSection(item.id);
     }
   }, [tab]);
+
+  // Scroll progress bar: how far down the page the user has scrolled (0–100%).
+  // Driven by requestAnimationFrame so updates sync with the paint cycle (smooth, no jank).
+  useEffect(() => {
+    let ticking = false;
+    const compute = () => {
+      const h = document.documentElement;
+      const scrollable = h.scrollHeight - h.clientHeight;
+      const pct = scrollable > 0 ? (h.scrollTop / scrollable) * 100 : 0;
+      setScrollPct(Math.max(0, Math.min(100, pct)));
+      ticking = false;
+    };
+    const onScroll = () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(compute); }
+    };
+    window.addEventListener("scroll", onScroll, { passive:true });
+    window.addEventListener("resize", onScroll);
+    compute();
+    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); };
+  }, []);
 
   // Scroll-spy: highlight the sidebar item for whichever section is in view.
   useEffect(() => {
@@ -4013,7 +4034,11 @@ export default function App() {
         </aside>
 
         {/* Content */}
-        <main style={{ ...S.main, flex:1, minWidth:0 }}>
+        <main style={{ ...S.main, flex:1, minWidth:0, position:"relative" }}>
+          {/* Scroll progress bar — sticky at top of content, starts where the sidebar ends */}
+          <div style={{ position:"sticky", top:0, zIndex:15, height:3, background:"#E8E2D6", margin:"-16px -20px 13px", borderRadius:0 }}>
+            <div style={{ height:"100%", width:`${scrollPct}%`, background:"linear-gradient(90deg, #B07A08, #D4A03A)", transition:"width 0.15s ease-out", willChange:"width" }}/>
+          </div>
           {tab==="overview"   && renderOverview()}
           {tab==="news"       && renderNews()}
           {tab==="drilling"   && renderDrilling()}
