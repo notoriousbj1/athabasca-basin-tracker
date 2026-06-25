@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LineChart, Line, AreaChart, Area, ComposedChart, Legend, ScatterChart, Scatter, ZAxis, ReferenceArea, CartesianGrid } from "recharts";
-import { Atom, Hammer, Timer, DollarSign, Building2, Zap, Globe, TrendingUp, BarChart3, Newspaper, Landmark, Play, Map, Activity, Flag, Scale, Users, Tag, Radio, Linkedin, Star } from "lucide-react";
+import { Atom, Hammer, Timer, DollarSign, Building2, Zap, Globe, TrendingUp, BarChart3, Newspaper, Landmark, Play, Map, Activity, Flag, Scale, Users, Tag, Radio, Linkedin, Star, Home, ChevronLeft, ChevronRight, Menu } from "lucide-react";
 
 // ─────────────────────────────────────────────
 // COMPANY DATA
@@ -378,6 +378,22 @@ const TABS = [
   { id:"financings",  label:"Financings"  },
   { id:"videos",      label:"Videos"      },
   { id:"politics",    label:"Politics"    },
+];
+
+// Sidebar navigation. `scroll` items jump to a section on the Overview page;
+// `tab` items switch to a separate tab view.
+const SIDEBAR_NAV = [
+  { id:"top",           label:"Dashboard Home",      icon:"Home",        kind:"scroll", target:"top"           },
+  { id:"sec-featured",  label:"Featured Stories",    icon:"Star",        kind:"scroll", target:"sec-featured"  },
+  { id:"sec-map",       label:"Map Tracker",         icon:"Map",         kind:"scroll", target:"sec-map"       },
+  { id:"sec-drill",     label:"Drill Results",       icon:"Hammer",      kind:"scroll", target:"sec-drill"     },
+  { id:"sec-capital",   label:"Capital Monitor",     icon:"DollarSign",  kind:"scroll", target:"sec-capital"   },
+  { id:"sec-runway",    label:"Exploration Runway",  icon:"Timer",       kind:"scroll", target:"sec-runway"    },
+  { id:"sec-sentiment", label:"Community Sentiment", icon:"Users",       kind:"scroll", target:"sec-sentiment" },
+  { id:"sec-demand",    label:"Demand Tracker",      icon:"Activity",    kind:"scroll", target:"sec-demand"    },
+  { id:"sec-interviews",label:"Interviews",          icon:"Play",        kind:"scroll", target:"sec-interviews"},
+  { id:"sec-macro",     label:"Nuclear Macro",       icon:"Globe",       kind:"scroll", target:"sec-macro"     },
+  { id:"contact",       label:"Contact",             icon:"Newspaper",   kind:"contact"                        },
 ];
 
 // ─────────────────────────────────────────────
@@ -1125,6 +1141,8 @@ export default function App() {
   }, [subEmail]);
   const [videoData, setVideoData]       = useState([]);
   const [sentiment, setSentiment]       = useState(null);
+  const [sidebarOpen, setSidebarOpen]   = useState(true);
+  const [activeSection, setActiveSection] = useState("top");
   const [sentPost, setSentPost]         = useState(null);
   const [sentLoading, setSentLoading]   = useState(false);
   const [videosLoading, setVideosLoading] = useState(false);
@@ -1255,6 +1273,43 @@ export default function App() {
     }
     setSentLoading(false);
   }, []);
+
+  // Sidebar navigation: switch to overview if needed, then smooth-scroll to the section.
+  const goToSection = useCallback((item) => {
+    if (item.kind === "contact") {
+      window.location.href = "mailto:admin@juniorstocks.com";
+      return;
+    }
+    if (item.kind === "scroll") {
+      if (tab !== "overview") setTab("overview");
+      const doScroll = () => {
+        if (item.target === "top") { window.scrollTo({ top:0, behavior:"smooth" }); return; }
+        const el = document.getElementById(item.target);
+        if (el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+      };
+      // if we just switched tabs, wait a tick for the section to render
+      if (tab !== "overview") setTimeout(doScroll, 80); else doScroll();
+      setActiveSection(item.id);
+    }
+  }, [tab]);
+
+  // Scroll-spy: highlight the sidebar item for whichever section is in view.
+  useEffect(() => {
+    if (tab !== "overview") return;
+    const ids = SIDEBAR_NAV.filter(n=>n.kind==="scroll" && n.target!=="top").map(n=>n.target);
+    const onScroll = () => {
+      if (window.scrollY < 120) { setActiveSection("top"); return; }
+      let current = "top";
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= 140) current = id;
+      }
+      setActiveSection(current);
+    };
+    window.addEventListener("scroll", onScroll, { passive:true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [tab]);
 
   const fetchYTD = useCallback(async () => {
     try {
@@ -1439,7 +1494,7 @@ export default function App() {
         </div>
 
         {/* Featured Stories — two column */}
-        <div style={{ marginBottom:20, paddingBottom:20, borderBottom:"2px solid #D8D0C4" }}>
+        <div id="sec-featured" style={{ marginBottom:20, paddingBottom:20, borderBottom:"2px solid #D8D0C4", scrollMarginTop:90 }}>
           <div style={{ ...S.lbl, color:"#B07A08", marginBottom:12, letterSpacing:"0.15em" }}>FEATURED STORIES</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1px 1fr 1px 240px", gap:"0 20px" }}>
 
@@ -1487,7 +1542,7 @@ export default function App() {
             {/* Right — Juniorstocks.com feature */}
             <div>
               <div style={{ ...S.lbl, marginBottom:8 }}>FEATURED ON JUNIORSTOCKS.COM</div>
-              <a href="https://www.juniorstocks.com/saskatchewan-breaks-20-year-resource-drought-with-historic-copper-and-uranium-milestones"
+              <a href="https://www.juniorstocks.com/canada-s-new-nuclear-strategy-the-ground-to-grid-plan-to-power-the-future"
                 target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
                 <div>
                   {(()=>{
@@ -1497,26 +1552,26 @@ export default function App() {
                     return (
                       <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center" }}>
                         <span style={{ ...S.badge(ch!==null?(up?"green":"red"):"amber"), fontSize:10 }}>
-                          DML {ch!==null ? `${up?"▲":"▼"} ${Math.abs(ch).toFixed(2)}%` : ""}
+                          CCO {ch!==null ? `${up?"▲":"▼"} ${Math.abs(ch).toFixed(2)}%` : ""}
                         </span>
                         <span style={{ ...S.badge("gray"), fontSize:10 }}>News</span>
                       </div>
                     );
                   })()}
                   <img
-                    src="https://cdn.investor-files.net/medium_hf_20260608_184353_4b88ea9a_7f4e_4acb_b0aa_0f4993f97029_93b621ab41.png"
-                    alt="Saskatchewan resource story"
+                    src="https://cdn.investor-files.net/medium_hf_20260625_160449_1e560766_4e83_4179_af4b_0b03bac5635e_384a9d1218.png"
+                    alt="Canada nuclear strategy"
                     style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:160 }}
                     onError={e=>{ e.target.style.display="none"; }}
                   />
                   <h2 style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14", lineHeight:1.35, margin:"0 0 8px", letterSpacing:"-0.01em" }}>
-                    Saskatchewan Breaks 20-Year Resource Drought with Historic Copper and Uranium Milestones
+                    Canada's New Nuclear Strategy: The Ground-to-Grid Plan to Power the Future
                   </h2>
                   <p style={{ fontSize:13, color:"#6A6A5A", lineHeight:1.7, margin:"0 0 10px" }}>
-                    How Eldorado Gold and Denison Mines are shattering a two-decade resource dry spell to anchor North America's clean energy supply chain.
+                    Ottawa's Ground-to-Grid nuclear strategy aims to fast-track a low-emission energy superpower — doubling the grid by 2050 and building a sovereign supply chain from Saskatchewan dirt to export market.
                   </p>
                   <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                    <span style={{ fontSize:11, color:"#9A9A8A" }}>Jun 14, 2026</span>
+                    <span style={{ fontSize:11, color:"#9A9A8A" }}>Jun 25, 2026</span>
                     <span style={{ fontSize:11, color:"#B07A08", fontWeight:600 }}>Read on Juniorstocks.com →</span>
                   </div>
                 </div>
@@ -1782,7 +1837,7 @@ export default function App() {
         </div>
 
         {/* Basin Map Tracker */}
-        <div style={{ marginBottom:48, marginTop:24 }}>
+        <div id="sec-map" style={{ scrollMarginTop:90,  marginBottom:48, marginTop:24 }}>
           <div style={{ ...RuleH }}>
             <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Athabasca Basin Map Tracker</div>
             <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Interactive deposit map — toggle by stage, hover any project for details</div>
@@ -2362,7 +2417,7 @@ export default function App() {
         </div>
 
         {/* Drill Result Tracker */}
-        <div style={{ marginBottom:48, marginTop:24 }}>
+        <div id="sec-drill" style={{ scrollMarginTop:90,  marginBottom:48, marginTop:24 }}>
           <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
             <div>
               <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Drill Result Tracker</div>
@@ -2498,7 +2553,7 @@ export default function App() {
         </div>
 
         {/* Basin Capital Monitor */}
-        <div style={{ marginBottom:48, marginTop:24 }}>
+        <div id="sec-capital" style={{ scrollMarginTop:90,  marginBottom:48, marginTop:24 }}>
           <div style={{ ...RuleH }}>
             <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Basin Capital Monitor</div>
             <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Investment heatmap — where capital is being deployed across the Athabasca Basin</div>
@@ -2654,7 +2709,7 @@ export default function App() {
         </div>
 
         {/* Athabasca Exploration Runway */}
-        <div style={{ marginBottom:48, marginTop:24 }}>
+        <div id="sec-runway" style={{ scrollMarginTop:90,  marginBottom:48, marginTop:24 }}>
           <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
             <div>
               <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Athabasca Exploration Runway</div>
@@ -2920,7 +2975,7 @@ export default function App() {
         </div>
 
         {/* Community Sentiment (X / social) */}
-        <div style={{ marginBottom:48, marginTop:24 }}>
+        <div id="sec-sentiment" style={{ scrollMarginTop:90,  marginBottom:48, marginTop:24 }}>
           <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
             <div>
               <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Community Sentiment</div>
@@ -3023,7 +3078,7 @@ export default function App() {
         </div>
 
         {/* Supply Deficit & Price Visualizer */}
-        <div style={{ marginBottom:48, marginTop:24 }}>
+        <div id="sec-demand" style={{ scrollMarginTop:90,  marginBottom:48, marginTop:24 }}>
           <div style={{ ...RuleH }}>
             <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Uranium Supply & Demand Tracker</div>
             <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>The structural case for Athabasca exploration — global supply vs. reactor demand</div>
@@ -3241,7 +3296,7 @@ export default function App() {
         </div>
 
         {/* Video / Interviews */}
-        <div style={{ marginBottom:20 }}>
+        <div id="sec-interviews" style={{ scrollMarginTop:90,  marginBottom:20 }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", ...RuleH }}>
             <div>
               <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Featured Interviews & Analysis</div>
@@ -3376,7 +3431,7 @@ export default function App() {
         </div>
 
         {/* Nuclear Macro + Global News */}
-        <div style={{ display:"grid", gridTemplateColumns:"256px 1fr", gap:20, marginBottom:20 }}>
+        <div id="sec-macro" style={{ scrollMarginTop:90,  display:"grid", gridTemplateColumns:"256px 1fr", gap:20, marginBottom:20 }}>
           <div>
             <div style={RuleH}>
               <div style={{ ...SERIF, fontSize:18, fontWeight:700, color:"#1A1A14" }}>Nuclear Macro</div>
@@ -3882,22 +3937,91 @@ export default function App() {
         </div>
       </header>
 
-      {/* Tabs */}
-      <nav style={S.nav}>
-        {TABS.map(t=>(
-          <button key={t.id} style={S.tab(tab===t.id)} onClick={()=>setTab(t.id)}>{t.label}</button>
-        ))}
-      </nav>
+      {/* Sidebar + Content layout */}
+      <div style={{ display:"flex", alignItems:"flex-start" }}>
 
-      {/* Content */}
-      <main style={S.main}>
-        {tab==="overview"   && renderOverview()}
-        {tab==="news"       && renderNews()}
-        {tab==="drilling"   && renderDrilling()}
-        {tab==="financings" && renderFinancings()}
-        {tab==="videos"     && renderVideos()}
-        {tab==="politics"   && renderPolitics()}
-      </main>
+        {/* Collapsible Sidebar */}
+        <aside style={{
+          position:"sticky", top:0, alignSelf:"flex-start",
+          width: sidebarOpen ? 224 : 60, flexShrink:0,
+          height:"100vh", overflowY:"auto", overflowX:"hidden",
+          background:"#F5F3EE", borderRight:"1px solid #D8D0C4",
+          transition:"width 0.18s ease", paddingTop:12, paddingBottom:24,
+          display:"flex", flexDirection:"column", gap:2, zIndex:20,
+        }}>
+          {/* Collapse toggle */}
+          <button onClick={()=>setSidebarOpen(o=>!o)}
+            title={sidebarOpen?"Collapse":"Expand"}
+            style={{ display:"flex", alignItems:"center", justifyContent:sidebarOpen?"flex-end":"center",
+              background:"none", border:"none", cursor:"pointer", color:"#9A9A8A", padding:"4px 14px 10px", marginBottom:4 }}>
+            {sidebarOpen ? <ChevronLeft size={18}/> : <Menu size={18}/>}
+          </button>
+
+          {SIDEBAR_NAV.map(item=>{
+            const ICONS = { Home, Star, Map, Hammer, DollarSign, Timer, Users, Activity, Play, Globe, Newspaper };
+            const Icon = ICONS[item.icon] || Atom;
+            const active = tab==="overview" && activeSection===item.id;
+            return (
+              <button key={item.id} onClick={()=>goToSection(item)}
+                title={!sidebarOpen ? item.label : undefined}
+                style={{
+                  display:"flex", alignItems:"center", gap:12,
+                  padding: sidebarOpen ? "10px 16px" : "10px 0",
+                  justifyContent: sidebarOpen ? "flex-start" : "center",
+                  background: active ? "#FFFFFF" : "transparent",
+                  borderLeft: active ? "3px solid #B07A08" : "3px solid transparent",
+                  borderTop:"none", borderRight:"none", borderBottom:"none",
+                  cursor:"pointer", width:"100%", textAlign:"left",
+                  color: active ? "#1A1A14" : "#6A6A5A",
+                  fontSize:13, fontWeight: active ? 700 : 500,
+                  fontFamily:"Helvetica, Arial, sans-serif",
+                  transition:"background 0.12s, color 0.12s", whiteSpace:"nowrap",
+                }}
+                onMouseEnter={e=>{ if(!active) e.currentTarget.style.background="#EDE9E1"; }}
+                onMouseLeave={e=>{ if(!active) e.currentTarget.style.background="transparent"; }}>
+                <Icon size={18} strokeWidth={active?2.4:2} color={active?"#B07A08":"#8A8A7A"} style={{ flexShrink:0 }}/>
+                {sidebarOpen && <span style={{ overflow:"hidden", textOverflow:"ellipsis" }}>{item.label}</span>}
+              </button>
+            );
+          })}
+
+          {/* Tab links the sidebar doesn't cover (News Feed, Financings, Politics) */}
+          {sidebarOpen && <div style={{ ...S.lbl, padding:"16px 16px 6px", fontSize:9, color:"#B8AE9C" }}>MORE</div>}
+          {[{id:"news",label:"News Feed",icon:Newspaper},{id:"financings",label:"Financings",icon:Landmark},{id:"politics",label:"Politics",icon:Flag}].map(t=>{
+            const Icon = t.icon; const active = tab===t.id;
+            return (
+              <button key={t.id} onClick={()=>{ setTab(t.id); window.scrollTo({top:0}); }}
+                title={!sidebarOpen ? t.label : undefined}
+                style={{
+                  display:"flex", alignItems:"center", gap:12,
+                  padding: sidebarOpen ? "10px 16px" : "10px 0",
+                  justifyContent: sidebarOpen ? "flex-start" : "center",
+                  background: active ? "#FFFFFF" : "transparent",
+                  borderLeft: active ? "3px solid #B07A08" : "3px solid transparent",
+                  borderTop:"none", borderRight:"none", borderBottom:"none",
+                  cursor:"pointer", width:"100%", textAlign:"left",
+                  color: active ? "#1A1A14" : "#6A6A5A", fontSize:13, fontWeight: active?700:500,
+                  fontFamily:"Helvetica, Arial, sans-serif", whiteSpace:"nowrap",
+                }}
+                onMouseEnter={e=>{ if(!active) e.currentTarget.style.background="#EDE9E1"; }}
+                onMouseLeave={e=>{ if(!active) e.currentTarget.style.background="transparent"; }}>
+                <Icon size={18} strokeWidth={active?2.4:2} color={active?"#B07A08":"#8A8A7A"} style={{ flexShrink:0 }}/>
+                {sidebarOpen && <span>{t.label}</span>}
+              </button>
+            );
+          })}
+        </aside>
+
+        {/* Content */}
+        <main style={{ ...S.main, flex:1, minWidth:0 }}>
+          {tab==="overview"   && renderOverview()}
+          {tab==="news"       && renderNews()}
+          {tab==="drilling"   && renderDrilling()}
+          {tab==="financings" && renderFinancings()}
+          {tab==="videos"     && renderVideos()}
+          {tab==="politics"   && renderPolitics()}
+        </main>
+      </div>
 
       {/* Footer */}
       <footer style={{ background:"#F5F3EE", borderTop:"1px solid #D8D0C4", padding:"20px 24px", marginTop:8 }}>
