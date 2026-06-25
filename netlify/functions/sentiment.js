@@ -1,105 +1,158 @@
 // sentiment.js
-// Community sentiment for the Athabasca uranium juniors, sourced from a third-party
-// X/Twitter sentiment API. Vendor-agnostic: set the provider URL + key, then adjust the
-// ADAPTER section to map the provider's response shape to our format.
+// Live community sentiment for the Athabasca uranium juniors.
+// Sources: Reddit (public JSON) + Bluesky (public AT Protocol search) for content,
+// Claude (ANTHROPIC_API_KEY) for bull/bear sentiment scoring.
 //
-// Env vars (Netlify → Site settings → Environment variables):
-//   SENTIMENT_API_URL   – the provider's endpoint (e.g. https://api.twitterapi.io/...)
-//   SENTIMENT_API_KEY   – your API key for that provider
+// Env vars:
+//   ANTHROPIC_API_KEY  – required for AI sentiment tagging (you already have this)
 //
-// Returns:
-//   { ok, score (0-100), label, volume, volumeChangePct, updatedAt, tweets:[{text,author,score,tag,url,time}] }
+// Returns: { ok, score 0-100, label, volume, sources, updatedAt, tweets:[{text,author,score,tag,url,source}] }
 
-const CASHTAGS = ["$NXE","$DNN","$CCJ","$FCU","$UEC","$ISO","$SYH","$URNM","$U.UN"];
-const KEYWORDS = ["uranium","Athabasca","yellowcake","U3O8"];
+const SUBREDDITS = ["UraniumSqueeze", "uranium", "SmallCap_MiningStocks"];
+const BLUESKY_QUERIES = ["uranium stock", "Athabasca uranium", "$NXE", "$CCJ uranium"];
+const KEYWORDS = /(uranium|athabasca|u3o8|yellowcake|nexgen|cameco|denison|fission|isoenergy|nuclear fuel|\$nxe|\$ccj|\$dnn|\$fcu|\$uec|\$uuuu|\$urnm)/i;
+
+const UA = "Mozilla/5.0 (compatible; AthabascaTracker/1.0; +https://athabasca-tracker.netlify.app)";
 
 exports.handler = async () => {
   const CORS = { "Access-Control-Allow-Origin":"*", "Content-Type":"application/json", "Cache-Control":"public, max-age=900" };
-  const API_URL = process.env.SENTIMENT_API_URL;
-  const API_KEY = process.env.SENTIMENT_API_KEY;
-
-  // Not configured yet → tell the dashboard to show illustrative sample data, clearly labeled.
-  if (!API_URL || !API_KEY) {
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({
-      ok: false, configured: false,
-      error: "Sentiment source not configured",
-      detail: `Missing ${!API_URL ? "SENTIMENT_API_URL " : ""}${!API_KEY ? "SENTIMENT_API_KEY" : ""}`.trim(),
-    }) };
-  }
-
   try {
-    const query = encodeURIComponent([...CASHTAGS, ...KEYWORDS].join(" OR "));
-    const res = await fetch(`${API_URL}?query=${query}&limit=40`, {
-      headers: { "Authorization": `Bearer ${API_KEY}`, "Accept": "application/json" },
-      signal: AbortSignal.timeout(12000),
-    });
-    const text = await res.text();
-    let raw; try { raw = JSON.parse(text); } catch { raw = { _raw: text }; }
+    // ---- 1. Gather posts from Reddit + Bluesky in parallel ----
+    const [redditPosts, blueskyPosts] = await Promise.all([
+      fetchReddit().catch(()=>[]),
+      fetchBluesky().catch(()=>[]),
+    ]);
 
-    if (!res.ok) {
-      return { statusCode: res.status, headers: CORS, body: JSON.stringify({
-        ok:false, configured:true, error:"Provider rejected the request", status:res.status, provider: raw,
-      }) };
-    }
+    let posts = [...redditPosts, ...blueskyPosts]
+      .filter(p => p.text && p.text.length > 12)
+      .filter(p => KEYWORDS.test(p.text))           // keep only uranium-relevant chatter
+      .slice(0, 40);
 
-    // ───────────────────────── ADAPTER ─────────────────────────
-    // Map the provider's response to our tweet array. ADJUST these field names to match
-    // whichever vendor you choose (the common ones expose tweets under data/results/statuses).
-    const items = raw.tweets || raw.data || raw.results || raw.statuses || [];
-    const tweets = items.map(t => {
-      const txt = t.text || t.full_text || t.content || "";
-      // Provider may give a sentiment already; else derive a light heuristic.
-      let s = (typeof t.sentiment_score === "number") ? t.sentiment_score
-            : (typeof t.sentiment === "number") ? t.sentiment
-            : heuristicScore(txt);
-      // normalize to 0-100
-      const score = clamp(Math.round(s <= 1 && s >= -1 ? (s + 1) * 50 : s), 0, 100);
-      return {
-        text: txt.slice(0, 240),
-        author: t.author || t.username || t.user?.screen_name || "—",
-        score,
-        tag: score >= 60 ? "Bullish" : score <= 40 ? "Bearish" : "Neutral",
-        url: t.url || (t.id ? `https://x.com/i/web/status/${t.id}` : null),
-        time: t.created_at || t.time || null,
-      };
-    }).filter(t => t.text);
-    // ────────────────────────────────────────────────────────────
-
-    if (!tweets.length) {
+    if (!posts.length) {
       return { statusCode: 200, headers: CORS, body: JSON.stringify({
-        ok:false, configured:true, error:"No posts returned for the query", provider_keys:Object.keys(raw),
+        ok:false, configured:true, error:"No relevant posts found right now",
+        sources:{ reddit:redditPosts.length, bluesky:blueskyPosts.length },
       }) };
     }
 
-    const score = Math.round(tweets.reduce((a,t)=>a+t.score,0) / tweets.length);
-    const volume = (typeof raw.volume === "number") ? raw.volume
-                 : (typeof raw.total === "number") ? raw.total
-                 : tweets.length;
-    const volumeChangePct = (typeof raw.volume_change_pct === "number") ? raw.volume_change_pct : null;
+    // ---- 2. Score sentiment with Claude (one batched call) ----
+    const scored = await scoreWithClaude(posts);
+
+    // ---- 3. Aggregate ----
+    const valid = scored.filter(p => typeof p.score === "number");
+    const score = valid.length ? Math.round(valid.reduce((a,p)=>a+p.score,0)/valid.length) : 50;
 
     return { statusCode: 200, headers: CORS, body: JSON.stringify({
       ok: true, configured: true,
       score,
-      label: score >= 60 ? "Bullish" : score <= 40 ? "Bearish" : "Neutral",
-      volume,
-      volumeChangePct,
+      label: score>=60 ? "Bullish" : score<=40 ? "Bearish" : "Neutral",
+      volume: posts.length,
+      sources: { reddit: redditPosts.length, bluesky: blueskyPosts.length },
       updatedAt: new Date().toISOString(),
-      tweets: tweets.slice(0, 12),
+      tweets: scored.slice(0, 14),
     }) };
   } catch (err) {
-    return { statusCode: 502, headers: CORS, body: JSON.stringify({ ok:false, configured:true, error:"Could not reach sentiment provider", detail: err.message }) };
+    return { statusCode: 502, headers: CORS, body: JSON.stringify({ ok:false, error:"Sentiment build failed", detail: err.message }) };
   }
 };
 
-function clamp(n,lo,hi){ return Math.max(lo, Math.min(hi, n)); }
+// ---------- Reddit (public JSON, no OAuth needed for light reads) ----------
+async function fetchReddit() {
+  const out = [];
+  for (const sub of SUBREDDITS) {
+    try {
+      const res = await fetch(`https://www.reddit.com/r/${sub}/new.json?limit=25`, {
+        headers: { "User-Agent": UA, "Accept": "application/json" },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const children = data?.data?.children || [];
+      for (const c of children) {
+        const d = c.data || {};
+        const text = `${d.title || ""}${d.selftext ? " — " + d.selftext.slice(0,200) : ""}`.trim();
+        if (!text) continue;
+        out.push({
+          text,
+          author: `u/${d.author || "?"}`,
+          url: d.permalink ? `https://www.reddit.com${d.permalink}` : null,
+          upvotes: d.ups || 0,
+          source: "Reddit",
+          createdMs: (d.created_utc || 0) * 1000,
+        });
+      }
+    } catch { /* skip this sub */ }
+  }
+  return out;
+}
 
-// Fallback heuristic if the provider doesn't return a per-post sentiment score.
-function heuristicScore(text){
-  const t = (text||"").toLowerCase();
-  const bull = ["buy","bull","moon","breakout","up","gain","strong","accumulate","undervalued","rip","🚀","green"];
-  const bear = ["sell","bear","dump","down","loss","weak","crash","dilution","red","overvalued","drop"];
-  let s = 50;
-  bull.forEach(w=>{ if(t.includes(w)) s += 6; });
-  bear.forEach(w=>{ if(t.includes(w)) s -= 6; });
-  return clamp(s, 0, 100);
+// ---------- Bluesky (public AT Protocol search, no auth) ----------
+async function fetchBluesky() {
+  const out = [];
+  for (const q of BLUESKY_QUERIES) {
+    try {
+      const res = await fetch(
+        `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(q)}&limit=15&sort=latest`,
+        { headers: { "User-Agent": UA, "Accept": "application/json" }, signal: AbortSignal.timeout(8000) }
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      for (const p of (data?.posts || [])) {
+        const text = p?.record?.text;
+        if (!text) continue;
+        const handle = p?.author?.handle;
+        const rkey = p?.uri?.split("/").pop();
+        out.push({
+          text,
+          author: `@${handle || "?"}`,
+          url: handle && rkey ? `https://bsky.app/profile/${handle}/post/${rkey}` : null,
+          upvotes: p?.likeCount || 0,
+          source: "Bluesky",
+          createdMs: p?.record?.createdAt ? new Date(p.record.createdAt).getTime() : Date.now(),
+        });
+      }
+    } catch { /* skip this query */ }
+  }
+  return out;
+}
+
+// ---------- Claude sentiment scoring (batched) ----------
+async function scoreWithClaude(posts) {
+  const API_KEY = process.env.ANTHROPIC_API_KEY;
+  // If no key, fall back to a light keyword heuristic so the feature still works.
+  if (!API_KEY) return posts.map(p => ({ ...p, ...heuristic(p.text) }));
+
+  const numbered = posts.map((p,i)=>`${i}. ${p.text.replace(/\s+/g," ").slice(0,200)}`).join("\n");
+  const prompt = `You are a financial sentiment classifier for uranium mining stocks. For each numbered post, rate investor sentiment from 0 (very bearish) to 100 (very bullish), where 50 is neutral. Respond ONLY with a JSON array of objects like [{"i":0,"score":72,"tag":"Bullish"}], one per post, no prose. tag must be "Bullish" (score>=60), "Bearish" (score<=40), or "Neutral".\n\nPosts:\n${numbered}`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "x-api-key":API_KEY, "anthropic-version":"2023-06-01" },
+      body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:1500, messages:[{ role:"user", content:prompt }] }),
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!res.ok) return posts.map(p => ({ ...p, ...heuristic(p.text) }));
+    const data = await res.json();
+    let txt = (data?.content?.[0]?.text || "").trim().replace(/```json|```/g,"").trim();
+    const arr = JSON.parse(txt);
+    const byIdx = new Map(arr.map(o => [o.i, o]));
+    return posts.map((p,i)=>{
+      const o = byIdx.get(i);
+      const score = (o && typeof o.score==="number") ? clamp(o.score,0,100) : heuristic(p.text).score;
+      return { text:p.text, author:p.author, url:p.url, source:p.source, score,
+               tag: score>=60?"Bullish":score<=40?"Bearish":"Neutral" };
+    });
+  } catch {
+    return posts.map(p => ({ ...p, ...heuristic(p.text) }));
+  }
+}
+
+function clamp(n,lo,hi){ return Math.max(lo, Math.min(hi, n)); }
+function heuristic(text){
+  const t=(text||"").toLowerCase(); let s=50;
+  ["buy","bull","moon","breakout","gain","strong","accumulate","undervalued","🚀","squeeze","rip"].forEach(w=>{ if(t.includes(w)) s+=6; });
+  ["sell","bear","dump","loss","weak","crash","dilution","overvalued","drop","bag"].forEach(w=>{ if(t.includes(w)) s-=6; });
+  s=clamp(s,0,100);
+  return { score:s, tag: s>=60?"Bullish":s<=40?"Bearish":"Neutral" };
 }
