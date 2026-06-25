@@ -1228,15 +1228,16 @@ export default function App() {
 
   // Illustrative sample data shown (clearly labeled) until the live X-sentiment API key is configured.
   const SENTIMENT_SAMPLE = {
-    ok:true, sample:true, score:67, label:"Bullish", volume:1840, volumeChangePct:38,
+    ok:true, sample:true, score:67, label:"Bullish", volume:38, volumeChangePct:38,
+    sources:{ reddit:24, bluesky:14 },
     updatedAt:new Date().toISOString(),
     tweets:[
-      { text:"Spot price ripping again — basin juniors about to follow. $NXE $FCU looking primed.", author:"@uraniumbull", score:82, tag:"Bullish", url:null, time:null },
-      { text:"NexGen Arrow numbers are just on another level vs peers. Generational deposit.", author:"@ccjwatcher", score:78, tag:"Bullish", url:null, time:null },
-      { text:"Careful chasing here, a lot of these explorers are cash-light and will dilute hard.", author:"@deepvaluemining", score:31, tag:"Bearish", url:null, time:null },
-      { text:"Denison Phoenix ISR is the most de-risked path to production in the basin imo.", author:"@isruranium", score:74, tag:"Bullish", url:null, time:null },
-      { text:"Volume on the junior names is exploding today. Something is brewing. $URNM", author:"@juniortrader", score:69, tag:"Bullish", url:null, time:null },
-      { text:"Spot pulled back a touch, expect some profit taking across the sector short term.", author:"@macrouranium", score:45, tag:"Neutral", url:null, time:null },
+      { text:"Spot price ripping again — basin juniors about to follow. $NXE $FCU looking primed.", author:"u/uraniumbull", source:"Reddit", score:82, tag:"Bullish", url:null },
+      { text:"NexGen Arrow numbers are just on another level vs peers. Generational deposit.", author:"@ccjwatcher.bsky.social", source:"Bluesky", score:78, tag:"Bullish", url:null },
+      { text:"Careful chasing here, a lot of these explorers are cash-light and will dilute hard.", author:"u/deepvaluemining", source:"Reddit", score:31, tag:"Bearish", url:null },
+      { text:"Denison Phoenix ISR is the most de-risked path to production in the basin imo.", author:"u/isruranium", source:"Reddit", score:74, tag:"Bullish", url:null },
+      { text:"Volume on the junior names is exploding today. Something is brewing. $URNM", author:"@juniortrader.bsky.social", source:"Bluesky", score:69, tag:"Bullish", url:null },
+      { text:"Spot pulled back a touch, expect some profit taking across the sector short term.", author:"u/macrouranium", source:"Reddit", score:45, tag:"Neutral", url:null },
     ],
   };
 
@@ -2923,8 +2924,9 @@ export default function App() {
             <div>
               <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Community Sentiment</div>
               <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>
-                Real-time mood of the uranium community on X — aggregated hourly
-                {sentiment?.sample && <span style={{ color:"#B07A08", fontWeight:600 }}> · showing sample data (live source not yet connected)</span>}
+                Real-time mood from Reddit & Bluesky, AI-scored
+                {sentiment?.sources && <span style={{ color:"#9A9A8A" }}> · {sentiment.sources.reddit||0} Reddit · {sentiment.sources.bluesky||0} Bluesky posts</span>}
+                {sentiment?.sample && <span style={{ color:"#B07A08", fontWeight:600 }}> · sample data (live source unavailable)</span>}
               </div>
             </div>
             <button onClick={fetchSentiment} disabled={sentLoading} style={{ ...S.btn("s"), fontSize:11 }}>
@@ -2973,10 +2975,10 @@ export default function App() {
 
                   {/* Social volume */}
                   <div style={{ ...S.card, padding:18, marginBottom:0 }}>
-                    <div style={{ ...S.lbl, marginBottom:8 }}>SOCIAL VOLUME (24H)</div>
+                    <div style={{ ...S.lbl, marginBottom:8 }}>POSTS ANALYZED</div>
                     <div style={{ display:"flex", alignItems:"baseline", gap:10 }}>
                       <span style={{ ...SERIF, fontSize:30, fontWeight:800, color:"#1A1A14" }}>{(sentiment.volume??0).toLocaleString()}</span>
-                      <span style={{ fontSize:12, color:"#6A6A5A" }}>posts</span>
+                      <span style={{ fontSize:12, color:"#6A6A5A" }}>recent posts</span>
                       {sentiment.volumeChangePct!=null && (
                         <span className={sentiment.volumeChangePct>=0?"up-arrow":""} style={{ marginLeft:"auto", fontSize:13, fontWeight:800, color:sentiment.volumeChangePct>=0?"#16C44A":"#C01818" }}>
                           {sentiment.volumeChangePct>=0?"▲":"▼"} {Math.abs(sentiment.volumeChangePct)}%
@@ -2984,7 +2986,7 @@ export default function App() {
                       )}
                     </div>
                     <div style={{ fontSize:10, color:"#9A9A8A", marginTop:6, lineHeight:1.5 }}>
-                      Spikes in post volume often precede sharp moves in junior miners — watch for sudden surges.
+                      Recent uranium-related posts pulled from Reddit & Bluesky and scored by AI. A surge in chatter often precedes sharp moves in junior miners.
                     </div>
                   </div>
                 </div>
@@ -3001,6 +3003,7 @@ export default function App() {
                         style={{ textDecoration:"none", display:"block", padding:"12px 18px", borderBottom:i<(sentiment.tweets.length-1)?"1px solid #F0ECE4":"none", cursor:t.url?"pointer":"default" }}>
                         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:5 }}>
                           <span style={{ ...MONO, fontSize:11, fontWeight:700, color:"#1A5AA8" }}>{t.author}</span>
+                          {t.source && <span style={{ fontSize:8.5, fontWeight:700, color:"#9A9A8A", padding:"1px 6px", borderRadius:4, background:"#F0ECE4", textTransform:"uppercase", letterSpacing:"0.04em" }}>{t.source}</span>}
                           <span style={{ marginLeft:"auto", fontSize:9.5, fontWeight:800, padding:"2px 8px", borderRadius:20, color:tagColor(t.tag), background:`${tagColor(t.tag)}14`, border:`1px solid ${tagColor(t.tag)}33` }}>
                             {t.tag} · {t.score}
                           </span>
@@ -3010,7 +3013,7 @@ export default function App() {
                     ))}
                   </div>
                   <div style={{ padding:"10px 18px", borderTop:"1px solid #EDE8E0", fontSize:9, color:"#9A9A8A", lineHeight:1.5 }}>
-                    Sentiment tags are generated by AI from public posts and may be inaccurate. Not investment advice. {sentiment.updatedAt && `Updated ${new Date(sentiment.updatedAt).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}.`}
+                    Sentiment is AI-scored from public Reddit & Bluesky posts and may be inaccurate or unrepresentative. Not investment advice. {sentiment.updatedAt && `Updated ${new Date(sentiment.updatedAt).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}.`}
                   </div>
                 </div>
               </div>
