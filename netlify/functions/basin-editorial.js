@@ -1,4 +1,4 @@
-const BASIN_KEYWORDS = ["athabasca","saskatchewan","athabasca basin"];
+const BASIN_KEYWORDS = ["athabasca","saskatchewan","athabasca basin","uranium","nuclear","cameco","yellowcake","u3o8","nexgen","denison"];
 
 const FEEDS = [
   { url:"https://www.mining.com/category/uranium/feed/",                      source:"Mining.com"        },
@@ -6,6 +6,10 @@ const FEEDS = [
   { url:"https://www.globenewswire.com/RssFeed/keyword/athabasca+uranium",    source:"GlobeNewswire"     },
   { url:"https://www.world-nuclear-news.org/rss",                             source:"World Nuclear News"},
   { url:"https://www.mining.com/category/uranium-2/feed/",                    source:"Mining.com"        },
+  { url:"https://financialpost.com/tag/uranium/feed",                         source:"Financial Post"    },
+  { url:"https://financialpost.com/tag/cameco-corp/feed",                     source:"Financial Post"    },
+  { url:"https://financialpost.com/commodities/energy/feed",                  source:"Financial Post"    },
+  { url:"https://www.northernminer.com/news/feed/",                           source:"Northern Miner"    },
 ];
 
 const COMPANY_NAMES = ["nexgen","denison","fission","skyharbour","isoenergy","cameco",
@@ -75,8 +79,62 @@ function isBasinRelated(text) {
   return BASIN_KEYWORDS.some(k => text.toLowerCase().includes(k));
 }
 
+function relevanceScore(text) {
+  const t = text.toLowerCase();
+  let s = 0;
+  // Strongest: directly about the basin / Saskatchewan
+  if (t.includes("athabasca")) s += 10;
+  if (t.includes("saskatchewan")) s += 6;
+  // Canada nuclear/uranium policy angle
+  if (t.includes("uranium")) s += 4;
+  if (t.includes("cameco")) s += 4;
+  if (t.includes("nuclear")) s += 2;
+  if (t.includes("canada") || t.includes("canadian") || t.includes("carney")) s += 2;
+  // Named juniors
+  ["nexgen","denison","fission","isoenergy","skyharbour"].forEach(n=>{ if(t.includes(n)) s += 2; });
+  return s;
+}
+
+// Optional: pin a specific article as the hero story by setting FEATURED_STORY_URL in Netlify.
+// We fetch the page's OpenGraph tags so the card renders with the right title/image/summary.
+async function fetchPinnedStory(url) {
+  try {
+    const res = await fetch(url, {
+      headers:{"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
+      signal: AbortSignal.timeout(9000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const og = (p) => html.match(new RegExp(`<meta[^>]+property=["']og:${p}["'][^>]+content=["']([^"']+)["']`,"i"))?.[1]
+                    || html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:${p}["']`,"i"))?.[1]
+                    || html.match(new RegExp(`<meta[^>]+name=["']${p}["'][^>]+content=["']([^"']+)["']`,"i"))?.[1];
+    const headline = decodeHtml(og("title") || html.match(/<title>([^<]+)<\/title>/)?.[1] || "");
+    if (!headline) return null;
+    const siteName = og("site_name") || "";
+    return {
+      headline,
+      url,
+      date: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
+      summary: decodeHtml(og("description") || ""),
+      source: siteName || "Featured",
+      image: og("image") || null,
+      category: "Featured",
+      pinned: true,
+    };
+  } catch { return null; }
+}
+
 exports.handler = async () => {
   try {
+    // 1) Manual override wins if set
+    const pinnedUrl = process.env.FEATURED_STORY_URL;
+    if (pinnedUrl) {
+      const pinned = await fetchPinnedStory(pinnedUrl.trim());
+      if (pinned) {
+        return { statusCode:200, headers:{"Access-Control-Allow-Origin":"*"}, body: JSON.stringify(pinned) };
+      }
+    }
+
     const candidates = [];
 
     await Promise.all(FEEDS.map(async ({ url, source }) => {
@@ -105,6 +163,9 @@ exports.handler = async () => {
           const combined = headline + " " + summary;
           if (!isBasinRelated(combined)) continue;
 
+          const score = relevanceScore(combined);
+          if (score < 4) continue; // must be genuinely uranium/nuclear-relevant, not just any match
+
           // Prefer editorial (allow multi-company mentions)
           const companyCount = COMPANY_NAMES.filter(n => combined.toLowerCase().includes(n)).length;
           const headlineLower = headline.toLowerCase();
@@ -113,15 +174,21 @@ exports.handler = async () => {
             const date = pd.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
             candidates.push({
               headline, url, date, dateMs:pd.getTime(), summary, source, image,
-              category:"Athabasca Basin",
+              category:"Athabasca Basin", score,
             });
           }
         }
       } catch(e) {}
     }));
 
-    const best = candidates.sort((a,b) => b.dateMs - a.dateMs)[0];
-    const result = best ? (({ dateMs,...rest }) => rest)(best) : null;
+    // Rank by relevance, then recency. Recent + highly-relevant wins.
+    const now = Date.now();
+    const best = candidates.sort((a,b) => {
+      const ra = a.score + Math.max(0, 6 - (now - a.dateMs)/(24*3600*1000)); // recency bonus, decays over ~6 days
+      const rb = b.score + Math.max(0, 6 - (now - b.dateMs)/(24*3600*1000));
+      return rb - ra;
+    })[0];
+    const result = best ? (({ dateMs, score, ...rest }) => rest)(best) : null;
 
     return {
       statusCode: 200,
