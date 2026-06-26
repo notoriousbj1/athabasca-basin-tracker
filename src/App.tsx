@@ -1580,18 +1580,67 @@ export default function App() {
             const parseShares = s => { const n=parseFloat(s||"0"); if(!s)return 0; if(s.includes("B"))return n*1e9; if(s.includes("M"))return n*1e6; if(s.includes("K"))return n*1e3; return n; };
             const totalMktCap = COMPANIES.reduce((s,c)=>s+gP(c)*parseShares(c.sharesBasic),0);
             const totalVol    = COMPANIES.reduce((s,c)=>s+gVol(c),0);
-            const activeDrills = DRILLING.filter(d=>d.status==="Active"||d.status==="Drilling").length;
-            const pendingAssays = DRILLING.reduce((s,d)=>s+(d.pending||0),0);
+            // Active Drills = distinct companies with a drill result dated within the last 90 days (live feed).
+            // Falls back to the static program count if the live feed has no dated results yet.
+            const recentlyActive = (()=>{
+              const NINETY = 90*24*3600*1000;
+              const now = Date.now();
+              const companies = new Set();
+              let anyDated = false;
+              (drillResults||[]).forEach(r=>{
+                const d = r.date ? new Date(r.date) : null;
+                // require a real, parseable date that isn't just a bare year ("2025")
+                if (d && !isNaN(d.getTime()) && /\d{1,2}/.test(String(r.date).replace(/^\d{4}$/,""))) {
+                  anyDated = true;
+                  if (now - d.getTime() <= NINETY) companies.add(r.company || r.ticker);
+                }
+              });
+              return anyDated ? companies.size : null;
+            })();
+            const staticActiveDrills = DRILLING.filter(d=>d.status==="Active"||d.status==="Drilling").length;
+            const activeDrills = recentlyActive !== null ? recentlyActive : staticActiveDrills;
+            const drillsLive = recentlyActive !== null;
+
+            // Live news-derived metrics: scan recent press releases (last ~60d) by keyword,
+            // counting distinct companies. Fall back to static counts if the feed is empty.
+            const newsWithin = (days)=>{
+              const cut = Date.now() - days*24*3600*1000;
+              return (news||[]).filter(n=>{
+                const d = n.date ? new Date(n.date) : null;
+                return d && !isNaN(d.getTime()) && d.getTime() >= cut;
+              });
+            };
+            const countCompaniesMatching = (items, re)=>{
+              const set = new Set();
+              items.forEach(n=>{
+                const t = `${n.headline||""} ${n.summary||""}`.toLowerCase();
+                if (re.test(t)) set.add(n.company || n.ticker || n.headline);
+              });
+              return set.size;
+            };
+            const recent60 = newsWithin(60);
+            // Pending Assays → companies awaiting drill results
+            const pendingRe = /(assays?\s+pending|results?\s+pending|awaiting\s+(assays?|results?)|samples?\s+submitted|pending\s+assay|drill(ing)?\s+(commenced|underway|continues|program)|core\s+logged)/i;
+            const livePending = recent60.length ? countCompaniesMatching(recent60, pendingRe) : null;
+            const staticPending = DRILLING.reduce((s,d)=>s+(d.pending||0),0);
+            const pendingAssays = (livePending && livePending>0) ? livePending : staticPending;
+            const pendingLive = !!(livePending && livePending>0);
+            // Open Raises → companies with active/recent financings
+            const raiseRe = /(private\s+placement|bought\s+deal|financing|flow[-\s]?through|raises?\s+\$|offering|unit\s+offering|subscription\s+receipts?|closes?\s+\$)/i;
+            const liveRaises = recent60.length ? countCompaniesMatching(recent60, raiseRe) : null;
+            const staticRaises = FINANCINGS.filter(f=>f.status==="Open").length;
+            const openRaises = (liveRaises && liveRaises>0) ? liveRaises : staticRaises;
+            const raisesLive = !!(liveRaises && liveRaises>0);
+
             const activeProjects = COMPANIES.reduce((s,c)=>s+(c.projects?.length||0),0);
-            const openRaises = FINANCINGS.filter(f=>f.status==="Open").length;
             // simple deterministic sparkline shapes per metric (visual texture, not literal history)
             const spk = (seed)=>{ const a=[]; let v=50; for(let i=0;i<8;i++){ v += ((Math.sin(seed*7.3+i*1.7)*0.5+0.5)-0.45)*30; a.push(Math.max(8,Math.min(92,v))); } return a; };
             const cards = [
               { icon:Atom,      label:"Total Resources",  value:900, suffix:" Mlb", decimals:0, prefix:"~", spark:spk(4), note:"~10% global", trend:null },
               { icon:Map,       label:"Active Projects",  value:activeProjects, decimals:0, spark:spk(3), trend:null },
-              { icon:Hammer,    label:"Active Drills",    value:activeDrills, decimals:0, spark:spk(1), trend:"+2", up:true },
-              { icon:Timer,     label:"Pending Assays",   value:pendingAssays, decimals:0, spark:spk(2), trend:null },
-              { icon:Landmark,  label:"Open Raises",      value:openRaises, decimals:0, spark:spk(7), trend:null },
+              { icon:Hammer,    label:"Active Drills",    value:activeDrills, decimals:0, spark:spk(1), trend:drillsLive?"live":null, up:true, note:drillsLive?"companies drilling · 90d":null },
+              { icon:Timer,     label:"Pending Assays",   value:pendingAssays, decimals:0, spark:spk(2), trend:pendingLive?"live":null, note:pendingLive?"companies awaiting · 60d":null },
+              { icon:Landmark,  label:"Open Raises",      value:openRaises, decimals:0, spark:spk(7), trend:raisesLive?"live":null, note:raisesLive?"financings active · 60d":null },
               { icon:DollarSign,label:"Total Market Cap", value:totalMktCap/1e9, prefix:"$", suffix:"B", decimals:1, spark:spk(5), trend:totalMktCap>0?"live":null, up:true },
               { icon:Activity,  label:"Daily Volume",     value:totalVol/1e6, suffix:"M", decimals:1, spark:spk(6), trend:null, dim:totalVol===0 },
             ];
