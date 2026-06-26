@@ -10,6 +10,11 @@
 
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 const CACHE_KEY = "quotes-v1";
+const MAX_SYMBOLS_PER_CALL = 50; // never exceed plan's per-minute credit limit in one shot
+
+// Module-level in-memory cache — persists across invocations while the function
+// instance stays warm. Safety net if Netlify Blobs isn't enabled.
+const memCache = globalThis.__pricesMemCache || (globalThis.__pricesMemCache = { ts: 0, data: {} });
 
 const SUFFIX_TO_EXCHANGE = { "TO":"TSX", "V":"TSXV", "CN":"CSE", "NE":"NEO" };
 
@@ -39,33 +44,45 @@ exports.handler = async (event) => {
 
     const store = await getStore();
 
-    // 1) Serve from cache if fresh
+    // Helper: serve a subset from a cache object if it covers ALL requested symbols & is fresh.
+    const trySubset = (cacheObj, label) => {
+      if (!cacheObj || !cacheObj.ts || (Date.now() - cacheObj.ts) >= CACHE_TTL_MS || !cacheObj.data) return null;
+      const subset = {}; let have = 0;
+      for (const s of symbols) if (cacheObj.data[s] !== undefined) { subset[s] = cacheObj.data[s]; have++; }
+      if (have === symbols.length) return { statusCode: 200, headers: { ...CORS, "X-Cache": label }, body: JSON.stringify(subset) };
+      return null;
+    };
+
+    // 0) In-memory cache first (instant, no Blobs needed, survives while function is warm)
+    const memHit = trySubset(memCache, "HIT-MEM");
+    if (memHit) return memHit;
+
+    // 1) Blobs cache next (shared across all warm/cold instances)
     if (store) {
       try {
         const cached = await store.get(CACHE_KEY, { type: "json" });
-        if (cached && cached.ts && (Date.now() - cached.ts) < CACHE_TTL_MS && cached.data) {
-          // Serve from cache only if it covers every requested symbol the upstream knows about.
-          const subset = {};
-          let haveCount = 0;
-          for (const s of symbols) {
-            if (cached.data[s] !== undefined) { subset[s] = cached.data[s]; haveCount++; }
-          }
-          // If cache has data for all requested symbols, serve it; else refetch to fill gaps.
-          if (haveCount === symbols.length) {
-            return { statusCode: 200, headers: { ...CORS, "X-Cache": "HIT" }, body: JSON.stringify(subset) };
-          }
-        }
+        const blobHit = trySubset(cached, "HIT");
+        if (cached) { memCache.ts = cached.ts; memCache.data = cached.data; } // warm the mem cache
+        if (blobHit) return blobHit;
       } catch { /* ignore cache read errors */ }
     }
 
-    // 2) Cache miss/stale → fetch fresh from Twelve Data
-    const mapped = symbols.map(toTD);
+    // 2) Cache miss/stale → fetch fresh from Twelve Data.
+    // Cap how many symbols we request at once so a single call can't blow the per-minute limit.
+    const fetchSymbols = symbols.slice(0, MAX_SYMBOLS_PER_CALL);
+    const mapped = fetchSymbols.map(toTD);
     const tdToOrig = {};
     mapped.forEach(({ td, orig }) => { tdToOrig[td] = orig; });
     const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(mapped.map(m=>m.td).join(","))}&apikey=${KEY}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
     if (!res.ok) {
-      // On upstream failure, serve stale cache if we have any
+      // On upstream failure (e.g. 429 rate limit), serve stale cache if we have any
+      const staleObj = (memCache.data && Object.keys(memCache.data).length) ? memCache : null;
+      if (staleObj) {
+        const subset = {};
+        for (const s of symbols) if (staleObj.data[s]) subset[s] = staleObj.data[s];
+        if (Object.keys(subset).length) return { statusCode: 200, headers: { ...CORS, "X-Cache": "STALE" }, body: JSON.stringify(subset) };
+      }
       if (store) {
         try {
           const cached = await store.get(CACHE_KEY, { type: "json" });
@@ -106,7 +123,13 @@ exports.handler = async (event) => {
       } catch { /* ignore cache write errors */ }
     }
 
-    return { statusCode: 200, headers: { ...CORS, "X-Cache": "MISS" }, body: JSON.stringify(out) };
+    // Always update the in-memory cache (works even when Blobs is unavailable)
+    if (Object.keys(out).length) {
+      memCache.ts = Date.now();
+      memCache.data = { ...memCache.data, ...out };
+    }
+
+    return { statusCode: 200, headers: { ...CORS, "X-Cache": store ? "MISS" : "MISS-NOBLOBS" }, body: JSON.stringify(out) };
   } catch (err) {
     return { statusCode: 200, headers: CORS, body: JSON.stringify({ error: err.message }) };
   }
