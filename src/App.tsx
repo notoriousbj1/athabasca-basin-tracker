@@ -1251,9 +1251,19 @@ export default function App() {
   const fetchVideoData = useCallback(async () => {
     setVideosLoading(true);
     try {
-      const response = await fetch("/.netlify/functions/videos");
-      const data = await response.json();
-      if (Array.isArray(data)) setVideoData(data);
+      // Fetch each pinned video's real title + channel from YouTube's oEmbed endpoint
+      // (no API key, works from the browser). Falls back to any title set in PINNED_VIDEOS.
+      const enriched = await Promise.all(PINNED_VIDEOS.filter(v=>v.id).map(async (v)=>{
+        try {
+          const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${v.id}&format=json`, { signal: AbortSignal.timeout(8000) });
+          if (!r.ok) throw new Error(String(r.status));
+          const j = await r.json();
+          return { id:v.id, videoTitle: v.title || j.title || "", channel: v.channel || j.author_name || "", focus: v.focus || "" };
+        } catch {
+          return { id:v.id, videoTitle: v.title || "", channel: v.channel || "", focus: v.focus || "" };
+        }
+      }));
+      setVideoData(enriched);
     } catch(e) { console.error("Video fetch failed", e); }
     setVideosLoading(false);
   }, []);
@@ -1577,12 +1587,17 @@ export default function App() {
                 target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
                 <div>
                   {(()=>{
-                    const co = COMPANIES.find(c=>c.ticker==="DML.TO"||c.altTicker==="DNN");
+                    const co = COMPANIES.find(c=>c.ticker==="CCO.TO"||c.ticker==="CCO"||c.altTicker==="CCO");
                     const ch = co ? gCh(co) : null;
                     const up = ch !== null && ch >= 0;
                     return (
                       <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center" }}>
-                        <span style={{ ...S.badge(ch!==null?(up?"green":"red"):"amber"), fontSize:10 }}>
+                        <span
+                          onClick={(e)=>{ if(co){ e.preventDefault(); e.stopPropagation(); setCompanyModal(co); } }}
+                          title={co ? `View ${co.name} profile` : undefined}
+                          style={{ ...S.badge(ch!==null?(up?"green":"red"):"amber"), fontSize:10, cursor:co?"pointer":"default", transition:"filter 0.12s ease, transform 0.12s ease" }}
+                          onMouseEnter={e=>{ if(co){ e.currentTarget.style.filter="brightness(0.93)"; e.currentTarget.style.transform="translateY(-1px)"; } }}
+                          onMouseLeave={e=>{ e.currentTarget.style.filter="none"; e.currentTarget.style.transform="none"; }}>
                           CCO {ch!==null ? `${up?"▲":"▼"} ${Math.abs(ch).toFixed(2)}%` : ""}
                         </span>
                         <span style={{ ...S.badge("gray"), fontSize:10 }}>News</span>
@@ -3351,18 +3366,27 @@ export default function App() {
               "linear-gradient(150deg,#1A0A2A 0%,#4A1A5A 100%)",
               "linear-gradient(150deg,#0A1828 0%,#1A3A58 100%)",
             ];
-            // Build the list from the manually-pinned videos (PINNED_VIDEOS).
-            // This replaces the auto channel-feed, which YouTube blocks from datacenter IPs.
-            const items = PINNED_VIDEOS.filter(v=>v.id).map((v,i)=>({
-              inf: { name: v.channel || "", channel: v.channel || "", handle:"", focus: v.focus || "", url:`https://www.youtube.com/watch?v=${v.id}` },
-              grad: THUMBS[i % THUMBS.length],
-              href: `https://www.youtube.com/watch?v=${v.id}`,
-              thumb: `https://img.youtube.com/vi/${v.id}/hqdefault.jpg`,
-              maxThumb: `https://img.youtube.com/vi/${v.id}/maxresdefault.jpg`,
-              title: v.title || "",
-              date: null,
-              hasVideo: true,
-            }));
+            // Build the list from the manually-pinned videos (PINNED_VIDEOS), enriched with
+            // titles/channels fetched via YouTube oEmbed (held in videoData). Replaces the
+            // auto channel-feed, which YouTube blocks from datacenter IPs.
+            const meta = {};
+            (videoData||[]).forEach(d=>{ if(d.id) meta[d.id]=d; });
+            const items = PINNED_VIDEOS.filter(v=>v.id).map((v,i)=>{
+              const m = meta[v.id] || {};
+              const title = v.title || m.videoTitle || "";
+              const channel = v.channel || m.channel || "";
+              const focus = v.focus || m.focus || "";
+              return {
+                inf: { name: channel, channel, handle:"", focus, url:`https://www.youtube.com/watch?v=${v.id}` },
+                grad: THUMBS[i % THUMBS.length],
+                href: `https://www.youtube.com/watch?v=${v.id}`,
+                thumb: `https://img.youtube.com/vi/${v.id}/hqdefault.jpg`,
+                maxThumb: `https://img.youtube.com/vi/${v.id}/maxresdefault.jpg`,
+                title,
+                date: null,
+                hasVideo: true,
+              };
+            });
             const sorted = items;
             const featured = sorted[0];
             const sideList = sorted.slice(1);
