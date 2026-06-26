@@ -1554,6 +1554,30 @@ export default function App() {
                     <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center", flexWrap:"wrap" }}>
                       {featuredStory.source && <span style={{ ...S.badge("blue"), fontSize:10 }}>{featuredStory.source}</span>}
                       {(featuredStory.category||featuredStory.type) && <span style={{ ...S.badge("gray"), fontSize:10 }}>{featuredStory.category||featuredStory.type}</span>}
+                      {/* Clickable ticker pills for any tracked company mentioned in the story */}
+                      {(()=>{
+                        const text = `${featuredStory.headline||""} ${featuredStory.summary||""}`.toLowerCase();
+                        const GENERIC = new Set(["energy","uranium","resources","corp","corporation","inc","ltd","mining","metals","group","royalty"]);
+                        const mentioned = COMPANIES.filter(c=>{
+                          const tk = (c.ticker||"").split(".")[0].toLowerCase();
+                          if (tk && new RegExp(`[(:\\s]${tk}[)\\s,.]`).test(text)) return true;
+                          const toks = c.name.toLowerCase().replace(/[.,]/g," ").split(/\s+/).filter(t=>t && !GENERIC.has(t));
+                          return toks.length && toks.every(t=>text.includes(t));
+                        }).slice(0,4);
+                        return mentioned.map(c=>{
+                          const ch = gCh(c); const up = ch>=0;
+                          return (
+                            <span key={c.id}
+                              onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setCompanyModal(c); }}
+                              title={`View ${c.name} profile`}
+                              style={{ ...S.badge(up?"green":"red"), fontSize:10, cursor:"pointer", transition:"filter 0.12s ease, transform 0.12s ease" }}
+                              onMouseEnter={e=>{ e.currentTarget.style.filter="brightness(0.93)"; e.currentTarget.style.transform="translateY(-1px)"; }}
+                              onMouseLeave={e=>{ e.currentTarget.style.filter="none"; e.currentTarget.style.transform="none"; }}>
+                              {(c.ticker||"").split(".")[0]} {ch!==null ? `${up?"▲":"▼"} ${Math.abs(ch).toFixed(2)}%` : ""}
+                            </span>
+                          );
+                        });
+                      })()}
                       <span style={{ fontSize:11, color:"#9A9A8A", marginLeft:"auto" }}>{featuredStory.date}</span>
                     </div>
                     {(featuredStory.image || basinSat) && (
