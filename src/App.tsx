@@ -404,7 +404,6 @@ const SIDEBAR_NAV = [
   { id:"sec-demand",    label:"Demand Tracker",      icon:"Activity",    kind:"scroll", target:"sec-demand"    },
   { id:"sec-interviews",label:"Interviews",          icon:"Play",        kind:"scroll", target:"sec-interviews"},
   { id:"sec-macro",     label:"Nuclear Macro",       icon:"Globe",       kind:"scroll", target:"sec-macro"     },
-  { id:"contact",       label:"Contact",             icon:"Newspaper",   kind:"contact"                        },
 ];
 
 // ─────────────────────────────────────────────
