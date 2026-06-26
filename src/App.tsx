@@ -1439,12 +1439,9 @@ export default function App() {
     return (
       <div>
         {/* Date masthead strip */}
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, paddingBottom:10, borderBottom:"1px solid #D8D0C4" }}>
+        <div style={{ display:"flex", justifyContent:"flex-start", alignItems:"center", marginBottom:16, paddingBottom:10, borderBottom:"1px solid #D8D0C4" }}>
           <div style={{ fontSize:11, color:"#6A6A5A" }}>
             {new Date().toLocaleDateString("en-CA",{ weekday:"long", year:"numeric", month:"long", day:"numeric" })}
-          </div>
-          <div style={{ ...SERIF, fontSize:11, color:"#6A6A5A", fontStyle:"italic" }}>
-            Uranium Intelligence Dashboard by Juniorstocks.com
           </div>
         </div>
 
@@ -3948,13 +3945,20 @@ export default function App() {
           </div>
 
           <div style={{ borderBottom:"1px solid #E2DCD0", margin:"0 0 6px" }}/>
-          {/* Collapse toggle */}
-          <button onClick={()=>setSidebarOpen(o=>!o)}
-            title={sidebarOpen?"Collapse":"Expand"}
-            style={{ display:"flex", alignItems:"center", justifyContent:sidebarOpen?"flex-end":"center",
-              background:"none", border:"none", cursor:"pointer", color:"#9A9A8A", padding:"14px 14px 10px", marginBottom:4 }}>
-            {sidebarOpen ? <ChevronLeft size={18}/> : <Menu size={18}/>}
-          </button>
+          {/* Collapse toggle row — tagline left, chevron right */}
+          <div style={{ display:"flex", alignItems:"center", justifyContent: sidebarOpen?"space-between":"center", padding: sidebarOpen?"4px 10px 8px 16px":"4px 0 8px", gap:8 }}>
+            {sidebarOpen && (
+              <div style={{ fontSize:8, color:"#9A9A8A", letterSpacing:"0.07em", textTransform:"uppercase", lineHeight:1.5, minWidth:0 }}>
+                Uranium Intelligence Dashboard<br/>by Juniorstocks.com
+              </div>
+            )}
+            <button onClick={()=>setSidebarOpen(o=>!o)}
+              title={sidebarOpen?"Collapse":"Expand"}
+              style={{ display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+                background:"none", border:"none", cursor:"pointer", color:"#9A9A8A", padding:4 }}>
+              {sidebarOpen ? <ChevronLeft size={18}/> : <Menu size={18}/>}
+            </button>
+          </div>
 
           {SIDEBAR_NAV.map(item=>{
             const ICONS = { Home, Star, Map, Hammer, DollarSign, Timer, Users, Activity, Play, Globe, Newspaper };
@@ -4010,9 +4014,9 @@ export default function App() {
             );
           })}
 
-          {/* U₃O₈ Spot price card — below the nav, padded up from the very bottom */}
+          {/* U₃O₈ Spot price card — pinned to the bottom of the sidebar, with padding */}
           {sidebarOpen && (
-            <div style={{ margin:"28px 12px 18px", padding:"12px 14px", background:"#FFFFFF", border:"1px solid #E2DCD0", borderRadius:8 }}>
+            <div style={{ margin:"auto 12px 20px", padding:"12px 14px", background:"#FFFFFF", border:"1px solid #E2DCD0", borderRadius:8 }}>
               <div style={{ ...S.lbl, marginBottom:4, fontSize:8.5 }}>U₃O₈ SPOT · USD/LB</div>
               <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
                 <span style={{ fontSize:26, fontWeight:900, color:"#B07A08", ...MONO, letterSpacing:"-1px", lineHeight:1 }}>
