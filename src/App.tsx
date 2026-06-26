@@ -2196,6 +2196,10 @@ export default function App() {
                             r = p.stage==="Producer"?7 : p.stage==="Developer"?6.5 : 5.5;
                           }
                           r = Math.min(r, 16);
+                          // Shrink bubbles as the map zooms in so overlapping markers separate
+                          // and you can see ones hidden underneath. 1/sqrt(z) keeps them visible
+                          // but progressively smaller (same factor used for labels).
+                          r = r / Math.sqrt(mapView.z);
                           const hov = bmtHover?.name===p.name;
                           return (
                             <g key={i} style={{ cursor:"pointer" }}
@@ -2236,7 +2240,7 @@ export default function App() {
                           if(h.lat==null||h.lng==null) return null;
                           const [x,y]=toSVG(h.lat,h.lng);
                           const hov = bmtHover?.isDrill && bmtHover?._i===i;
-                          const sz = hov?10:8;
+                          const sz = (hov?10:8) / Math.sqrt(mapView.z);
                           // small starburst
                           const spikes = Array.from({length:8},(_,k)=>{
                             const a=(k/8)*Math.PI*2; const r1=sz, r2=sz*0.45;
