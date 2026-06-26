@@ -1102,6 +1102,7 @@ export default function App() {
   const [tab, setTab]             = useState("overview");
   const [expanded, setExpanded]   = useState(null);
   const [companyModal, setCompanyModal] = useState(null);
+  const [statModal, setStatModal]       = useState(null);
   const [spot, setSpot]           = useState({ price:79.50, high52:106, low52:73, source:"Trading Economics", date:"Jun 2026" });
   const [spotLoading, setSL]      = useState(false);
   const [news, setNews]           = useState([]);
@@ -1635,14 +1636,59 @@ export default function App() {
             const activeProjects = COMPANIES.reduce((s,c)=>s+(c.projects?.length||0),0);
             // simple deterministic sparkline shapes per metric (visual texture, not literal history)
             const spk = (seed)=>{ const a=[]; let v=50; for(let i=0;i<8;i++){ v += ((Math.sin(seed*7.3+i*1.7)*0.5+0.5)-0.45)*30; a.push(Math.max(8,Math.min(92,v))); } return a; };
+
+            // ---- Drill-down row builders for the stat popups ----
+            // Each returns [{ company, ticker, detail, co? }] for the modal.
+            const findCo = (name,ticker)=> COMPANIES.find(c=> (name && c.name.toLowerCase()===String(name).toLowerCase()) || (ticker && (c.ticker===ticker||c.altTicker===ticker)) || (name && c.name.toLowerCase().includes(String(name).toLowerCase().split(" ")[0])));
+            const newsRows = (re, days)=>{
+              const cut = Date.now() - days*24*3600*1000;
+              const byCo = {};
+              (news||[]).forEach(n=>{
+                const d = n.date ? new Date(n.date) : null;
+                if (!d || isNaN(d.getTime()) || d.getTime()<cut) return;
+                const t = `${n.headline||""} ${n.summary||""}`.toLowerCase();
+                if (!re.test(t)) return;
+                const key = n.company || n.ticker || n.headline;
+                if (!byCo[key] || d.getTime()>byCo[key]._ms) byCo[key] = { company:n.company||key, ticker:n.ticker, detail:n.headline, date:n.date, _ms:d.getTime() };
+              });
+              return Object.values(byCo).map(r=>({ company:r.company, ticker:r.ticker, detail:r.detail, date:r.date, co:findCo(r.company,r.ticker) }));
+            };
+            const drillRows = ()=>{
+              const NINETY = 90*24*3600*1000, now=Date.now(), byCo={};
+              (drillResults||[]).forEach(r=>{
+                const d = r.date ? new Date(r.date) : null;
+                if (!d || isNaN(d.getTime()) || /^\d{4}$/.test(String(r.date)) || now-d.getTime()>NINETY) return;
+                const key = r.company || r.ticker;
+                if (!byCo[key]) byCo[key] = { company:r.company||key, ticker:r.ticker, detail:r.interval_text||r.hole||"Recent result", date:r.date, co:findCo(r.company,r.ticker) };
+              });
+              return Object.values(byCo);
+            };
+            const projectRows = ()=> COMPANIES.filter(c=>c.projects?.length).map(c=>({ company:c.name, ticker:c.ticker, detail:`${c.projects.length} project${c.projects.length>1?"s":""}: ${c.projects.slice(0,3).join(", ")}${c.projects.length>3?"…":""}`, co:c }));
+            const mktCapRows = ()=>{
+              const parseSh = s=>{ const n=parseFloat(s||"0"); if(!s)return 0; if(s.includes("B"))return n*1e9; if(s.includes("M"))return n*1e6; if(s.includes("K"))return n*1e3; return n; };
+              return COMPANIES.map(c=>({ company:c.name, ticker:c.ticker, _v:gP(c)*parseSh(c.sharesBasic), co:c }))
+                .filter(r=>r._v>0).sort((a,b)=>b._v-a._v)
+                .map(r=>({ ...r, detail: r._v>=1e9?`$${(r._v/1e9).toFixed(2)}B`:`$${(r._v/1e6).toFixed(0)}M` }));
+            };
+            const volRows = ()=> COMPANIES.map(c=>({ company:c.name, ticker:c.ticker, _v:gVol(c), co:c }))
+                .filter(r=>r._v>0).sort((a,b)=>b._v-a._v)
+                .map(r=>({ ...r, detail: r._v>=1e6?`${(r._v/1e6).toFixed(2)}M shares`:`${(r._v/1e3).toFixed(0)}K shares` }));
+
             const cards = [
-              { icon:Atom,      label:"Total Resources",  value:900, suffix:" Mlb", decimals:0, prefix:"~", spark:spk(4), note:"~10% global", trend:null },
-              { icon:Map,       label:"Active Projects",  value:activeProjects, decimals:0, spark:spk(3), trend:null },
-              { icon:Hammer,    label:"Active Drills",    value:activeDrills, decimals:0, spark:spk(1), trend:drillsLive?"live":null, up:true, note:drillsLive?"companies drilling · 90d":null },
-              { icon:Timer,     label:"Pending Assays",   value:pendingAssays, decimals:0, spark:spk(2), trend:pendingLive?"live":null, note:pendingLive?"companies awaiting · 60d":null },
-              { icon:Landmark,  label:"Open Raises",      value:openRaises, decimals:0, spark:spk(7), trend:raisesLive?"live":null, note:raisesLive?"financings active · 60d":null },
-              { icon:DollarSign,label:"Total Market Cap", value:totalMktCap/1e9, prefix:"$", suffix:"B", decimals:1, spark:spk(5), trend:totalMktCap>0?"live":null, up:true },
-              { icon:Activity,  label:"Daily Volume",     value:totalVol/1e6, suffix:"M", decimals:1, spark:spk(6), trend:null, dim:totalVol===0 },
+              { icon:Atom,      label:"Total Resources",  value:900, suffix:" Mlb", decimals:0, prefix:"~", spark:spk(4), note:"~10% global", trend:null,
+                explain:"An estimate of the Athabasca Basin's total historical + current uranium endowment — roughly 10% of global known uranium resources. This is a basin-wide figure, not a single company's." },
+              { icon:Map,       label:"Active Projects",  value:activeProjects, decimals:0, spark:spk(3), trend:null, rows:projectRows,
+                explain:"Total exploration & development projects across all tracked basin companies." },
+              { icon:Hammer,    label:"Active Drills",    value:activeDrills, decimals:0, spark:spk(1), trend:drillsLive?"live":null, up:true, note:drillsLive?"companies drilling · 90d":null, rows:drillsLive?drillRows:null,
+                explain:drillsLive?"Companies with a drill result reported in the last 90 days.":"Active drill programs across the basin (snapshot)." },
+              { icon:Timer,     label:"Pending Assays",   value:pendingAssays, decimals:0, spark:spk(2), trend:pendingLive?"live":null, note:pendingLive?"companies awaiting · 60d":null, rows:pendingLive?(()=>newsRows(pendingRe,60)):null,
+                explain:pendingLive?"Companies whose recent news indicates drilling underway or assays pending (last 60 days).":"Holes drilled and awaiting assay results (snapshot)." },
+              { icon:Landmark,  label:"Open Raises",      value:openRaises, decimals:0, spark:spk(7), trend:raisesLive?"live":null, note:raisesLive?"financings active · 60d":null, rows:raisesLive?(()=>newsRows(raiseRe,60)):(()=>FINANCINGS.filter(f=>f.status==="Open").map(f=>({company:f.company,ticker:f.ticker,detail:`${f.type} · ${f.amount}`,co:findCo(f.company,f.ticker)}))),
+                explain:raisesLive?"Companies with financing activity in the news over the last 60 days.":"Currently open financings across the basin." },
+              { icon:DollarSign,label:"Total Market Cap", value:totalMktCap/1e9, prefix:"$", suffix:"B", decimals:1, spark:spk(5), trend:totalMktCap>0?"live":null, up:true, rows:mktCapRows,
+                explain:"Combined market capitalization of all 21 tracked basin companies, by live price × shares outstanding." },
+              { icon:Activity,  label:"Daily Volume",     value:totalVol/1e6, suffix:"M", decimals:1, spark:spk(6), trend:null, dim:totalVol===0, rows:totalVol>0?volRows:null,
+                explain:"Combined shares traded today across tracked companies. Populates when live quotes are available." },
             ];
             return (
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))", gap:12 }}>
@@ -1650,7 +1696,8 @@ export default function App() {
                   const Icon = c.icon;
                   return (
                     <div key={c.label} className="stat-card"
-                      style={{ background:"linear-gradient(150deg, #FFFFFF 0%, #FFFCF3 100%)", border:"1px solid #E2DCD0", borderRadius:10, padding:"13px 15px", position:"relative", overflow:"hidden", transition:"border-color 0.15s ease, transform 0.15s ease", animationDelay:`${i*60}ms` }}>
+                      onClick={()=>setStatModal({ label:c.label, icon:c.icon, explain:c.explain, rows: c.rows ? c.rows() : [], live: c.trend==="live" })}
+                      style={{ background:"linear-gradient(150deg, #FFFFFF 0%, #FFFCF3 100%)", border:"1px solid #E2DCD0", borderRadius:10, padding:"13px 15px", position:"relative", overflow:"hidden", cursor:"pointer", transition:"border-color 0.15s ease, transform 0.15s ease", animationDelay:`${i*60}ms` }}>
                       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
                         <Icon size={16} strokeWidth={2} color="#B07A08"/>
                         {c.spark && <Sparkline data={c.spark} color="#D4A03A" w={48} h={16}/>}
@@ -4315,6 +4362,60 @@ export default function App() {
               <div style={{ fontSize:9.5, color:"#9A9A8A", textAlign:"center", marginTop:12, lineHeight:1.5 }}>
                 Sentiment is AI-estimated from the post text and may be inaccurate. Not investment advice.
               </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Basin-at-a-Glance stat detail modal */}
+      {statModal && (()=>{
+        const Icon = statModal.icon || Atom;
+        const rows = statModal.rows || [];
+        return (
+          <div onClick={()=>setStatModal(null)}
+            style={{ position:"fixed", inset:0, background:"rgba(26,26,20,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+            <div onClick={e=>e.stopPropagation()}
+              style={{ background:"#FFFFFF", borderRadius:12, width:"100%", maxWidth:520, maxHeight:"80vh", boxShadow:"0 24px 64px rgba(0,0,0,0.18)", position:"relative", display:"flex", flexDirection:"column", overflow:"hidden" }}>
+              {/* Header */}
+              <div style={{ padding:"22px 26px 16px", borderBottom:"1px solid #EDE8E0" }}>
+                <button onClick={()=>setStatModal(null)}
+                  style={{ position:"absolute", top:16, right:18, background:"none", border:"none", fontSize:22, color:"#9A9A8A", cursor:"pointer", lineHeight:1 }}>×</button>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:6 }}>
+                  <Icon size={20} strokeWidth={2} color="#B07A08"/>
+                  <span style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>{statModal.label}</span>
+                  {statModal.live && <span style={{ fontSize:8.5, color:"#16A34A", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginLeft:2 }}>● Live</span>}
+                </div>
+                {statModal.explain && <div style={{ fontSize:12.5, color:"#6A6A5A", lineHeight:1.55 }}>{statModal.explain}</div>}
+              </div>
+              {/* Rows */}
+              <div style={{ overflowY:"auto", padding: rows.length ? "8px 0" : "0" }}>
+                {rows.length ? rows.map((r,i)=>(
+                  <div key={i}
+                    onClick={()=>{ if(r.co){ setStatModal(null); setCompanyModal(r.co); } }}
+                    style={{ display:"flex", alignItems:"center", gap:12, padding:"11px 26px", borderBottom:i<rows.length-1?"1px solid #F2EEE6":"none", cursor:r.co?"pointer":"default", transition:"background 0.12s ease" }}
+                    onMouseEnter={e=>{ if(r.co) e.currentTarget.style.background="#FAF7F0"; }}
+                    onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
+                    <div style={{ minWidth:0, flex:1 }}>
+                      <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
+                        <span style={{ fontSize:13.5, fontWeight:700, color:"#1A1A14" }}>{r.company}</span>
+                        {r.ticker && <span style={{ ...MONO, fontSize:11, color:"#B07A08", fontWeight:700 }}>{(r.ticker||"").split(".")[0]}</span>}
+                        {r.date && <span style={{ fontSize:10, color:"#9A9A8A", marginLeft:"auto" }}>{r.date}</span>}
+                      </div>
+                      {r.detail && <div style={{ fontSize:11.5, color:"#6A6A5A", marginTop:3, lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{r.detail}</div>}
+                    </div>
+                    {r.co && <span style={{ fontSize:15, color:"#C8BEA8", flexShrink:0 }}>›</span>}
+                  </div>
+                )) : (
+                  <div style={{ padding:"24px 26px", fontSize:12.5, color:"#9A9A8A", textAlign:"center" }}>
+                    No company-level breakdown for this metric.
+                  </div>
+                )}
+              </div>
+              {rows.some(r=>r.co) && (
+                <div style={{ padding:"10px 26px", borderTop:"1px solid #EDE8E0", fontSize:10, color:"#9A9A8A" }}>
+                  Tap a company to open its full profile.
+                </div>
+              )}
             </div>
           </div>
         );
