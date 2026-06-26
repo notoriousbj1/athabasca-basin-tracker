@@ -57,35 +57,45 @@ async function resolveChannelId(ch) {
   return null;
 }
 
-async function latestVideo(channelId) {
+async function latestVideos(channelId, max = 4) {
   const rss = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
   const res = await fetch(rss, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(9000) });
   if (!res.ok) throw new Error(`rss ${res.status}`);
   const xml = await res.text();
-  const entry = xml.match(/<entry>[\s\S]*?<\/entry>/);
-  if (!entry) return null;
-  const block = entry[0];
-  const videoId = block.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1];
-  const title = (block.match(/<title>([^<]+)<\/title>/)?.[1] || "")
-    .replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">");
-  const pub = block.match(/<published>([^<]+)<\/published>/)?.[1];
-  const date = pub ? new Date(pub).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
-  if (!videoId) return null;
-  return { videoId, videoTitle: title, videoUrl: `https://www.youtube.com/watch?v=${videoId}`, date };
+  const entries = xml.match(/<entry>[\s\S]*?<\/entry>/g) || [];
+  const out = [];
+  for (const block of entries.slice(0, max)) {
+    const videoId = block.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1];
+    if (!videoId) continue;
+    const title = (block.match(/<title>([^<]+)<\/title>/)?.[1] || "")
+      .replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+    const pub = block.match(/<published>([^<]+)<\/published>/)?.[1];
+    const date = pub ? new Date(pub).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
+    out.push({ videoId, videoTitle: title, videoUrl: `https://www.youtube.com/watch?v=${videoId}`, date, publishedAt: pub || null });
+  }
+  return out;
 }
 
 exports.handler = async () => {
-  const results = await Promise.all(CHANNELS.map(async (ch) => {
+  const perChannel = await Promise.all(CHANNELS.map(async (ch) => {
     try {
       const id = await resolveChannelId(ch);
-      if (!id) return { channel: ch.name, error: "channelId not resolved" };
-      const vid = await latestVideo(id);
-      if (!vid) return { channel: ch.name, channelId: id, error: "no video" };
-      return { channel: ch.name, channelId: id, ...vid };
+      if (!id) return [{ channel: ch.name, error: "channelId not resolved" }];
+      const vids = await latestVideos(id, 4);
+      if (!vids.length) return [{ channel: ch.name, channelId: id, error: "no video" }];
+      return vids.map(v => ({ channel: ch.name, channelId: id, ...v }));
     } catch (e) {
-      return { channel: ch.name, error: e.message };
+      return [{ channel: ch.name, error: e.message }];
     }
   }));
+
+  // Flatten, then sort newest-first across all channels
+  const results = perChannel.flat();
+  results.sort((a, b) => {
+    const ta = a.publishedAt ? Date.parse(a.publishedAt) : 0;
+    const tb = b.publishedAt ? Date.parse(b.publishedAt) : 0;
+    return tb - ta;
+  });
 
   return {
     statusCode: 200,
