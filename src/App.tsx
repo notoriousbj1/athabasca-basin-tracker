@@ -1587,13 +1587,13 @@ export default function App() {
             // simple deterministic sparkline shapes per metric (visual texture, not literal history)
             const spk = (seed)=>{ const a=[]; let v=50; for(let i=0;i<8;i++){ v += ((Math.sin(seed*7.3+i*1.7)*0.5+0.5)-0.45)*30; a.push(Math.max(8,Math.min(92,v))); } return a; };
             const cards = [
+              { icon:Atom,      label:"Total Resources",  value:900, suffix:" Mlb", decimals:0, prefix:"~", spark:spk(4), note:"~10% global", trend:null },
+              { icon:Map,       label:"Active Projects",  value:activeProjects, decimals:0, spark:spk(3), trend:null },
               { icon:Hammer,    label:"Active Drills",    value:activeDrills, decimals:0, spark:spk(1), trend:"+2", up:true },
               { icon:Timer,     label:"Pending Assays",   value:pendingAssays, decimals:0, spark:spk(2), trend:null },
-              { icon:Map,       label:"Active Projects",  value:activeProjects, decimals:0, spark:spk(3), trend:null },
-              { icon:Atom,      label:"Total Resources",  value:900, suffix:" Mlb", decimals:0, prefix:"~", spark:spk(4), note:"~10% global", trend:null },
+              { icon:Landmark,  label:"Open Raises",      value:openRaises, decimals:0, spark:spk(7), trend:null },
               { icon:DollarSign,label:"Total Market Cap", value:totalMktCap/1e9, prefix:"$", suffix:"B", decimals:1, spark:spk(5), trend:totalMktCap>0?"live":null, up:true },
               { icon:Activity,  label:"Daily Volume",     value:totalVol/1e6, suffix:"M", decimals:1, spark:spk(6), trend:null, dim:totalVol===0 },
-              { icon:Landmark,  label:"Open Raises",      value:openRaises, decimals:0, spark:spk(7), trend:null },
             ];
             return (
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))", gap:12 }}>
