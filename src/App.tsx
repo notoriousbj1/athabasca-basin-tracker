@@ -1672,7 +1672,7 @@ export default function App() {
                     </div>
                     {(featuredStory.image || basinSat) && (
                       <img src={featuredStory.image || basinSat} alt={featuredStory.headline}
-                        style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:160 }}
+                        style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:220 }}
                         onError={e=>{ if(basinSat && e.target.src!==basinSat){ e.target.src=basinSat; } else { e.target.style.display="none"; } }}
                       />
                     )}
@@ -1720,7 +1720,7 @@ export default function App() {
                   <img
                     src="https://cdn.investor-files.net/medium_hf_20260625_160449_1e560766_4e83_4179_af4b_0b03bac5635e_384a9d1218.png"
                     alt="Canada nuclear strategy"
-                    style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:160 }}
+                    style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:220 }}
                     onError={e=>{ e.target.style.display="none"; }}
                   />
                   <h2 style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14", lineHeight:1.35, margin:"0 0 8px", letterSpacing:"-0.01em" }}>
@@ -1905,7 +1905,7 @@ export default function App() {
           </div>
           {/* Right: News */}
           <div ref={newsColRef} style={{ ...S.card, marginBottom:0 }}>
-            <div style={{ position:"sticky", top:16 }}>
+            <div>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
             <div style={{ ...S.lbl, letterSpacing:"0.15em" }}>LATEST RELEASES</div>
             <button onClick={fetchNews} disabled={newsLoading}
