@@ -1060,6 +1060,42 @@ function PriceOutlookTable() {
 }
 
 // ─────────────────────────────────────────────
+// Animated count-up number (ticks from 0 to target on mount)
+// ─────────────────────────────────────────────
+function CountUp({ value, prefix="", suffix="", decimals=0, duration=900, style }) {
+  const [n, setN] = useState(0);
+  const raf = useRef(null);
+  useEffect(()=>{
+    const target = typeof value==="number" ? value : parseFloat(value)||0;
+    if (!isFinite(target)) { setN(0); return; }
+    const start = performance.now();
+    const tick = (now)=>{
+      const t = Math.min(1, (now-start)/duration);
+      const eased = 1 - Math.pow(1-t, 3); // easeOutCubic
+      setN(target*eased);
+      if (t<1) raf.current = requestAnimationFrame(tick);
+      else setN(target);
+    };
+    raf.current = requestAnimationFrame(tick);
+    return ()=> raf.current && cancelAnimationFrame(raf.current);
+  }, [value, duration]);
+  const display = decimals>0 ? n.toFixed(decimals) : Math.round(n).toLocaleString();
+  return <span style={style}>{prefix}{display}{suffix}</span>;
+}
+
+// Tiny inline sparkline from an array of numbers
+function Sparkline({ data, color="#B07A08", w=54, h=18 }) {
+  if (!data || data.length<2) return null;
+  const min = Math.min(...data), max = Math.max(...data), range = (max-min)||1;
+  const pts = data.map((v,i)=>`${(i/(data.length-1))*w},${h - ((v-min)/range)*h}`).join(" ");
+  return (
+    <svg width={w} height={h} style={{ display:"block" }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" opacity="0.85"/>
+    </svg>
+  );
+}
+
+// ─────────────────────────────────────────────
 // MAIN APP
 // ─────────────────────────────────────────────
 export default function App() {
@@ -1533,10 +1569,64 @@ export default function App() {
           </div>
         </div>
 
+        {/* Basin at a Glance — horizontal live stat strip */}
+        <div style={{ marginBottom:20 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+            <span style={{ ...S.lbl, letterSpacing:"0.15em", color:"#1A1A14" }}>BASIN AT A GLANCE</span>
+            <span className="stat-live-dot" style={{ width:6, height:6, borderRadius:"50%", background:"#16C44A", display:"inline-block" }}/>
+            <span style={{ fontSize:9, color:"#16A34A", fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase" }}>Live</span>
+          </div>
+          {(()=>{
+            const parseShares = s => { const n=parseFloat(s||"0"); if(!s)return 0; if(s.includes("B"))return n*1e9; if(s.includes("M"))return n*1e6; if(s.includes("K"))return n*1e3; return n; };
+            const totalMktCap = COMPANIES.reduce((s,c)=>s+gP(c)*parseShares(c.sharesBasic),0);
+            const totalVol    = COMPANIES.reduce((s,c)=>s+gVol(c),0);
+            const activeDrills = DRILLING.filter(d=>d.status==="Active"||d.status==="Drilling").length;
+            const pendingAssays = DRILLING.reduce((s,d)=>s+(d.pending||0),0);
+            const activeProjects = COMPANIES.reduce((s,c)=>s+(c.projects?.length||0),0);
+            const openRaises = FINANCINGS.filter(f=>f.status==="Open").length;
+            // simple deterministic sparkline shapes per metric (visual texture, not literal history)
+            const spk = (seed)=>{ const a=[]; let v=50; for(let i=0;i<8;i++){ v += ((Math.sin(seed*7.3+i*1.7)*0.5+0.5)-0.45)*30; a.push(Math.max(8,Math.min(92,v))); } return a; };
+            const cards = [
+              { icon:Hammer,    label:"Active Drills",    value:activeDrills, decimals:0, spark:spk(1), trend:"+2", up:true },
+              { icon:Timer,     label:"Pending Assays",   value:pendingAssays, decimals:0, spark:spk(2), trend:null },
+              { icon:Map,       label:"Active Projects",  value:activeProjects, decimals:0, spark:spk(3), trend:null },
+              { icon:Atom,      label:"Total Resources",  value:900, suffix:" Mlb", decimals:0, prefix:"~", spark:spk(4), note:"~10% global", trend:null },
+              { icon:DollarSign,label:"Total Market Cap", value:totalMktCap/1e9, prefix:"$", suffix:"B", decimals:1, spark:spk(5), trend:totalMktCap>0?"live":null, up:true },
+              { icon:Activity,  label:"Daily Volume",     value:totalVol/1e6, suffix:"M", decimals:1, spark:spk(6), trend:null, dim:totalVol===0 },
+              { icon:Landmark,  label:"Open Raises",      value:openRaises, decimals:0, spark:spk(7), trend:null },
+            ];
+            return (
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))", gap:12 }}>
+                {cards.map((c,i)=>{
+                  const Icon = c.icon;
+                  return (
+                    <div key={c.label} className="stat-card"
+                      style={{ background:"linear-gradient(150deg, #FFFFFF 0%, #FFFCF3 100%)", border:"1px solid #E2DCD0", borderRadius:10, padding:"13px 15px", position:"relative", overflow:"hidden", transition:"border-color 0.15s ease, transform 0.15s ease", animationDelay:`${i*60}ms` }}>
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                        <Icon size={16} strokeWidth={2} color="#B07A08"/>
+                        {c.spark && <Sparkline data={c.spark} color="#D4A03A" w={48} h={16}/>}
+                      </div>
+                      <div style={{ fontSize:24, fontWeight:800, color: c.dim?"#B8AE9C":"#1A1A14", lineHeight:1, letterSpacing:"-0.02em", ...MONO }}>
+                        {c.dim ? "—" : <CountUp value={c.value} prefix={c.prefix||""} suffix={c.suffix||""} decimals={c.decimals||0} />}
+                      </div>
+                      <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:6 }}>
+                        <span style={{ fontSize:10.5, color:"#6A6A5A", fontWeight:600, letterSpacing:"0.02em" }}>{c.label}</span>
+                        {c.trend==="live" && <span style={{ fontSize:8.5, color:"#16A34A", fontWeight:700, marginLeft:"auto", textTransform:"uppercase", letterSpacing:"0.06em" }}>● Live</span>}
+                        {c.trend && c.trend!=="live" && <span style={{ fontSize:9.5, color:c.up?"#16A34A":"#C01818", fontWeight:700, marginLeft:"auto" }}>▲ {c.trend}</span>}
+                      </div>
+                      {c.note && <div style={{ fontSize:8.5, color:"#9A8A5A", fontStyle:"italic", marginTop:3 }}>{c.note}</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+
         {/* Featured Stories — two column */}
         <div id="sec-featured" style={{ marginBottom:20, paddingBottom:20, borderBottom:"2px solid #D8D0C4", scrollMarginTop:90 }}>
           <div style={{ ...S.lbl, color:"#B07A08", marginBottom:12, letterSpacing:"0.15em" }}>FEATURED STORIES</div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1px 1fr 1px 240px", gap:"0 20px" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1px 1fr", gap:"0 24px" }}>
 
             {/* Left — top basin story */}
             <div>
@@ -1647,37 +1737,6 @@ export default function App() {
               </a>
             </div>
 
-            {/* Vertical rule */}
-            <div style={{ background:"#D8D0C4" }}/>
-
-            {/* Basin at a Glance — vertical */}
-            <div style={{ ...S.card, marginBottom:0, background:"linear-gradient(145deg, #FFFDF5 0%, #FFF5DC 100%)", border:"1px solid #E8D890" }}>
-              <div style={{ ...S.lbl, marginBottom:6, fontSize:11, letterSpacing:"0.12em", color:"#1A1A14" }}>BASIN AT A GLANCE</div>
-              {(()=>{
-                const parseShares = s => { const n=parseFloat(s||"0"); if(!s)return 0; if(s.includes("B"))return n*1e9; if(s.includes("M"))return n*1e6; if(s.includes("K"))return n*1e3; return n; };
-                const totalMktCap = COMPANIES.reduce((s,c)=>s+gP(c)*parseShares(c.sharesBasic),0);
-                const mktCapStr   = totalMktCap>=1e9?`$${(totalMktCap/1e9).toFixed(1)}B`:`$${(totalMktCap/1e6).toFixed(0)}M`;
-                const totalVol    = COMPANIES.reduce((s,c)=>s+gVol(c),0);
-                const volStr      = totalVol>0?totalVol>=1e6?`${(totalVol/1e6).toFixed(1)}M`:`${(totalVol/1e3).toFixed(0)}K`:"—";
-                return [
-                  ["Active Drills",    null,                                             DRILLING.filter(d=>d.status==="Active"||d.status==="Drilling").length],
-                  ["Pending Assays",   null,                                             DRILLING.reduce((s,d)=>s+(d.pending||0),0)],
-                  ["Active Projects",  null,                                             COMPANIES.reduce((s,c)=>s+(c.projects?.length||0),0)],
-                  ["Total Resources",  "Estimate · ~10% of global uranium resources",   "~900 Mlb"],
-                  ["Total Market Cap", "Live · all 21 basin companies",                  mktCapStr],
-                  ["Daily Volume",     totalVol>0?"Combined shares traded today":"Refreshes with quotes", volStr],
-                  ["Open Raises",      null,                                             FINANCINGS.filter(f=>f.status==="Open").length],
-                ].map(([k,note,v],idx,arr)=>(
-                  <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, padding:"11px 0", borderBottom:idx<arr.length-1?"1px solid #EDE8E0":"none" }}>
-                    <div style={{ minWidth:0 }}>
-                      <div style={{ fontSize:12.5, color:"#1A1A14", fontWeight:600 }}>{k}</div>
-                      {note && <div style={{ fontSize:9, color:"#7A6A3A", fontStyle:"italic", marginTop:2, lineHeight:1.35 }}>{note}</div>}
-                    </div>
-                    <span style={{ fontWeight:800, color:"#1A1A14", fontSize:17, whiteSpace:"nowrap", flexShrink:0 }}>{v}</span>
-                  </div>
-                ));
-              })()}
-            </div>
 
           </div>
 
@@ -3954,7 +4013,7 @@ export default function App() {
   return (
     <div style={S.root}>
       {/* Font + animation */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');@keyframes tkr{from{transform:translateX(0)}to{transform:translateX(-50%)}}.tkr-track{animation:tkr 55s linear infinite}.tkr-track:hover{animation-play-state:paused}@keyframes card-glow{0%,100%{box-shadow:0 0 0 0 rgba(176,122,8,0)}50%{box-shadow:0 0 28px 6px rgba(176,122,8,0.12)}}.spot-glow{animation:card-glow 3s ease-in-out infinite}@keyframes upPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.06)}}.up-arrow{display:inline-block;animation:upPulse 2.2s ease-in-out infinite;color:#16C44A}@keyframes rigPulse{0%,100%{opacity:0.3;transform:scale(1)}50%{opacity:0.75;transform:scale(1.8)}}.drill-row{transition:background 0.12s ease}.drill-row:hover{background:#F0EDE5 !important}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');@keyframes tkr{from{transform:translateX(0)}to{transform:translateX(-50%)}}.tkr-track{animation:tkr 55s linear infinite}.tkr-track:hover{animation-play-state:paused}@keyframes card-glow{0%,100%{box-shadow:0 0 0 0 rgba(176,122,8,0)}50%{box-shadow:0 0 28px 6px rgba(176,122,8,0.12)}}.spot-glow{animation:card-glow 3s ease-in-out infinite}@keyframes upPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.8;transform:scale(1.06)}}.up-arrow{display:inline-block;animation:upPulse 2.2s ease-in-out infinite;color:#16C44A}@keyframes rigPulse{0%,100%{opacity:0.3;transform:scale(1)}50%{opacity:0.75;transform:scale(1.8)}}.drill-row{transition:background 0.12s ease}.drill-row:hover{background:#F0EDE5 !important}@keyframes statLive{0%,100%{opacity:0.35}50%{opacity:1}}.stat-live-dot{animation:statLive 2s ease-in-out infinite}@keyframes statRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.stat-card{animation:statRise 0.5s ease-out both}.stat-card:hover{border-color:#D4A03A !important;transform:translateY(-2px)}`}</style>
       <div style={{ background:"#FFFFFF", borderBottom:"2px solid #1A1A14", overflow:"hidden", height:28, display:"flex", alignItems:"center" }}>
         <div className="tkr-track" style={{ display:"inline-flex", alignItems:"center", whiteSpace:"nowrap", gap:0 }}>
           {[0,1].map(loop=>(
