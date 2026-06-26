@@ -3954,8 +3954,8 @@ export default function App() {
           {/* Collapse toggle row — tagline left, chevron right */}
           <div style={{ display:"flex", alignItems:"center", justifyContent: sidebarOpen?"space-between":"center", padding: sidebarOpen?"4px 10px 8px 16px":"4px 0 8px", gap:8 }}>
             {sidebarOpen && (
-              <div style={{ fontSize:8, color:"#9A9A8A", letterSpacing:"0.07em", textTransform:"uppercase", lineHeight:1.5, minWidth:0 }}>
-                Uranium Intelligence Dashboard<br/>by Juniorstocks.com
+              <div style={{ fontSize:9.5, color:"#6A6A5A", letterSpacing:"0.05em", textTransform:"uppercase", lineHeight:1.45, minWidth:0, fontWeight:600 }}>
+                Uranium Intelligence<br/>Dashboard <span style={{ color:"#B07A08", fontWeight:700 }}>by Juniorstocks.com</span>
               </div>
             )}
             <button onClick={()=>setSidebarOpen(o=>!o)}
