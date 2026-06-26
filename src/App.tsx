@@ -325,6 +325,17 @@ const INFLUENCERS = [
   { name:"Sprott Media", channel:"Sprott Media", handle:"@SprottMedia", url:"https://www.youtube.com/@SprottMedia", focus:"Physical uranium trust analysis, institutional uranium market views" },
 ];
 
+// Manually-curated featured videos. These REPLACE the auto channel-feed (which YouTube
+// blocks from datacenter IPs). The first one is shown as the large "Featured" video;
+// the rest fill the side list. Thumbnails come straight from YouTube by video id.
+// To add/change a video: paste its id (the part after watch?v=), title and channel.
+const PINNED_VIDEOS = [
+  { id:"aW8nxjxbuNQ", title:"", channel:"", focus:"" },
+  { id:"onpish1ESoA", title:"", channel:"", focus:"" },
+  { id:"Zt4jEoXb2ZU", title:"", channel:"", focus:"" },
+  { id:"zd1zzM3zfcw", title:"", channel:"", focus:"" },
+];
+
 const YTD_PERF = [
   { ticker:"SASK.V", ytd:22.0  },
   { ticker:"UEC",    ytd:18.3  },
@@ -3340,41 +3351,21 @@ export default function App() {
               "linear-gradient(150deg,#1A0A2A 0%,#4A1A5A 100%)",
               "linear-gradient(150deg,#0A1828 0%,#1A3A58 100%)",
             ];
-            // Build the list FROM the videos themselves (the function now returns several
-            // recent videos per channel), matching each back to its influencer for name/handle.
-            const normCh = (s)=> (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
-            const matchInf = (channel)=>{
-              const vc = normCh(channel);
-              return INFLUENCERS.find(inf =>
-                vc===normCh(inf.channel) || normCh(inf.handle).includes(vc) ||
-                vc.includes(normCh(inf.channel)) || normCh(inf.channel).includes(vc) ||
-                vc===normCh(inf.name) || vc.includes(normCh(inf.name.split(" ")[0]))
-              );
-            };
-            const realVids = (videoData||[]).filter(v => v.videoId);
-            let items = realVids.map((v,i)=>{
-              const inf = matchInf(v.channel) || { name:v.channel, channel:v.channel, handle:"", focus:"", url:v.videoUrl };
-              return {
-                inf, grad:THUMBS[i % THUMBS.length],
-                href: v.videoUrl,
-                thumb: `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`,
-                maxThumb: `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`,
-                title: v.videoTitle || inf.channel,
-                date: v.date || null,
-                hasVideo: true,
-              };
-            });
-            // Fallback: if no real videos at all, show influencer placeholders so the section isn't empty
-            if (!items.length) {
-              items = INFLUENCERS.map((inf,i)=>({
-                inf, grad:THUMBS[i % THUMBS.length], href:inf.url,
-                thumb:null, maxThumb:null, title:inf.channel, date:null, hasVideo:false,
-              }));
-            }
+            // Build the list from the manually-pinned videos (PINNED_VIDEOS).
+            // This replaces the auto channel-feed, which YouTube blocks from datacenter IPs.
+            const items = PINNED_VIDEOS.filter(v=>v.id).map((v,i)=>({
+              inf: { name: v.channel || "", channel: v.channel || "", handle:"", focus: v.focus || "", url:`https://www.youtube.com/watch?v=${v.id}` },
+              grad: THUMBS[i % THUMBS.length],
+              href: `https://www.youtube.com/watch?v=${v.id}`,
+              thumb: `https://img.youtube.com/vi/${v.id}/hqdefault.jpg`,
+              maxThumb: `https://img.youtube.com/vi/${v.id}/maxresdefault.jpg`,
+              title: v.title || "",
+              date: null,
+              hasVideo: true,
+            }));
             const sorted = items;
             const featured = sorted[0];
-            // Side list: all remaining real videos (no colored placeholders)
-            const sideList = sorted.slice(1).filter(v => v.hasVideo);
+            const sideList = sorted.slice(1);
 
             return (
               <div style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:16 }}>
