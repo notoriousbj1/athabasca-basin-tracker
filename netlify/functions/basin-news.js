@@ -182,16 +182,95 @@ async function fetchCompany(co) {
   return tryNewsfileSearch(co);
 }
 
+// ---- Aggregate basin-wide feeds (carry many companies in one feed) ----
+const AGGREGATE_FEEDS = [
+  "https://www.globenewswire.com/RssFeed/industry/1775-General Mining/feedTitle/GlobeNewswire - General Mining",
+  "https://www.globenewswire.com/RssFeed/industry/1-Energy/feedTitle/GlobeNewswire - Energy",
+];
+
+// Distinctive name tokens per company for matching headlines (drop generic words).
+function companyMatchers() {
+  const GENERIC = new Set(["energy","uranium","resources","corp","corporation","inc","ltd","mining","metals","group","the","of","and","royalty","3.0"]);
+  return COMPANIES.map(co => {
+    const tokens = co.name.toLowerCase().replace(/[.,]/g," ").split(/\s+/).filter(t=>t && !GENERIC.has(t));
+    return { co, tokens };
+  });
+}
+
+function tagToCompany(text, matchers) {
+  const t = (text||"").toLowerCase();
+  for (const { co, tokens } of matchers) {
+    // ticker as a standalone token like "(TSXV: PTU)" or " PTU "
+    const tk = co.ticker.toLowerCase();
+    if (new RegExp(`[(:\\s]${tk}[)\\s,.]`).test(t)) return co;
+    // distinctive name token(s)
+    if (tokens.length && tokens.every(tok => t.includes(tok))) return co;
+  }
+  return null;
+}
+
+async function fetchAggregate() {
+  const matchers = companyMatchers();
+  const out = [];
+  for (const url of AGGREGATE_FEEDS) {
+    try {
+      const res = await fetch(url, {
+        headers:{"User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
+        signal:AbortSignal.timeout(9000),
+      });
+      if (!res.ok) continue;
+      const xml = await res.text();
+      const items = xml.match(/<item[\s\S]*?<\/item>/g) || [];
+      for (const item of items) {
+        const headline = decodeHtml(getField(item,"title"));
+        const summary = decodeHtml(getField(item,"description")).replace(/<[^>]+>/g,"").slice(0,200);
+        const url = extractUrl(item);
+        const pd = parseDate(getField(item,"pubDate") || getField(item,"published"));
+        if (!headline || !url || !pd || pd < CUTOFF) continue;
+        const co = tagToCompany(headline + " " + summary, matchers);
+        if (!co) continue; // only keep releases we can attribute to a tracked company
+        out.push({
+          headline, url,
+          date: pd.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
+          dateMs: pd.getTime(), summary,
+          company: co.name, ticker: co.ticker,
+          source:"GlobeNewswire", type:"Press Release",
+        });
+      }
+    } catch { /* skip feed on error */ }
+  }
+  return out;
+}
+
 exports.handler = async () => {
   try {
-    const perCompany = await Promise.all(COMPANIES.map(fetchCompany));
-    const results = perCompany
-      .filter(Boolean)
-      .flat()                                  // each company now returns up to 5 items
-      .filter(Boolean)
-      .sort((a,b) => b.dateMs - a.dateMs)
-      .slice(0, 80)                            // 21 companies × up to 5 ≈ plenty; cap generously
-      .map(({dateMs,...rest}) => rest);
+    const [perCompany, aggregate] = await Promise.all([
+      Promise.all(COMPANIES.map(fetchCompany)),
+      fetchAggregate(),
+    ]);
+
+    // Merge per-company results + aggregate-feed results
+    const all = [...perCompany.filter(Boolean).flat().filter(Boolean), ...aggregate];
+
+    // De-duplicate by URL
+    const seen = new Set();
+    const deduped = all.filter(r => {
+      if (!r?.url || seen.has(r.url)) return false;
+      seen.add(r.url); return true;
+    });
+
+    // Sort newest-first, then cap per company so no single company dominates the list
+    deduped.sort((a,b) => (b.dateMs||0) - (a.dateMs||0));
+    const PER_COMPANY_MAX = 3;
+    const counts = {};
+    const balanced = [];
+    for (const r of deduped) {
+      const key = r.ticker || r.company;
+      counts[key] = (counts[key]||0) + 1;
+      if (counts[key] <= PER_COMPANY_MAX) balanced.push(r);
+    }
+
+    const results = balanced.slice(0, 80).map(({dateMs,...rest}) => rest);
 
     return {
       statusCode:200,
