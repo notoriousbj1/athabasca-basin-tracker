@@ -3340,33 +3340,41 @@ export default function App() {
               "linear-gradient(150deg,#1A0A2A 0%,#4A1A5A 100%)",
               "linear-gradient(150deg,#0A1828 0%,#1A3A58 100%)",
             ];
-            // Build a unified list: match each influencer to its latest video.
-            // Match on the YouTube CHANNEL name (inf.channel), since the feed returns channel names,
-            // not the person's name (inf.name). Fall back to handle and loose contains.
+            // Build the list FROM the videos themselves (the function now returns several
+            // recent videos per channel), matching each back to its influencer for name/handle.
             const normCh = (s)=> (s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
-            const items = INFLUENCERS.map((inf,i)=>{
-              const target = normCh(inf.channel);
-              const handle = normCh(inf.handle);
-              const vd = videoData.find(v =>{
-                const vc = normCh(v.channel);
-                if(!vc) return false;
-                return vc===target || handle.includes(vc) || vc.includes(target) || target.includes(vc) ||
-                       vc===normCh(inf.name) || vc.includes(normCh(inf.name.split(" ")[0]));
-              });
+            const matchInf = (channel)=>{
+              const vc = normCh(channel);
+              return INFLUENCERS.find(inf =>
+                vc===normCh(inf.channel) || normCh(inf.handle).includes(vc) ||
+                vc.includes(normCh(inf.channel)) || normCh(inf.channel).includes(vc) ||
+                vc===normCh(inf.name) || vc.includes(normCh(inf.name.split(" ")[0]))
+              );
+            };
+            const realVids = (videoData||[]).filter(v => v.videoId);
+            let items = realVids.map((v,i)=>{
+              const inf = matchInf(v.channel) || { name:v.channel, channel:v.channel, handle:"", focus:"", url:v.videoUrl };
               return {
-                inf, grad:THUMBS[i]||THUMBS[0],
-                href: vd?.videoUrl || inf.url,
-                thumb: vd?.videoId ? `https://img.youtube.com/vi/${vd.videoId}/hqdefault.jpg` : null,
-                maxThumb: vd?.videoId ? `https://img.youtube.com/vi/${vd.videoId}/maxresdefault.jpg` : null,
-                title: vd?.videoTitle || inf.channel,
-                date: vd?.date || null,
-                hasVideo: !!vd?.videoId,
+                inf, grad:THUMBS[i % THUMBS.length],
+                href: v.videoUrl,
+                thumb: `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`,
+                maxThumb: `https://img.youtube.com/vi/${v.videoId}/maxresdefault.jpg`,
+                title: v.videoTitle || inf.channel,
+                date: v.date || null,
+                hasVideo: true,
               };
             });
-            // Sort: real videos first
-            const sorted = [...items].sort((a,b)=> (b.hasVideo?1:0)-(a.hasVideo?1:0));
+            // Fallback: if no real videos at all, show influencer placeholders so the section isn't empty
+            if (!items.length) {
+              items = INFLUENCERS.map((inf,i)=>({
+                inf, grad:THUMBS[i % THUMBS.length], href:inf.url,
+                thumb:null, maxThumb:null, title:inf.channel, date:null, hasVideo:false,
+              }));
+            }
+            const sorted = items;
             const featured = sorted[0];
-            const sideList = sorted.slice(1,5);
+            // Side list: all remaining real videos (no colored placeholders)
+            const sideList = sorted.slice(1).filter(v => v.hasVideo);
 
             return (
               <div style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:16 }}>
@@ -3400,13 +3408,13 @@ export default function App() {
                   </div>
                 </a>
 
-                {/* Vertical list of 4 — right */}
-                <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                  {sideList.map((v)=>(
-                    <a key={v.inf.name} href={v.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none", flex:1 }}>
-                      <div style={{ ...S.card, marginBottom:0, overflow:"hidden", padding:0, display:"flex", height:"100%", minHeight:74 }}>
-                        {/* Thumbnail */}
-                        <div style={{ position:"relative", width:128, flexShrink:0, background:v.grad, overflow:"hidden" }}>
+                {/* Vertical list — right (real videos only, 16:9 thumbnails) */}
+                <div style={{ display:"flex", flexDirection:"column", gap:10, maxHeight:560, overflowY:"auto", paddingRight:4 }}>
+                  {sideList.map((v,vi)=>(
+                    <a key={v.href||vi} href={v.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+                      <div style={{ ...S.card, marginBottom:0, overflow:"hidden", padding:0, display:"flex", gap:0, alignItems:"stretch" }}>
+                        {/* 16:9 thumbnail */}
+                        <div style={{ position:"relative", width:140, flexShrink:0, aspectRatio:"16/9", background:v.grad, overflow:"hidden", alignSelf:"center" }}>
                           {v.thumb && (
                             <img src={v.thumb} alt={v.inf.name}
                               style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
@@ -3417,14 +3425,14 @@ export default function App() {
                               }}
                             />
                           )}
-                          <div style={{ position:"absolute", inset:0, background:"linear-gradient(to right, transparent 40%, rgba(0,0,0,0.2) 100%)" }}/>
-                          <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:30, height:30, borderRadius:"50%", background:"rgba(255,255,255,0.92)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 6px rgba(0,0,0,0.25)" }}>
-                            <Play size={12} strokeWidth={2} color="#1A1A14" style={{ marginLeft:1.5 }}/>
+                          <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.25) 100%)" }}/>
+                          <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:28, height:28, borderRadius:"50%", background:"rgba(255,255,255,0.92)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 6px rgba(0,0,0,0.25)" }}>
+                            <Play size={11} strokeWidth={2} color="#1A1A14" style={{ marginLeft:1.5 }}/>
                           </div>
                         </div>
                         {/* Info */}
                         <div style={{ padding:"8px 12px", flex:1, display:"flex", flexDirection:"column", justifyContent:"center", minWidth:0 }}>
-                          <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:3 }}>
                             <span style={{ fontWeight:700, fontSize:12, color:"#1A1A14" }}>{v.inf.name}</span>
                             {v.date && <span style={{ fontSize:9, color:"#9A9A8A", marginLeft:"auto", whiteSpace:"nowrap" }}>{v.date}</span>}
                           </div>
@@ -3433,6 +3441,11 @@ export default function App() {
                       </div>
                     </a>
                   ))}
+                  {sideList.length===0 && (
+                    <div style={{ ...S.card, marginBottom:0, padding:"20px 16px", textAlign:"center", fontSize:12, color:"#9A9A8A" }}>
+                      Loading latest videos…
+                    </div>
+                  )}
                 </div>
               </div>
             );
