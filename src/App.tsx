@@ -4014,9 +4014,9 @@ export default function App() {
             );
           })}
 
-          {/* U₃O₈ Spot price card — pinned to the bottom of the sidebar, with padding */}
+          {/* U₃O₈ Spot price card — spacing that survives sidebar overflow/scroll */}
           {sidebarOpen && (
-            <div style={{ margin:"auto 12px 20px", padding:"12px 14px", background:"#FFFFFF", border:"1px solid #E2DCD0", borderRadius:8 }}>
+            <div style={{ marginTop:"auto", marginLeft:12, marginRight:12, marginBottom:28, padding:"12px 14px", background:"#FFFFFF", border:"1px solid #E2DCD0", borderRadius:8, flexShrink:0 }}>
               <div style={{ ...S.lbl, marginBottom:4, fontSize:8.5 }}>U₃O₈ SPOT · USD/LB</div>
               <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
                 <span style={{ fontSize:26, fontWeight:900, color:"#B07A08", ...MONO, letterSpacing:"-1px", lineHeight:1 }}>
@@ -4037,6 +4037,8 @@ export default function App() {
               </div>
             </div>
           )}
+          {/* Spacer to guarantee breathing room below the card when the sidebar scrolls */}
+          <div style={{ height:16, flexShrink:0 }} aria-hidden="true"/>
         </aside>
 
         {/* Content */}
