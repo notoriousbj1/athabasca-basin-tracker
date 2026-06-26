@@ -4,9 +4,9 @@
 // If you know a channel's UC... id, put it in `id:` to skip resolution entirely (most reliable).
 
 const CHANNELS = [
-  { name:"Uranium Insider",   handle:"@UraniumInsider",    id:null },
+  { name:"Uranium Insider",   handle:"@UraniumInsider",    id:"UCDmY09g5tiR0ocNXvEnOddg" },
   { name:"Palisades Radio",   handle:"@PalisadesGoldRadio",id:null },
-  { name:"Commodity Culture", handle:"@CommodityCulture",  id:null },
+  { name:"Commodity Culture", handle:"@CommodityCulture",  id:"UC8n-nG-Wui_Ho1v_RgmJbTw" },
   { name:"Mining Stock Daily",handle:"@MiningStockDaily",  id:null },
   { name:"Louis James LLC",   handle:"@LoboTiggre",        id:null },
   { name:"Sprott Media",      handle:"@SprottMedia",       id:null },
