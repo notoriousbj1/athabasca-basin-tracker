@@ -1743,9 +1743,9 @@ export default function App() {
         </div>
 
         {/* Companies + News 2-col */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1px 284px", gap:"0 18px", marginBottom:20 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 300px", gap:"0 18px", marginBottom:20, alignItems:"start" }}>
           {/* Left: Companies */}
-          <div ref={coListRef}>
+          <div ref={coListRef} style={{ ...S.card, marginBottom:0 }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
               <div style={{ ...S.lbl, letterSpacing:"0.15em" }}>TOP PERFORMING COMPANIES</div>
               <div style={{ display:"flex", border:"1px solid #D8D0C4", borderRadius:6, overflow:"hidden" }}>
@@ -1903,10 +1903,8 @@ export default function App() {
               </div>
             )}
           </div>
-          {/* Divider */}
-          <div style={{ background:"#D8D0C4" }}/>
           {/* Right: News */}
-          <div ref={newsColRef}>
+          <div ref={newsColRef} style={{ ...S.card, marginBottom:0 }}>
             <div style={{ position:"sticky", top:16 }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
             <div style={{ ...S.lbl, letterSpacing:"0.15em" }}>LATEST RELEASES</div>
