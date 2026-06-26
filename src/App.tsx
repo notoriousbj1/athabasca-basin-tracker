@@ -1663,7 +1663,10 @@ export default function App() {
               });
               return Object.values(byCo);
             };
-            const projectRows = ()=> COMPANIES.filter(c=>c.projects?.length).map(c=>({ company:c.name, ticker:c.ticker, detail:`${c.projects.length} project${c.projects.length>1?"s":""}: ${c.projects.slice(0,3).join(", ")}${c.projects.length>3?"…":""}`, co:c }));
+            const projectRows = ()=> COMPANIES.filter(c=>c.projects?.length).map(c=>{
+              const names = c.projects.map(p=> typeof p==="string" ? p : (p?.name || "")).filter(Boolean);
+              return { company:c.name, ticker:c.ticker, detail:`${names.length} project${names.length>1?"s":""}: ${names.slice(0,3).join(", ")}${names.length>3?"…":""}`, co:c };
+            });
             const mktCapRows = ()=>{
               const parseSh = s=>{ const n=parseFloat(s||"0"); if(!s)return 0; if(s.includes("B"))return n*1e9; if(s.includes("M"))return n*1e6; if(s.includes("K"))return n*1e3; return n; };
               return COMPANIES.map(c=>({ company:c.name, ticker:c.ticker, _v:gP(c)*parseSh(c.sharesBasic), co:c }))
