@@ -117,33 +117,6 @@ const COMPANIES = [
     ytSearch:"Uranium Energy Corp UEC Roughrider Athabasca 2025",
   },
   {
-    id:"baselode", ticker:"FIND.V", altTicker:"BSENF", name:"Baselode", fullName:"Baselode Energy Corp.",
-    exchange:"TSX-V / OTC", price:0.18, changePct:-2.08, marketCap:"28M",
-    sharesBasic:"155M", sharesFD:"180M", cashPosition:"$3M CAD", float:"124M",
-    insiderOwnership:"~20%", institutionalOwnership:"~15%", avgVolume:"95K",
-    stage:"Explorer",
-    description:"Unconventional near-surface basement uranium model. ACKIO and Hook zone discoveries with wide-spaced alteration systems.",
-    projects:[
-      { name:"ACKIO / Hook Zone", stage:"Active Drilling", ownership:"100%", grade:"Multiple intersections", resource:"TBD", depth:"50–250m" },
-    ],
-    location:{ lat:58.2, lng:-106.8 }, color:"#84CC16",
-    ytSearch:"Baselode Energy FIND ACKIO uranium 2025",
-  },
-  {
-    id:"fission3", ticker:"FIS.V", altTicker:"FISOF", name:"Fission 3.0", fullName:"Fission 3.0 Corp.",
-    exchange:"TSXV / OTCQB", price:0.07, changePct:-3.45, marketCap:"16M",
-    sharesBasic:"228M", sharesFD:"260M", cashPosition:"$2.5M CAD", float:"195M",
-    insiderOwnership:"~22%", institutionalOwnership:"~10%", avgVolume:"180K",
-    stage:"Explorer",
-    description:"Basin-wide explorer with properties including Hearty Bay and Pasfield Lake. Spinout from the Fission Uranium management team.",
-    projects:[
-      { name:"Hearty Bay", stage:"Reconnaissance", ownership:"100%", grade:"TBD", resource:"TBD", depth:"TBD" },
-      { name:"Pasfield Lake", stage:"Exploration", ownership:"100%", grade:"TBD", resource:"TBD", depth:"TBD" },
-    ],
-    location:{ lat:58.5, lng:-105.5 }, color:"#FF8C42",
-    ytSearch:"Fission 3.0 FIS uranium Athabasca 2025",
-  },
-  {
     id:"canalaska", ticker:"CVV.V", altTicker:"CVVUF", name:"CanAlaska", fullName:"CanAlaska Uranium Ltd.",
     exchange:"TSXV / OTCQB", price:0.38, changePct:5.56, marketCap:"65M",
     sharesBasic:"170M", sharesFD:"195M", cashPosition:"$9M CAD", float:"148M",
@@ -170,20 +143,6 @@ const COMPANIES = [
     ],
     location:{ lat:57.4, lng:-106.5 }, color:"#34D399",
     ytSearch:"Purepoint Uranium PTU Athabasca 2025",
-  },
-  {
-    id:"forum", ticker:"FMC.V", altTicker:"FDCFF", name:"Forum Energy", fullName:"Forum Energy Metals Corp.",
-    exchange:"TSXV / OTCQB", price:0.27, changePct:3.85, marketCap:"38M",
-    sharesBasic:"140M", sharesFD:"160M", cashPosition:"$4.5M CAD", float:"118M",
-    insiderOwnership:"~18%", institutionalOwnership:"~15%", avgVolume:"85K",
-    stage:"Explorer",
-    description:"Multi-commodity basin explorer focused on uranium and battery metals. Clearwater and Love Lake are priority uranium targets.",
-    projects:[
-      { name:"Clearwater Uranium", stage:"Drilling", ownership:"100%", grade:"Historical showings", resource:"TBD", depth:"TBD" },
-      { name:"Love Lake", stage:"Exploration", ownership:"100%", grade:"TBD", resource:"TBD", depth:"TBD" },
-    ],
-    location:{ lat:57.5, lng:-104.0 }, color:"#FB923C",
-    ytSearch:"Forum Energy Metals FMC uranium Athabasca 2025",
   },
   {
     id:"standard", ticker:"STND.V", altTicker:"STTDF", name:"Standard Uranium", fullName:"Standard Uranium Ltd.",
@@ -240,20 +199,6 @@ const COMPANIES = [
     ytSearch:"Fortune Bay FOR uranium Murmac Athabasca 2025",
   },
   {
-    id:"alx", ticker:"AL.V", altTicker:"ALXEF", name:"ALX Resources", fullName:"ALX Resources Corp.",
-    exchange:"TSXV / OTCQB", price:0.09, changePct:-10.00, marketCap:"14M",
-    sharesBasic:"157M", sharesFD:"180M", cashPosition:"$1.8M CAD", float:"133M",
-    insiderOwnership:"~18%", institutionalOwnership:"~8%", avgVolume:"48K",
-    stage:"Explorer",
-    description:"Multi-project western Athabasca Basin explorer. Gibbons Creek and Carpenter Lake are key uranium-focused drill targets.",
-    projects:[
-      { name:"Gibbons Creek", stage:"Exploration", ownership:"100%", grade:"TBD", resource:"TBD", depth:"TBD" },
-      { name:"Carpenter Lake", stage:"Exploration", ownership:"100%", grade:"TBD", resource:"TBD", depth:"TBD" },
-    ],
-    location:{ lat:59.1, lng:-108.0 }, color:"#38BDF8",
-    ytSearch:"ALX Resources AL uranium Athabasca 2025",
-  },
-  {
     id:"appia", ticker:"API", altTicker:"APAAF", name:"Appia", fullName:"Appia Rare Earths & Uranium Corp.",
     exchange:"CSE / OTCQX", price:0.26, changePct:8.33, marketCap:"30M",
     sharesBasic:"115M", sharesFD:"132M", cashPosition:"$3.5M CAD", float:"97M",
@@ -295,6 +240,49 @@ const COMPANIES = [
     location:{ lat:58.3, lng:-106.2 }, color:"#B07A08",
     ytSearch:"Canadian Uranium CANU uranium Athabasca 2025",
   },
+  {
+    id:"cosa", ticker:"COSA.V", altTicker:"COSAF", name:"Cosa Resources", fullName:"Cosa Resources Corp.",
+    exchange:"TSXV / OTCQB", price:0.675, changePct:0, marketCap:"76M",
+    sharesBasic:"116M", sharesFD:"130M", cashPosition:"$12M CAD", float:"95M",
+    insiderOwnership:"~15%", institutionalOwnership:"~25%", avgVolume:"250K",
+    stage:"Explorer",
+    description:"Eastern Athabasca explorer backed by Denison Mines (~16% holder). Team behind the Hurricane discovery; drilling Murphy Lake North & Darby on JV ground 2.7 km from the Hurricane deposit.",
+    projects:[
+      { name:"Murphy Lake North", stage:"Active Drilling", ownership:"70% (Denison JV)", grade:"Discovery-stage", resource:"TBD", depth:"260m" },
+      { name:"Darby", stage:"Active Drilling", ownership:"70% (Denison JV)", grade:"TBD", resource:"TBD", depth:"TBD" },
+      { name:"Astro / Ursa", stage:"Exploration", ownership:"Optioned (Global Uranium)", grade:"TBD", resource:"TBD", depth:"TBD" },
+    ],
+    location:{ lat:58.45, lng:-104.55 }, color:"#0E7C7B",
+    ytSearch:"Cosa Resources COSA uranium Athabasca Murphy Lake 2026",
+  },
+  {
+    id:"manhattan", ticker:"MANU.V", altTicker:"MAUUF", name:"Manhattan Uranium", fullName:"Manhattan Uranium Discovery Corp.",
+    exchange:"TSXV / OTC", price:0.30, changePct:0, marketCap:"30M",
+    sharesBasic:"100M", sharesFD:"120M", cashPosition:"$4M CAD", float:"80M",
+    insiderOwnership:"~18%", institutionalOwnership:"~12%", avgVolume:"120K",
+    stage:"Explorer",
+    description:"Newly consolidated North American uranium company drilling the Murmac project near Uranium City with Fortune Bay, complemented by a large US portfolio of 25 projects including 15 past-producing mines.",
+    projects:[
+      { name:"Murmac (Fortune Bay JV)", stage:"Active Drilling", ownership:"Earn-in (Fortune Bay operator)", grade:"Basement-hosted", resource:"TBD", depth:"TBD" },
+      { name:"Strike", stage:"Exploration", ownership:"Earn-in", grade:"TBD", resource:"TBD", depth:"TBD" },
+    ],
+    location:{ lat:59.52, lng:-108.62 }, color:"#3B3B7A",
+    ytSearch:"Manhattan Uranium MANU Murmac Athabasca 2026",
+  },
+  {
+    id:"geiger", ticker:"BEEP.V", altTicker:"BSENF", name:"Geiger Energy", fullName:"Geiger Energy Corporation",
+    exchange:"TSXV / OTCQB", price:0.20, changePct:0, marketCap:"30M",
+    sharesBasic:"58M", sharesFD:"70M", cashPosition:"$12M CAD", float:"48M",
+    insiderOwnership:"~20%", institutionalOwnership:"~18%", avgVolume:"110K",
+    stage:"Explorer",
+    description:"Formed from the 2025 merger of Baselode Energy and Forum Energy Metals. Well-capitalized uranium explorer focused on its 100%-owned Aberdeen (Thelon Basin, Nunavut) and Hook / ACKIO (Saskatchewan) projects.",
+    projects:[
+      { name:"ACKIO / Hook", stage:"Active Drilling", ownership:"100%", grade:"Multiple intersections", resource:"TBD", depth:"50–250m" },
+      { name:"Aberdeen (Thelon)", stage:"Active Drilling", ownership:"100%", grade:"Multiple-percent showings", resource:"TBD", depth:"TBD" },
+    ],
+    location:{ lat:58.2, lng:-106.8 }, color:"#84CC16",
+    ytSearch:"Geiger Energy BEEP uranium ACKIO Aberdeen 2026",
+  },
 ];
 
 const DRILLING = [
@@ -303,7 +291,7 @@ const DRILLING = [
   { company:"Denison Mines", ticker:"DML.TO", program:"Wheeler River Exploration 2025", total:18, drilled:14, pending:4, highlight:"WR-25-018: 1.23% U₃O₈ over 9.5m — Phoenix zone", status:"Active", updated:"May 30" },
   { company:"IsoEnergy", ticker:"ISO.V", program:"Hurricane Delineation Q1–Q2 2025", total:20, drilled:20, pending:0, highlight:"ISO-25-020: 35.2% U₃O₈ over 1.8m; resource update imminent", status:"Assays Complete", updated:"Jun 5" },
   { company:"F3 Uranium", ticker:"FUU.V", program:"PLN Summer 2025 Campaign", total:10, drilled:3, pending:7, highlight:"PLN-25-003: Visual core logged; lab turnaround 6–8 weeks", status:"Drilling", updated:"Jun 8" },
-  { company:"Baselode Energy", ticker:"FIND.V", program:"ACKIO 2025 Campaign", total:12, drilled:7, pending:5, highlight:"ACK-25-006: Bleaching & clay alteration confirmed; assays pending", status:"Assay Pending", updated:"Jun 4" },
+  { company:"Geiger Energy", ticker:"BEEP.V", program:"ACKIO 2026 Campaign", total:12, drilled:7, pending:5, highlight:"ACK-26-006: Bleaching & clay alteration confirmed; assays pending", status:"Assay Pending", updated:"Jun 4" },
   { company:"Fission Uranium", ticker:"FCU.TO", program:"PLS Target Drill 2025", total:8, drilled:5, pending:3, highlight:"PLS-025-005: 1.84% U₃O₈ over 3.5m — R840W zone", status:"Partial Assays", updated:"May 22" },
 ];
 
@@ -313,7 +301,7 @@ const FINANCINGS = [
   { company:"IsoEnergy", ticker:"ISO.V", type:"Brokered PP", amount:"$10M CAD", pricePerUnit:"$2.35/sh", units:"4.26M shares", warrants:"None", agents:"Canaccord Genuity", closed:"Mar 2025", purpose:"Hurricane delineation drill program & G&A", status:"Closed" },
   { company:"Skyharbour Resources", ticker:"SYH.V", type:"Non-Brokered PP", amount:"$3.5M CAD", pricePerUnit:"$0.62/unit", units:"5.65M units", warrants:"Full wt @ $0.85 / 24mo", agents:"Company", closed:"Apr 2025", purpose:"Moore Lake drilling, basin exploration", status:"Closed" },
   { company:"F3 Uranium", ticker:"FUU.V", type:"Non-Brokered PP", amount:"$2M CAD", pricePerUnit:"$0.27/unit", units:"7.41M units", warrants:"Full wt @ $0.40 / 18mo", agents:"Company", closed:"In Progress", purpose:"PLN summer 2025 drill program", status:"Open" },
-  { company:"Baselode Energy", ticker:"FIND.V", type:"Non-Brokered PP", amount:"$1M CAD", pricePerUnit:"$0.175/unit", units:"5.71M units", warrants:"Full wt @ $0.25 / 12mo", agents:"Company", closed:"May 2025", purpose:"ACKIO 2025 drill program", status:"Closed" },
+  { company:"Geiger Energy", ticker:"BEEP.V", type:"Non-Brokered PP", amount:"$6M CAD", pricePerUnit:"$0.10/unit", units:"60M units", warrants:"Full wt @ $0.15 / 12mo", agents:"Company", closed:"2025", purpose:"ACKIO / Aberdeen drill programs", status:"Closed" },
 ];
 
 const INFLUENCERS = [
@@ -346,18 +334,17 @@ const YTD_PERF = [
   { ticker:"CCO",    ytd:8.2   },
   { ticker:"APPIA",  ytd:8.3   },
   { ticker:"FUU.V",  ytd:5.6   },
-  { ticker:"FMC.V",  ytd:4.2   },
+  { ticker:"COSA.V", ytd:4.2   },
   { ticker:"DML",    ytd:3.1   },
   { ticker:"SYH.V",  ytd:-2.8  },
-  { ticker:"FIS.V",  ytd:-5.2  },
+  { ticker:"MANU.V", ytd:-5.2  },
   { ticker:"NXE",    ytd:-6.4  },
   { ticker:"PTU.V",  ytd:-6.8  },
   { ticker:"FCU",    ytd:-8.9  },
   { ticker:"FOR.V",  ytd:-9.4  },
   { ticker:"STND.V", ytd:-12.5 },
-  { ticker:"FIND.V", ytd:-15.2 },
+  { ticker:"BEEP.V", ytd:-15.2 },
   { ticker:"AAZ.V",  ytd:-18.6 },
-  { ticker:"AL.V",   ytd:-20.1 },
 ];
 
 const GLOBAL_STATS = [
@@ -461,16 +448,15 @@ const BASIN_PROJECTS = [
   { name:"West McArthur",    company:"CanAlaska",          ticker:"CVV",   lat:57.733, lng:-105.25, stage:"Explorer", grade:"~6% U₃O₈ (disc.)", gradePct:6.0, resourceMlb:null, drilling:true,  type:"Unconformity",     info:"Pike Zone high-grade discovery at West McArthur (Cameco JV); also Moon Lake, Geikie & Key Extension." },
   { name:"Hook Lake JV",     company:"Purepoint Uranium",  ticker:"PTU",   lat:57.7, lng:-109.333, stage:"Explorer", grade:"Spitfire zone", gradePct:4.0, resourceMlb:null, drilling:false, type:"Unconformity",       info:"Spitfire Zone on the Hook Lake JV (Cameco & Orano); also Red Willow, Turnor Lake." },
   { name:"Davidson River",   company:"Standard Uranium",   ticker:"STND",  lat:57.6, lng:-109.583, stage:"Explorer", grade:"Drill target", gradePct:null, resourceMlb:null,drilling:true,  type:"Basement-hosted",     info:"Warrior Zone on the Davidson River structural trend; also Sun Dog, Atlantic & Canary. Western basin near PLS." },
-  { name:"ACKIO / Hook",     company:"Baselode / Geiger",  ticker:"FIND",  lat:57.733, lng:-104.75, stage:"Explorer", grade:"Near-surface",  gradePct:1.0, resourceMlb:null, drilling:false, type:"Basement, shallow",  info:"Near-surface ACKIO discovery on the Hook Project; also Catharsis & Shadow." },
+  { name:"ACKIO / Hook",     company:"Geiger Energy",      ticker:"BEEP",  lat:57.733, lng:-104.75, stage:"Explorer", grade:"Near-surface",  gradePct:1.0, resourceMlb:null, drilling:false, type:"Basement, shallow",  info:"Near-surface ACKIO discovery on the Hook Project (Saskatchewan); plus Aberdeen in the Thelon Basin. From the 2025 Baselode–Forum merger." },
   { name:"Key Lake area",    company:"Canadian Uranium",   ticker:"CANU",  lat:57.30, lng:-105.40, stage:"Explorer", grade:"Drill-ready",   gradePct:null, resourceMlb:null,drilling:false, type:"Unconformity",       info:"Projects adjacent to Key Lake infrastructure." },
   { name:"East Preston",     company:"Azincourt Energy",   ticker:"AAZ",   lat:57.5, lng:-109.75, stage:"Explorer", grade:"Drill target",  gradePct:null, resourceMlb:null,drilling:false, type:"Basement-hosted",    info:"A1–A4 conductor zones at East Preston, western basin margin. JV operator." },
   { name:"Christie Lake",    company:"Uranium Energy",     ticker:"UEC",   lat:57.717, lng:-104.833, stage:"Explorer", grade:"~1–2% U₃O₈ (hist.)", gradePct:1.5, resourceMlb:null, drilling:false, type:"Unconformity",       info:"Roughrider deposit & Christie Lake / Horseshoe-Raven exploration zones. 100% owned." },
-  { name:"NW Athabasca JV",  company:"Forum Energy",       ticker:"FMC",   lat:57.583, lng:-104.333, stage:"Explorer", grade:"Drill target",  gradePct:null, resourceMlb:null, drilling:false, type:"Unconformity",       info:"Wollaston & Fir Island corridors; also NW Athabasca & Highrock. 100% owned / JV options." },
+  { name:"Murphy Lake North",company:"Cosa Resources",     ticker:"COSA",  lat:58.45, lng:-104.55, stage:"Explorer", grade:"Discovery-stage", gradePct:null, resourceMlb:null, drilling:true,  type:"Unconformity",       info:"Eastern Athabasca discovery-stage drilling 2.7 km from the Hurricane deposit; Denison-backed JV. Also Darby & Astro." },
   { name:"Murmac / Strike",  company:"Fortune Bay",        ticker:"FOR",   lat:59.517, lng:-108.917, stage:"Explorer", grade:"Drill target",  gradePct:null, resourceMlb:null, drilling:false, type:"Basement-hosted",    info:"Strike & Murmac high-grade conductor trends, far north near Uranium City. 100% owned." },
-  { name:"Gibbons Creek",    company:"ALX Resources",      ticker:"AL",    lat:59.333, lng:-106.083, stage:"Explorer", grade:"Drill target",  gradePct:null, resourceMlb:null, drilling:false, type:"Basement-hosted",    info:"Gibbons Creek exploration & conductor drilling; also Sabre, Black Lake & Javelin. Western basin." },
+  { name:"Murmac / Strike",  company:"Manhattan Uranium",  ticker:"MANU",  lat:59.52, lng:-108.62, stage:"Explorer", grade:"Basement-hosted", gradePct:null, resourceMlb:null, drilling:true,  type:"Basement-hosted",    info:"Drilling Murmac near Uranium City with Fortune Bay (operator); plus a large US uranium portfolio." },
   { name:"Loranger",         company:"Appia",              ticker:"API",   lat:57.35, lng:-104.2, stage:"Explorer", grade:"Drill target",  gradePct:null, resourceMlb:null, drilling:false, type:"Unconformity",       info:"Loranger Conductor & Otherside corridors; also Eastside & North Wollaston (plus Alces Lake REE)." },
   { name:"Royalty Portfolio",company:"Uranium Royalty",    ticker:"URC",   lat:57.50, lng:-106.20, stage:"Royalty",  grade:"Multiple",      gradePct:null, resourceMlb:null,drilling:false, type:"Royalties + physical",info:"Royalties across basin assets + physical U₃O₈." },
-  { name:"Hearty Bay",       company:"Fission 3.0",        ticker:"FIS",   lat:59.25, lng:-109.00, stage:"Explorer", grade:"Boulder trains", gradePct:null, resourceMlb:null, drilling:false, type:"Basement-hosted", info:"Hearty Bay, Cree Bay, Murphy Lake & Hobo Lake — high-grade boulder field trains, far north basin. 100% owned." },
 ];
 
 // All-weather highways (real approximate routes) — Hwy 905 (eastern) & Hwy 914 (Key Lake)
@@ -530,7 +516,7 @@ const SMART_MONEY_EVENTS = [
   { company:"IsoEnergy",   ticker:"ISO.V",  type:"Bought Deal",  amount:10,   amountLabel:"C$10M",   date:"Feb 2026", momentum:68, regionY:1, region:"Eastern Basin",  headline:"$10M raise to advance Hurricane deposit delineation program",                   proximity:"Hurricane Deposit"    },
   { company:"Std Uranium", ticker:"STND.V", type:"Bought Deal",  amount:6,    amountLabel:"C$6M",    date:"May 2026", momentum:58, regionY:0, region:"Basin Margins",  headline:"Davidson River drill program financed via $6M bought deal",                     proximity:"Davidson River"       },
   { company:"CANU",        ticker:"CANU.V", type:"Insider Buy",  amount:0.38, amountLabel:"C$380K",  date:"Jun 2026", momentum:55, regionY:0, region:"Basin Margins",  headline:"Management adds $380K ahead of summer drill program at Key Lake",              proximity:"Adjacent to Key Lake" },
-  { company:"Baselode",    ticker:"FIND.V", type:"Insider Buy",  amount:0.5,  amountLabel:"C$500K",  date:"May 2026", momentum:52, regionY:0, region:"Basin Margins",  headline:"Management buying post-Forum merger on Hook project potential",                  proximity:"Hook Lake"            },
+  { company:"Geiger Energy", ticker:"BEEP.V", type:"Insider Buy",  amount:0.5,  amountLabel:"C$500K",  date:"May 2026", momentum:52, regionY:0, region:"Basin Margins",  headline:"Management buying on Hook / Aberdeen project potential post-merger",                  proximity:"Hook Lake"            },
   { company:"Purepoint",   ticker:"PTU.V",  type:"Joint Venture", amount:3,   amountLabel:"C$3M",    date:"Mar 2026", momentum:60, regionY:1, region:"Eastern Basin",  headline:"Cameco & UEC JV funds $3M Hook Lake exploration",                               proximity:"Hook Lake JV"         },
 ];
 
@@ -566,14 +552,13 @@ const EXPLORATION_RUNWAY = [
   { company:"CanAlaska",   ticker:"CVV",   stage:"Advanced",   runway:14, budget:3.5, mktCap:90,   cash:"$9M CAD",   project:"West McArthur" },
   { company:"Appia",       ticker:"API",   stage:"Advanced",   runway:7,  budget:2.5, mktCap:45,   cash:"$3M CAD",   project:"Alces Lake" },
   { company:"Purepoint",   ticker:"PTU",   stage:"Advanced",   runway:9,  budget:2.0, mktCap:25,   cash:"$3.5M CAD", project:"Hook Lake JV" },
-  { company:"Baselode",    ticker:"FIND",  stage:"Grassroots", runway:10, budget:2.5, mktCap:40,   cash:"$2.5M CAD", project:"Hook / ACKIO" },
+  { company:"Geiger Energy", ticker:"BEEP",  stage:"Grassroots", runway:10, budget:2.5, mktCap:30,   cash:"$12M CAD", project:"Hook / ACKIO + Aberdeen" },
   { company:"CANU",        ticker:"CANU",  stage:"Grassroots", runway:8,  budget:2.0, mktCap:30,   cash:"$3.8M CAD", project:"Key Lake area" },
   { company:"Std Uranium", ticker:"STND",  stage:"Grassroots", runway:7,  budget:2.5, mktCap:20,   cash:"$2.2M CAD", project:"Davidson River" },
-  { company:"Forum",       ticker:"FMC",   stage:"Grassroots", runway:5,  budget:1.5, mktCap:15,   cash:"$1.5M CAD", project:"Hook Lake" },
+  { company:"Cosa Resources",ticker:"COSA", stage:"Discovery",  runway:11, budget:5.0, mktCap:76,   cash:"$12M CAD", project:"Murphy Lake North" },
   { company:"Azincourt",   ticker:"AAZ",   stage:"Grassroots", runway:6,  budget:1.0, mktCap:8,    cash:"$1M CAD",   project:"East Preston" },
   { company:"Fortune Bay", ticker:"FOR",   stage:"Grassroots", runway:9,  budget:2.0, mktCap:22,   cash:"$2M CAD",   project:"Strike / Goldfields" },
-  { company:"ALX",         ticker:"AL",    stage:"Grassroots", runway:5,  budget:1.0, mktCap:12,   cash:"$1M CAD",   project:"Gibbons Creek" },
-  { company:"Fission 3.0", ticker:"FIS",   stage:"Grassroots", runway:6,  budget:1.5, mktCap:18,   cash:"$1.5M CAD", project:"PLN / Patterson" },
+  { company:"Manhattan Uranium",ticker:"MANU", stage:"Grassroots", runway:6, budget:2.0, mktCap:30, cash:"$4M CAD",  project:"Murmac / Strike" },
 ];
 
 // Derived investor safety score (0–10) from runway, funding vs spend, and stage maturity.
@@ -594,7 +579,7 @@ const INSIDER_BUYS = [
   { company:"Canadian Uranium", ticker:"CANU",  buyer:"Multiple Directors",        amount:"C$380,000",   date:"Jun 2026", shares:"320,000" },
   { company:"IsoEnergy",        ticker:"ISO",   buyer:"Tim Gauthier (CEO)",        amount:"C$320,000",   date:"Apr 2026", shares:"145,000" },
   { company:"Skyharbour",       ticker:"SYH",   buyer:"Jordan Trimble (CEO)",      amount:"C$285,000",   date:"May 2026", shares:"475,000" },
-  { company:"Baselode Energy",  ticker:"FIND",  buyer:"Rebecca Hunter (CEO)",      amount:"C$200,000",   date:"May 2026", shares:"1,666,000"},
+  { company:"Geiger Energy",    ticker:"BEEP",  buyer:"Rebecca Hunter (CEO)",      amount:"C$200,000",   date:"May 2026", shares:"1,666,000"},
   { company:"Atha Energy",      ticker:"SASK",  buyer:"Board of Directors",        amount:"C$180,000",   date:"Mar 2026", shares:"225,000" },
   { company:"F3 Uranium",       ticker:"FUU",   buyer:"Dev Randhawa (Chair)",      amount:"C$165,000",   date:"Mar 2026", shares:"550,000" },
 ];
@@ -608,7 +593,7 @@ const INSIDER_SELLS = [
   { company:"IsoEnergy",        ticker:"ISO",   seller:"Craig Parry (Dir.)",       amount:"C$540,000",   date:"May 2026", shares:"245,000" },
   { company:"Skyharbour",       ticker:"SYH",   seller:"Riley Trimble (Dir.)",     amount:"C$320,000",   date:"Apr 2026", shares:"535,000" },
   { company:"Atha Energy",      ticker:"SASK",  seller:"Nick Tintor (CEO)",        amount:"C$285,000",   date:"Mar 2026", shares:"355,000" },
-  { company:"Baselode Energy",  ticker:"FIND",  seller:"James Sykes (Dir.)",       amount:"C$180,000",   date:"Apr 2026", shares:"2,000,000"},
+  { company:"Geiger Energy",    ticker:"BEEP",  seller:"James Sykes (Dir.)",       amount:"C$180,000",   date:"Apr 2026", shares:"2,000,000"},
   { company:"Purepoint Uranium",ticker:"PTU",   seller:"Scott Frostad (Dir.)",     amount:"C$95,000",    date:"May 2026", shares:"630,000" },
 ];
 
