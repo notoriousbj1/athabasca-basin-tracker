@@ -3661,45 +3661,77 @@ export default function App() {
           </div>
         </div>
 
-        {/* Nuclear Macro + Global News */}
-        <div id="sec-macro" style={{ scrollMarginTop:90,  display:"grid", gridTemplateColumns:"256px 1fr", gap:20, marginBottom:20 }}>
-          <div>
-            <div style={RuleH}>
-              <div style={{ ...SERIF, fontSize:18, fontWeight:700, color:"#1A1A14" }}>Nuclear Macro</div>
-            </div>
-            {GLOBAL_STATS.map(g=>(
-              <div key={g.label} style={{ display:"flex", justifyContent:"space-between", padding:"7px 0", borderBottom:"1px solid #D8D0C4" }}>
-                <span style={{ fontSize:12, color:"#6A6A5A" }}>{g.label}</span>
-                <div style={{ textAlign:"right" }}>
-                  <div style={{ ...MONO, fontWeight:700, fontSize:14, color:"#B07A08" }}>{g.value}</div>
-                  <div style={{ fontSize:10, color:"#6A6A5A" }}>{g.sub}</div>
-                </div>
-              </div>
-            ))}
+        {/* Nuclear Macro — stat card strip */}
+        <div id="sec-macro" style={{ scrollMarginTop:90, marginBottom:20 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+            <span style={{ ...S.lbl, letterSpacing:"0.15em", color:"#1A1A14" }}>NUCLEAR MACRO</span>
+            <span style={{ fontSize:9, color:"#9A9A8A", fontWeight:600 }}>· global context</span>
           </div>
-          <div>
-            <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
-              <div style={{ ...SERIF, fontSize:18, fontWeight:700, color:"#1A1A14" }}>Global Nuclear News</div>
-              <button onClick={fetchGlobalNews} style={{ ...S.btn("s"), fontSize:10, padding:"4px 10px" }} disabled={globalNewsLoading}>
-                {globalNewsLoading?"Fetching…":"↻ Refresh"}
-              </button>
-            </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-              {(globalNews.length>0?globalNews:STATIC_GLOBAL_NEWS).slice(0,6).map((n,i)=>(
-                <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-                  <div style={{ paddingBottom:10, borderBottom:"1px solid #D8D0C4", cursor:"pointer" }}>
-                    <div style={{ display:"flex", gap:5, marginBottom:5, flexWrap:"wrap", alignItems:"center" }}>
-                      <span style={{ ...S.badge("blue"), fontSize:9 }}>{n.publication||n.source}</span>
-                      {n.category&&<span style={{ ...S.badge("gray"), fontSize:9 }}>{n.category}</span>}
-                      <span style={{ fontSize:9, color:"#6A6A5A", marginLeft:"auto" }}>{n.date}</span>
+          {(()=>{
+            const MACRO_ICONS = [Zap, Building2, Globe, Activity, BarChart3, Atom];
+            const spk = (seed)=>{ const a=[]; let v=50; for(let i=0;i<8;i++){ v += ((Math.sin(seed*5.1+i*1.3)*0.5+0.5)-0.42)*28; a.push(Math.max(10,Math.min(90,v))); } return a; };
+            return (
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(155px, 1fr))", gap:12 }}>
+                {GLOBAL_STATS.map((g,i)=>{
+                  const Icon = MACRO_ICONS[i % MACRO_ICONS.length];
+                  // split numeric value for count-up where possible
+                  const num = parseFloat(String(g.value).replace(/[^0-9.]/g,""));
+                  const prefix = String(g.value).match(/^[^0-9]*/)?.[0] || "";
+                  const suffix = String(g.value).match(/[^0-9.]*$/)?.[0] || "";
+                  return (
+                    <div key={g.label} className="stat-card"
+                      style={{ background:"linear-gradient(150deg, #FFFFFF 0%, #FFFCF3 100%)", border:"1px solid #E2DCD0", borderRadius:10, padding:"13px 15px", position:"relative", overflow:"hidden", transition:"border-color 0.15s ease, transform 0.15s ease", animationDelay:`${i*55}ms` }}>
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+                        <Icon size={16} strokeWidth={2} color="#B07A08"/>
+                        <Sparkline data={spk(i+1)} color="#D4A03A" w={48} h={16}/>
+                      </div>
+                      <div style={{ fontSize:22, fontWeight:800, color:"#1A1A14", lineHeight:1, letterSpacing:"-0.02em", ...MONO }}>
+                        {isFinite(num) ? <CountUp value={num} prefix={prefix} suffix={suffix} decimals={String(g.value).includes(".")?1:0} /> : g.value}
+                      </div>
+                      <div style={{ fontSize:10.5, color:"#6A6A5A", fontWeight:600, marginTop:6 }}>{g.label}</div>
+                      <div style={{ fontSize:9, color:"#9A8A5A", fontStyle:"italic", marginTop:2 }}>{g.sub}</div>
                     </div>
-                    <div style={{ fontSize:12, color:"#1A1A14", fontWeight:600, lineHeight:1.4, marginBottom:4 }}>{n.headline}</div>
-                    <div style={{ fontSize:11, color:"#6A6A5A", lineHeight:1.4, marginBottom:6 }}>{(n.summary||"").substring(0,90)}{(n.summary||"").length>90?"…":""}</div>
-                    <div style={{ fontSize:10, color:"#B07A08", fontWeight:600 }}>Read article →</div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Global Nuclear News — white card with thumbnails */}
+        <div style={{ ...S.card, marginBottom:20 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+            <span style={{ ...S.lbl, letterSpacing:"0.15em", color:"#1A1A14" }}>GLOBAL NUCLEAR NEWS</span>
+            <button onClick={fetchGlobalNews} style={{ ...S.btn("s"), fontSize:10, padding:"4px 10px" }} disabled={globalNewsLoading}>
+              {globalNewsLoading?"Fetching…":"↻ Refresh"}
+            </button>
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 24px" }}>
+            {(globalNews.length>0?globalNews:STATIC_GLOBAL_NEWS).slice(0,6).map((n,i,arr)=>(
+              <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+                <div style={{ display:"flex", gap:12, padding:"12px 0", borderBottom:i<arr.length-(arr.length%2===0?2:1)?"1px solid #EDE8E0":"none", cursor:"pointer" }}>
+                  {/* Thumbnail */}
+                  <div style={{ position:"relative", width:88, height:62, flexShrink:0, borderRadius:6, overflow:"hidden", background:"linear-gradient(135deg, #E8E2D6, #D8D0C4)" }}>
+                    {(n.image||n.thumbnail) ? (
+                      <img src={n.image||n.thumbnail} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }}
+                        onError={e=>{ e.target.style.display="none"; }}/>
+                    ) : (
+                      <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        <Atom size={20} strokeWidth={1.5} color="#B07A08" style={{ opacity:0.5 }}/>
+                      </div>
+                    )}
                   </div>
-                </a>
-              ))}
-            </div>
+                  {/* Text */}
+                  <div style={{ minWidth:0, flex:1 }}>
+                    <div style={{ display:"flex", gap:5, marginBottom:4, alignItems:"center" }}>
+                      <span style={{ ...S.badge("blue"), fontSize:8.5 }}>{n.publication||n.source}</span>
+                      <span style={{ fontSize:9, color:"#9A9A8A", marginLeft:"auto" }}>{n.date}</span>
+                    </div>
+                    <div style={{ fontSize:12, color:"#1A1A14", fontWeight:600, lineHeight:1.35, display:"-webkit-box", WebkitLineClamp:3, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{n.headline}</div>
+                  </div>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
       </div>
