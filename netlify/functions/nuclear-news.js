@@ -35,6 +35,24 @@ function extractUrl(item) {
   return null;
 }
 
+// Pull an image straight out of the RSS item (no extra network request).
+function extractImage(item) {
+  // media:content / media:thumbnail
+  let m = item.match(/<media:content[^>]+url="([^"]+)"/i) || item.match(/<media:thumbnail[^>]+url="([^"]+)"/i);
+  if (m && /^https?:/.test(m[1])) return m[1];
+  // enclosure with image type
+  m = item.match(/<enclosure[^>]+url="([^"]+)"[^>]+type="image\/[^"]+"/i)
+   || item.match(/<enclosure[^>]+type="image\/[^"]+"[^>]+url="([^"]+)"/i);
+  if (m && /^https?:/.test(m[1])) return m[1];
+  // <img src> inside description/content
+  m = item.match(/<img[^>]+src="([^"]+)"/i);
+  if (m && /^https?:/.test(m[1])) return m[1];
+  // itunes / og style in content
+  m = item.match(/url="([^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
+  if (m && /^https?:/.test(m[1])) return m[1];
+  return null;
+}
+
 function parseDate(str) {
   if (!str) return null;
   let d = new Date(str.trim());
@@ -60,13 +78,34 @@ function parseRSS(xml, source) {
     const pubDate  = getText("pubDate") || getText("published") || getText("updated") || getText("dc:date");
     const rawDesc  = getText("description") || getText("summary") || getText("content") || "";
     const summary  = rawDesc.replace(/<[^>]+>/g,"").replace(/&[^;]+;/g," ").replace(/\s+/g," ").trim().substring(0,220);
+    const image    = extractImage(item);
     if (!headline || !url) return null;
     const parsedDate = parseDate(pubDate);
     if (!parsedDate || parsedDate < CUTOFF) return null;
     const date = parsedDate.toLocaleDateString("en-US",{ month:"short", day:"numeric", year:"numeric" });
-    return { headline, url, date, dateMs:parsedDate.getTime(), summary, source,
+    return { headline, url, date, dateMs:parsedDate.getTime(), summary, source, image,
              category:classify(headline + " " + summary) };
   }).filter(Boolean);
+}
+
+// Fetch an article page and extract its OpenGraph/Twitter image (used only for the
+// final results that didn't already have an image from the RSS item).
+async function fetchOgImage(url) {
+  try {
+    const res = await fetch(url, {
+      headers:{ "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36" },
+      signal: AbortSignal.timeout(7000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const pick = (re) => html.match(re)?.[1];
+    const img =
+      pick(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+      pick(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ||
+      pick(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i) ||
+      pick(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i);
+    return (img && /^https?:/.test(img)) ? img : null;
+  } catch { return null; }
 }
 
 exports.handler = async () => {
@@ -95,11 +134,19 @@ exports.handler = async () => {
     }
 
     const seen = new Set();
-    const results = allItems
+    let results = allItems
       .filter(i => { if (seen.has(i.headline)) return false; seen.add(i.headline); return true; })
       .sort((a,b) => b.dateMs - a.dateMs)
-      .map(({ dateMs, ...rest }) => rest)
       .slice(0, 12);
+
+    // Enrich the items missing an image with their article's og:image (capped to keep it fast).
+    const needsImage = results.filter(r => !r.image).slice(0, 8);
+    await Promise.all(needsImage.map(async (r) => {
+      const img = await fetchOgImage(r.url);
+      if (img) r.image = img;
+    }));
+
+    results = results.map(({ dateMs, ...rest }) => rest);
 
     return {
       statusCode:200,
