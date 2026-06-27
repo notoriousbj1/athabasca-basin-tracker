@@ -8,7 +8,7 @@ const COMPANIES = [
   { name:"F3 Uranium",       ticker:"FUU",  feeds:["https://f3uranium.ca/news/feed/","https://f3uranium.ca/feed/"],
     newsfile:"https://www.newsfilecorp.com/company/8110/F3-Uranium-Corp." },
   { name:"Uranium Energy",   ticker:"UEC",  feeds:["https://uraniumenergy.com/news/feed/","https://uraniumenergy.com/feed/"], newsfile:null, searchFallback:true },
-  { name:"Baselode Energy",  ticker:"FIND", feeds:["https://baselodeenergy.com/news/feed/","https://baselodeenergy.com/feed/"],
+  { name:"Geiger Energy",    ticker:"BEEP", feeds:["https://geigerenergy.ca/news/feed/","https://baselode.com/news/feed/"],
     newsfile:"https://www.newsfilecorp.com/company/6412/Baselode-Energy-Corp." },
   { name:"Canadian Uranium", ticker:"CANU", feeds:["https://canadianuranium.ca/news-releases/feed/","https://canadianuranium.ca/feed/"], newsfile:null, searchFallback:true },
   { name:"Atha Energy",      ticker:"SASK", feeds:["https://athaenergy.ca/news/feed/","https://athaenergy.ca/feed/"], newsfile:null, searchFallback:true },
@@ -16,16 +16,14 @@ const COMPANIES = [
     newsfile:"https://www.newsfilecorp.com/company/3218/Purepoint-Uranium-Group-Inc." },
   { name:"Standard Uranium", ticker:"STND", feeds:["https://standarduranium.ca/news-releases/feed/","https://standarduranium.ca/feed/"],
     newsfile:"https://www.newsfilecorp.com/company/10633/Standard-Uranium-Ltd." },
-  { name:"Forum Energy",     ticker:"FMC",  feeds:["https://forumenergymetals.com/news/feed/","https://forumenergymetals.com/feed/"],
-    newsfile:"https://www.newsfilecorp.com/company/4908/Forum-Energy-Metals-Corp." },
+  { name:"Cosa Resources",   ticker:"COSA", feeds:["https://cosaresources.ca/news-releases/feed/","https://cosaresources.ca/feed/"], newsfile:null, searchFallback:true },
   { name:"Azincourt Energy", ticker:"AAZ",  feeds:["https://azincourtenergy.com/news/feed/","https://azincourtenergy.com/feed/"], newsfile:null, searchFallback:true },
   { name:"Fortune Bay",      ticker:"FOR",  feeds:["https://fortunebaycorp.com/news/feed/","https://fortunebaycorp.com/feed/"], newsfile:null, searchFallback:true },
   { name:"CanAlaska Uranium",ticker:"CVV",  feeds:["https://canalaska.com/feed/","https://canalaska.com/news/feed/"],
     newsfile:"https://www.newsfilecorp.com/company/2864/CanAlaska-Uranium-Ltd." },
-  { name:"ALX Resources",    ticker:"AL",   feeds:["https://alxresources.ca/news/feed/","https://alxresources.ca/feed/"], newsfile:null, searchFallback:true },
+  { name:"Manhattan Uranium",ticker:"MANU", feeds:["https://manhattanuranium.com/news/feed/","https://manhattanuranium.com/feed/"], newsfile:null, searchFallback:true },
   { name:"Appia",            ticker:"API",  feeds:["https://appiaenergy.ca/news/feed/","https://appiaenergy.ca/feed/"], newsfile:null, searchFallback:true },
   { name:"Uranium Royalty",  ticker:"URC",  feeds:["https://uraniumroyaltycorp.com/news/feed/","https://uraniumroyaltycorp.com/feed/"], newsfile:null, searchFallback:true },
-  { name:"Fission 3.0",      ticker:"FIS",  feeds:["https://fission3.com/news/feed/","https://fission3.com/feed/"], newsfile:null, searchFallback:true },
 ];
 
 const CUTOFF = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
