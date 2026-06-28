@@ -3691,10 +3691,13 @@ export default function App() {
               {globalNewsLoading?"Fetching…":"↻ Refresh"}
             </button>
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 24px" }}>
-            {(globalNews.length>0?globalNews:STATIC_GLOBAL_NEWS).slice(0,6).map((n,i,arr)=>(
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"0 24px" }}>
+            {(globalNews.length>0?globalNews:STATIC_GLOBAL_NEWS).slice(0,9).map((n,i,arr)=>{
+              const cols = 3;
+              const lastRowStart = arr.length - (arr.length % cols === 0 ? cols : arr.length % cols);
+              return (
               <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-                <div style={{ display:"flex", gap:12, padding:"12px 0", borderBottom:i<arr.length-(arr.length%2===0?2:1)?"1px solid #EDE8E0":"none", cursor:"pointer" }}>
+                <div style={{ display:"flex", gap:12, padding:"12px 0", borderBottom:i<lastRowStart?"1px solid #EDE8E0":"none", cursor:"pointer" }}>
                   {/* Thumbnail */}
                   <div style={{ position:"relative", width:88, height:62, flexShrink:0, borderRadius:6, overflow:"hidden", background:"linear-gradient(135deg, #E8E2D6, #D8D0C4)" }}>
                     {(n.image||n.thumbnail) ? (
@@ -3716,7 +3719,7 @@ export default function App() {
                   </div>
                 </div>
               </a>
-            ))}
+            )})}
           </div>
         </div>
       </div>
