@@ -4502,13 +4502,23 @@ export default function App() {
         const tickerRoot = (t)=> (t||"").replace(/\.(V|TO|CN|NE)$/i,"").toUpperCase();
         const coRoot = tickerRoot(c.ticker);
         const coAlt  = tickerRoot(c.altTicker);
-        const firstWord = c.name.split(" ")[0].toLowerCase();
+        const cname  = c.name.toLowerCase();
+        // Distinctive name tokens: drop generic words that cause false matches
+        // ("canadian", "uranium", "energy", etc. appear in unrelated headlines).
+        const GENERIC = new Set(["canadian","uranium","energy","resources","corp","corporation","inc","ltd","mining","metals","group","royalty","standard","global","north","american"]);
+        const nameTokens = cname.replace(/[.,]/g," ").split(/\s+/).filter(t=>t.length>2 && !GENERIC.has(t));
         const companyNews = news.filter(n=>{
           const nt = tickerRoot(n.ticker);
           const hay = `${n.company||""} ${n.headline||""}`.toLowerCase();
-          return (nt && (nt===coRoot || nt===coAlt)) ||
-                 (firstWord.length>3 && hay.includes(firstWord)) ||
-                 hay.includes(c.name.toLowerCase());
+          // 1) Ticker match (most reliable — basin-news tags releases by ticker)
+          if (nt && (nt===coRoot || nt===coAlt)) return true;
+          // 2) Full company name appears verbatim
+          if (cname.length>5 && hay.includes(cname)) return true;
+          // 3) The news item's tagged company name matches ours
+          if (n.company && n.company.toLowerCase()===cname) return true;
+          // 4) All distinctive (non-generic) name tokens present
+          if (nameTokens.length && nameTokens.every(tok=>hay.includes(tok))) return true;
+          return false;
         }).slice(0,5);
 
         // Generate seeded 30-day price series with real dates (counting back from today)
