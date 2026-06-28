@@ -228,8 +228,8 @@ const COMPANIES = [
     ytSearch:"Uranium Royalty Corp URC UROY 2025",
   },
   {
-    id:"canu", ticker:"CANU.V", altTicker:"CANUUF", name:"Canadian Uranium", fullName:"Canadian Uranium Inc.",
-    exchange:"TSXV / OTCQB", price:1.23, changePct:3.4, marketCap:"42M",
+    id:"canu", ticker:"CANU.CN", altTicker:"CANUUF", name:"Canadian Uranium", fullName:"Canadian Uranium Inc.",
+    exchange:"CSE / OTCQB", price:1.23, changePct:3.4, marketCap:"42M",
     sharesBasic:"124M", sharesFD:"145M", cashPosition:"$3.8M CAD", float:"102M",
     insiderOwnership:"~20%", institutionalOwnership:"~10%", avgVolume:"88K",
     stage:"Explorer",
@@ -515,7 +515,7 @@ const SMART_MONEY_EVENTS = [
   { company:"Atha Energy", ticker:"SASK.V", type:"Bought Deal",  amount:15,   amountLabel:"C$15M",   date:"Mar 2026", momentum:65, regionY:1, region:"Eastern Basin",  headline:"$15M financing to fund multi-platform basin-wide geophysics",                   proximity:"CMB Land Package"     },
   { company:"IsoEnergy",   ticker:"ISO.V",  type:"Bought Deal",  amount:10,   amountLabel:"C$10M",   date:"Feb 2026", momentum:68, regionY:1, region:"Eastern Basin",  headline:"$10M raise to advance Hurricane deposit delineation program",                   proximity:"Hurricane Deposit"    },
   { company:"Std Uranium", ticker:"STND.V", type:"Bought Deal",  amount:6,    amountLabel:"C$6M",    date:"May 2026", momentum:58, regionY:0, region:"Basin Margins",  headline:"Davidson River drill program financed via $6M bought deal",                     proximity:"Davidson River"       },
-  { company:"CANU",        ticker:"CANU.V", type:"Insider Buy",  amount:0.38, amountLabel:"C$380K",  date:"Jun 2026", momentum:55, regionY:0, region:"Basin Margins",  headline:"Management adds $380K ahead of summer drill program at Key Lake",              proximity:"Adjacent to Key Lake" },
+  { company:"CANU",        ticker:"CANU.CN", type:"Insider Buy",  amount:0.38, amountLabel:"C$380K",  date:"Jun 2026", momentum:55, regionY:0, region:"Basin Margins",  headline:"Management adds $380K ahead of summer drill program at Key Lake",              proximity:"Adjacent to Key Lake" },
   { company:"Geiger Energy", ticker:"BEEP.V", type:"Insider Buy",  amount:0.5,  amountLabel:"C$500K",  date:"May 2026", momentum:52, regionY:0, region:"Basin Margins",  headline:"Management buying on Hook / Aberdeen project potential post-merger",                  proximity:"Hook Lake"            },
   { company:"Purepoint",   ticker:"PTU.V",  type:"Joint Venture", amount:3,   amountLabel:"C$3M",    date:"Mar 2026", momentum:60, regionY:1, region:"Eastern Basin",  headline:"Cameco & UEC JV funds $3M Hook Lake exploration",                               proximity:"Hook Lake JV"         },
 ];
