@@ -1743,6 +1743,48 @@ export default function App() {
                 co: findCo(d.company, d.ticker),
               }));
             };
+            // Open Raises: parse a comparable $ amount (normalize to CAD-ish millions for the bar),
+            // and carry type / purpose / close-status. Only shows a close date if real in the data.
+            const raiseRows = ()=>{
+              const parseAmt = s=>{
+                if(!s) return 0;
+                const m = String(s).match(/([\d.]+)\s*([BMK])?/i);
+                if(!m) return 0;
+                let v = parseFloat(m[1])||0;
+                const u = (m[2]||"").toUpperCase();
+                if(u==="B") v*=1000; else if(u==="K") v/=1000; // express in millions
+                if(/usd|us\$/i.test(s)) v*=1.36; // rough USD→CAD so the bar compares fairly
+                return v; // millions
+              };
+              const open = FINANCINGS.filter(f=>f.status==="Open");
+              const src = open.length ? open : FINANCINGS; // fall back to all if none flagged open
+              // Try to find the actual financing press release in the live news feed for this company.
+              const findRaiseUrl = (f)=>{
+                const co = findCo(f.company, f.ticker);
+                const tkRoot = (f.ticker||"").split(".")[0].toLowerCase();
+                const nameTok = (f.company||"").toLowerCase().split(/\s+/)[0];
+                const hit = (news||[]).find(n=>{
+                  const hay = `${n.company||""} ${n.headline||""} ${n.summary||""}`.toLowerCase();
+                  const isFinancing = /(placement|financing|bought\s+deal|flow[-\s]?through|offering|raises?\s+\$|subscription\s+receipt)/i.test(hay);
+                  if (!isFinancing) return false;
+                  const ntRoot = (n.ticker||"").split(".")[0].toLowerCase();
+                  return (ntRoot && ntRoot===tkRoot) || (nameTok.length>3 && hay.includes(nameTok));
+                });
+                return hit?.url || null;
+              };
+              const rows = src.map(f=>({
+                company:f.company, ticker:f.ticker, co:findCo(f.company,f.ticker),
+                amountStr:f.amount, _v:parseAmt(f.amount),
+                rType:f.type, purpose:f.purpose,
+                // only a real, specific date — skip vague "In Progress"/"2025"
+                closeDate: (f.closed && !/progress|2025|2026|open|tbd/i.test(f.closed)) ? f.closed : null,
+                rStatus: f.status,
+                url: findRaiseUrl(f),
+                raise:true,
+              })).sort((a,b)=>b._v-a._v);
+              const max = rows[0]?._v || 1;
+              return rows.map(r=>({ ...r, barPct: Math.round((r._v/max)*100) }));
+            };
             const projectRows = ()=> COMPANIES.filter(c=>c.projects?.length).map(c=>{
               const names = c.projects.map(p=> typeof p==="string" ? p : (p?.name || "")).filter(Boolean);
               return { company:c.name, ticker:c.ticker, detail:`${names.length} project${names.length>1?"s":""}: ${names.slice(0,3).join(", ")}${names.length>3?"…":""}`, co:c };
@@ -1770,8 +1812,8 @@ export default function App() {
                 explain:drillsLive?"Companies with a drill result reported in the last 90 days.":"Active drill programs across the basin." },
               { icon:Timer,     label:"Pending Assays",   value:pendingAssays, decimals:0, spark:spk(2), trend:pendingLive?"live":null, note:pendingLive?"companies awaiting · 60d":null, rows:pendingRows,
                 explain:pendingLive?"Companies whose recent news indicates drilling underway or assays pending (last 60 days).":"Holes drilled and awaiting assay results across the basin." },
-              { icon:Landmark,  label:"Open Raises",      value:openRaises, decimals:0, spark:spk(7), trend:raisesLive?"live":null, note:raisesLive?"financings active · 60d":null, rows:raisesLive?(()=>newsRows(raiseRe,60)):(()=>FINANCINGS.filter(f=>f.status==="Open").map(f=>({company:f.company,ticker:f.ticker,detail:`${f.type} · ${f.amount}`,co:findCo(f.company,f.ticker)}))),
-                explain:raisesLive?"Companies with financing activity in the news over the last 60 days.":"Currently open financings across the basin." },
+              { icon:Landmark,  label:"Open Raises",      value:openRaises, decimals:0, spark:spk(7), trend:raisesLive?"live":null, note:raisesLive?"financings active · 60d":null, rows:raisesLive?(()=>newsRows(raiseRe,60)):raiseRows,
+                explain:raisesLive?"Companies with financing activity in the news over the last 60 days.":"Currently open financings across the basin, by size." },
               { icon:DollarSign,label:"Total Market Cap", value:totalMktCap/1e9, prefix:"$", suffix:"B", decimals:1, spark:spk(5), trend:totalMktCap>0?"live":null, up:true, rows:mktCapRows, chart:"donut",
                 explain:"Combined market capitalization of all 21 tracked basin companies, by live price × shares outstanding." },
               { icon:Activity,  label:"Daily Volume",     value:totalVol/1e6, suffix:"M", decimals:1, spark:spk(6), trend:null, dim:totalVol===0, rows:totalVol>0?volRows:null,
@@ -4617,18 +4659,31 @@ export default function App() {
                 })()}
                 {rows.length ? rows.map((r,i)=>(
                   <div key={i}
-                    onClick={()=>{ if(r.co){ setStatModal(null); setCompanyModal(r.co); } }}
-                    style={{ display:"flex", alignItems:"center", gap:12, padding:"11px 26px", borderBottom:i<rows.length-1?"1px solid #F2EEE6":"none", cursor:r.co?"pointer":"default", transition:"background 0.12s ease" }}
-                    onMouseEnter={e=>{ if(r.co) e.currentTarget.style.background="#FAF7F0"; }}
+                    onClick={()=>{ if(r.url){ window.open(r.url, "_blank", "noopener"); } else if(r.co){ setStatModal(null); setCompanyModal(r.co); } }}
+                    style={{ display:"flex", alignItems:"center", gap:12, padding:"11px 26px", borderBottom:i<rows.length-1?"1px solid #F2EEE6":"none", cursor:(r.url||r.co)?"pointer":"default", transition:"background 0.12s ease" }}
+                    onMouseEnter={e=>{ if(r.url||r.co) e.currentTarget.style.background="#FAF7F0"; }}
                     onMouseLeave={e=>{ e.currentTarget.style.background="transparent"; }}>
                     <div style={{ minWidth:0, flex:1 }}>
                       <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
                         <span style={{ fontSize:13.5, fontWeight:700, color:"#1A1A14" }}>{r.company}</span>
                         {r.ticker && <span style={{ ...MONO, fontSize:11, color:"#B07A08", fontWeight:700 }}>{(r.ticker||"").split(".")[0]}</span>}
                         {r.gt != null && <span style={{ ...S.badge("amber"), fontSize:8.5, fontWeight:700 }} title="Grade × Thickness score">G×T {r.gt}</span>}
-                        {r.date && <span style={{ fontSize:10, color:"#9A9A8A", marginLeft:"auto" }}>{r.date}</span>}
+                        {r.raise && r.rType && <span style={{ ...S.badge("gray"), fontSize:8.5, fontWeight:700 }}>{r.rType}</span>}
+                        {r.raise && r.closeDate
+                          ? <span style={{ fontSize:10, color:"#9A9A8A", marginLeft:"auto" }}>Closes {r.closeDate}</span>
+                          : r.date && <span style={{ fontSize:10, color:"#9A9A8A", marginLeft:"auto" }}>{r.date}</span>}
                       </div>
-                      {r.barPct != null ? (
+                      {r.raise ? (
+                        <>
+                          <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:5 }}>
+                            <div style={{ flex:1, height:7, background:"#F0EBE1", borderRadius:4, overflow:"hidden" }}>
+                              <div style={{ width:`${Math.max(2,r.barPct||0)}%`, height:"100%", background:"linear-gradient(90deg,#0E7C7B,#16A34A)", borderRadius:4 }}/>
+                            </div>
+                            <span style={{ ...MONO, fontSize:12, fontWeight:800, color:"#0E7C7B", whiteSpace:"nowrap", minWidth:78, textAlign:"right" }}>{r.amountStr}</span>
+                          </div>
+                          {r.purpose && <div style={{ fontSize:10.5, color:"#9A9A8A", marginTop:4, lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>Use of funds: {r.purpose}</div>}
+                        </>
+                      ) : r.barPct != null ? (
                         <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:5 }}>
                           <div style={{ flex:1, height:7, background:"#F0EBE1", borderRadius:4, overflow:"hidden" }}>
                             <div style={{ width:`${Math.max(2,r.barPct)}%`, height:"100%", background:"linear-gradient(90deg,#B07A08,#D4A03A)", borderRadius:4 }}/>
@@ -4639,7 +4694,9 @@ export default function App() {
                         r.detail && <div style={{ fontSize:11.5, color:"#6A6A5A", marginTop:3, lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{r.detail}</div>
                       )}
                     </div>
-                    {r.co && <span style={{ fontSize:15, color:"#C8BEA8", flexShrink:0 }}>›</span>}
+                    {r.url
+                      ? <span style={{ fontSize:13, color:"#B07A08", flexShrink:0, fontWeight:700 }} title="Open press release">↗</span>
+                      : r.co && <span style={{ fontSize:15, color:"#C8BEA8", flexShrink:0 }}>›</span>}
                   </div>
                 )) : (
                   <div style={{ padding:"24px 26px", fontSize:12.5, color:"#9A9A8A", textAlign:"center" }}>
@@ -4647,7 +4704,11 @@ export default function App() {
                   </div>
                 )}
               </div>
-              {rows.some(r=>r.co) && (
+              {rows.some(r=>r.url) ? (
+                <div style={{ padding:"10px 26px", borderTop:"1px solid #EDE8E0", fontSize:10, color:"#9A9A8A" }}>
+                  Tap a raise to open its press release ↗ (or the company profile if no release is linked).
+                </div>
+              ) : rows.some(r=>r.co) && (
                 <div style={{ padding:"10px 26px", borderTop:"1px solid #EDE8E0", fontSize:10, color:"#9A9A8A" }}>
                   Tap a company to open its full profile.
                 </div>
