@@ -1415,6 +1415,20 @@ export default function App() {
   // Live clock — ticks every second for the sidebar date/time + market status
   useEffect(()=>{ const t=setInterval(()=>setNow(new Date()), 1000); return ()=>clearInterval(t); },[]);
 
+  // Press Esc to close any open popup/modal
+  useEffect(()=>{
+    const onKey = (e)=>{
+      if (e.key === "Escape") {
+        setCompanyModal(null);
+        setStatModal(null);
+        setSentPost(null);
+        setShowSubModal(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return ()=> window.removeEventListener("keydown", onKey);
+  },[]);
+
   // TSX/TSXV market status (open 9:30–16:00 ET, Mon–Fri). Computed in Eastern Time
   // regardless of the viewer's timezone.
   const marketStatus = (()=>{
