@@ -1177,6 +1177,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen]   = useState(true);
   const [activeSection, setActiveSection] = useState("top");
   const [scrollPct, setScrollPct]       = useState(0);
+  const [now, setNow]                   = useState(new Date());
   const [sentPost, setSentPost]         = useState(null);
   const [sentLoading, setSentLoading]   = useState(false);
   const [videosLoading, setVideosLoading] = useState(false);
@@ -1411,6 +1412,25 @@ export default function App() {
 
   useEffect(()=>{ fetchSpot(); fetchNews(); fetchPrices(); fetchVideoData(); fetchYTD(); fetchGlobalNews(); fetchBasinTopStory(); fetchBasinSat(); fetchSmdiDeposits(); fetchBasinClaims(); fetchDrillResults(); fetchSentiment(); },[]);
 
+  // Live clock — ticks every second for the sidebar date/time + market status
+  useEffect(()=>{ const t=setInterval(()=>setNow(new Date()), 1000); return ()=>clearInterval(t); },[]);
+
+  // TSX/TSXV market status (open 9:30–16:00 ET, Mon–Fri). Computed in Eastern Time
+  // regardless of the viewer's timezone, but displayed time stays local.
+  const marketStatus = (()=>{
+    try {
+      const fmt = new Intl.DateTimeFormat("en-US",{ timeZone:"America/Toronto", weekday:"short", hour:"2-digit", minute:"2-digit", hour12:false });
+      const parts = fmt.formatToParts(now);
+      const wd = parts.find(p=>p.type==="weekday")?.value;
+      const hh = parseInt(parts.find(p=>p.type==="hour")?.value||"0",10);
+      const mm = parseInt(parts.find(p=>p.type==="minute")?.value||"0",10);
+      const isWeekday = !["Sat","Sun"].includes(wd);
+      const mins = hh*60+mm;
+      const open = isWeekday && mins>=570 && mins<960; // 9:30=570, 16:00=960
+      return { open, label: open ? "Market Open" : "Market Closed" };
+    } catch { return { open:false, label:"Market Closed" }; }
+  })();
+
   // When locked, add blurred filler rows so the list fills down to the news column height.
   useEffect(()=>{
     if(subscribed) return; // subscribed list is full height; no filling needed
@@ -1482,13 +1502,6 @@ export default function App() {
 
     return (
       <div>
-        {/* Date masthead strip */}
-        <div style={{ display:"flex", justifyContent:"flex-start", alignItems:"center", marginBottom:16, paddingBottom:10, borderBottom:"1px solid #D8D0C4" }}>
-          <div style={{ fontSize:11, color:"#6A6A5A" }}>
-            {new Date().toLocaleDateString("en-CA",{ weekday:"long", year:"numeric", month:"long", day:"numeric" })}
-          </div>
-        </div>
-
         {/* Spot price sparkline + 4 info pits */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 256px", gap:0, marginBottom:20, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }} className="spot-glow">
           <div style={{ padding:"14px 20px", borderRight:"1px solid #D8D0C4" }}>
@@ -4192,6 +4205,28 @@ export default function App() {
               {sidebarOpen ? <ChevronLeft size={18}/> : <Menu size={18}/>}
             </button>
           </div>
+
+          {/* Live date / time / market status */}
+          {sidebarOpen && (
+            <div style={{ margin:"4px 12px 10px", padding:"10px 12px", background:"#FFFFFF", border:"1px solid #E2DCD0", borderRadius:8 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"#1A1A14", letterSpacing:"0.01em" }}>
+                {now.toLocaleDateString(undefined,{ weekday:"long", month:"short", day:"numeric" })}
+              </div>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:5 }}>
+                <span style={{ ...MONO, fontSize:12, fontWeight:700, color:"#6A6A5A", letterSpacing:"0.02em" }}>
+                  {now.toLocaleTimeString(undefined,{ hour:"2-digit", minute:"2-digit", second:"2-digit" })}
+                </span>
+                <span style={{ display:"inline-flex", alignItems:"center", gap:4 }}>
+                  <span className={marketStatus.open?"stat-live-dot":undefined}
+                    style={{ width:6, height:6, borderRadius:"50%", background:marketStatus.open?"#16C44A":"#C01818", display:"inline-block" }}/>
+                  <span style={{ fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", color:marketStatus.open?"#16A34A":"#C01818" }}>
+                    {marketStatus.open?"Open":"Closed"}
+                  </span>
+                </span>
+              </div>
+              <div style={{ fontSize:8, color:"#9A9A8A", marginTop:4, letterSpacing:"0.04em" }}>TSX / TSXV</div>
+            </div>
+          )}
 
           {SIDEBAR_NAV.map(item=>{
             const ICONS = { Home, Star, Map, Hammer, DollarSign, Timer, Users, Activity, Play, Globe, Newspaper };
