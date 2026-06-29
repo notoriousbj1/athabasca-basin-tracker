@@ -296,6 +296,18 @@ const DRILLING = [
   { company:"Fission Uranium", ticker:"FCU.TO", program:"PLS Target Drill 2025", total:8, drilled:5, pending:3, highlight:"PLS-025-005: 1.84% U₃O₈ over 3.5m — R840W zone", status:"Partial Assays", updated:"May 22" },
 ];
 
+// Curated macro catalyst milestones (PEA / FS / permits / resource updates).
+// These are forward-looking ESTIMATES from public guidance — clearly flagged as such in the UI.
+// quarter: which quarter the catalyst is expected; type: milestone category.
+const CATALYST_MILESTONES = [
+  { company:"NexGen Energy",  ticker:"NXE",    quarter:"Q3 2026", type:"Permitting",  label:"Federal EA decision / construction licence progress (Rook I)", est:true },
+  { company:"Denison Mines",  ticker:"DML.TO", quarter:"Q3 2026", type:"Economics",   label:"Phoenix ISR — final investment decision / construction update", est:true },
+  { company:"IsoEnergy",      ticker:"ISO.V",  quarter:"Q2 2026", type:"Resource",    label:"Hurricane updated resource estimate", est:true },
+  { company:"Cameco",         ticker:"CCO.TO", quarter:"Q3 2026", type:"Production",   label:"McArthur River / Key Lake production guidance update", est:true },
+  { company:"Fission Uranium",ticker:"FCU.TO", quarter:"Q4 2026", type:"Economics",   label:"PLS feasibility / permitting milestones", est:true },
+  { company:"Cosa Resources", ticker:"COSA.V", quarter:"Q4 2026", type:"Resource",    label:"Maiden discovery follow-up / initial resource potential", est:true },
+];
+
 const FINANCINGS = [
   { company:"NexGen Energy", ticker:"NXE", type:"Bought Deal", amount:"$150M USD", pricePerUnit:"$8.10/sh", units:"18.52M shares", warrants:"None", agents:"BMO Capital / RBC Capital Markets", closed:"May 2025", purpose:"Arrow development & general working capital", status:"Closed" },
   { company:"Denison Mines", ticker:"DML.TO", type:"Private Placement", amount:"$25M CAD", pricePerUnit:"$2.85/sh", units:"8.77M shares", warrants:"½ wt @ $3.50 / 24mo", agents:"Haywood Securities", closed:"In Progress", purpose:"Wheeler River exploration, working capital", status:"Open" },
@@ -385,6 +397,7 @@ const SIDEBAR_NAV = [
   { id:"top",           label:"Dashboard Home",      icon:"Home",        kind:"scroll", target:"top"           },
   { id:"sec-featured",  label:"Featured Stories",    icon:"Star",        kind:"scroll", target:"sec-featured"  },
   { id:"sec-map",       label:"Map Tracker",         icon:"Map",         kind:"scroll", target:"sec-map"       },
+  { id:"sec-catalyst",  label:"Catalyst Calendar",   icon:"Flag",        kind:"scroll", target:"sec-catalyst" },
   { id:"sec-drill",     label:"Drill Results",       icon:"Hammer",      kind:"scroll", target:"sec-drill"     },
   { id:"sec-capital",   label:"Capital Monitor",     icon:"DollarSign",  kind:"scroll", target:"sec-capital"   },
   { id:"sec-runway",    label:"Exploration Runway",  icon:"Timer",       kind:"scroll", target:"sec-runway"    },
@@ -2774,6 +2787,134 @@ export default function App() {
         </div>
         </div>
 
+        {/* Catalyst Calendar */}
+        <div id="sec-catalyst" style={{ scrollMarginTop:90, marginBottom:48, marginTop:24 }}>
+          <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
+            <div>
+              <div style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14" }}>Catalyst Calendar</div>
+              <div style={{ fontSize:12, color:"#6A6A5A", marginTop:2 }}>Upcoming catalysts that move share prices — who's drilling now, who's awaiting assays, and the macro milestones ahead.</div>
+            </div>
+          </div>
+          <div style={{ ...S.card, padding: isMobile?16:20 }}>
+            {(()=>{
+              // ---- Live drill & assay activity from DRILLING data ----
+              const drillingNow = DRILLING.filter(d=> /active|drilling/i.test(d.status));
+              const assaysPending = DRILLING.filter(d=> /pending|partial/i.test(d.status) || (d.pending||0)>0);
+              const TYPE_COLOR = { Permitting:"#1A5AA8", Economics:"#B07A08", Resource:"#0E7C7B", Production:"#3B3B7A", Other:"#6A6A5A" };
+              const QUARTERS = ["Q2 2026","Q3 2026","Q4 2026"];
+              const findCo2 = (name,tk)=> COMPANIES.find(c=> c.name===name || c.ticker===tk);
+              const openProfile = (name,tk)=>{ const c=findCo2(name,tk); if(c) setCompanyModal(c); };
+
+              return (
+                <>
+                  {/* SECTION 1 — Drill & Assay Countdown (live) */}
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+                    <Hammer size={15} color="#B07A08" strokeWidth={2}/>
+                    <span style={{ ...S.lbl, letterSpacing:"0.12em", color:"#1A1A14" }}>DRILL &amp; ASSAY COUNTDOWN</span>
+                    <span className="stat-live-dot" style={{ width:6, height:6, borderRadius:"50%", background:"#16C44A", display:"inline-block" }}/>
+                    <span style={{ fontSize:9, color:"#16A34A", fontWeight:700, letterSpacing:"0.06em" }}>LIVE</span>
+                  </div>
+                  <div style={{ display:"grid", gridTemplateColumns: isMobile?"1fr":"1fr 1fr", gap:14, marginBottom:24 }}>
+                    {/* Drilling Now */}
+                    <div style={{ border:"1px solid #E2DCD0", borderRadius:10, overflow:"hidden" }}>
+                      <div style={{ padding:"9px 14px", background:"#F0F7F1", borderBottom:"1px solid #DDEAE0", display:"flex", alignItems:"center", gap:7 }}>
+                        <span style={{ width:8, height:8, borderRadius:"50%", background:"#16A34A", display:"inline-block" }} className="stat-live-dot"/>
+                        <span style={{ fontSize:11.5, fontWeight:800, color:"#157A3A" }}>Drilling Now</span>
+                        <span style={{ fontSize:10, color:"#6A9A78", marginLeft:"auto", fontWeight:600 }}>{drillingNow.length} active</span>
+                      </div>
+                      <div>
+                        {drillingNow.length ? drillingNow.map((d,i)=>(
+                          <div key={i} onClick={()=>openProfile(d.company,d.ticker)}
+                            style={{ padding:"10px 14px", borderBottom:i<drillingNow.length-1?"1px solid #F2EEE6":"none", cursor:"pointer" }}
+                            onMouseEnter={e=>e.currentTarget.style.background="#FAFCFA"}
+                            onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                            <div style={{ display:"flex", alignItems:"baseline", gap:7 }}>
+                              <span style={{ fontSize:13, fontWeight:700, color:"#1A1A14" }}>{d.company}</span>
+                              <span style={{ ...MONO, fontSize:10, color:"#B07A08", fontWeight:700 }}>{(d.ticker||"").split(".")[0]}</span>
+                              <span style={{ fontSize:9.5, color:"#9A9A8A", marginLeft:"auto" }}>{d.updated}</span>
+                            </div>
+                            <div style={{ fontSize:11, color:"#6A6A5A", marginTop:2 }}>{d.program}</div>
+                            {/* progress: drilled / total */}
+                            {d.total>0 && (
+                              <div style={{ display:"flex", alignItems:"center", gap:7, marginTop:6 }}>
+                                <div style={{ flex:1, height:5, background:"#ECE7DD", borderRadius:3, overflow:"hidden" }}>
+                                  <div style={{ width:`${Math.round((d.drilled/d.total)*100)}%`, height:"100%", background:"#16A34A", borderRadius:3 }}/>
+                                </div>
+                                <span style={{ ...MONO, fontSize:9.5, color:"#6A6A5A", whiteSpace:"nowrap" }}>{d.drilled}/{d.total} holes</span>
+                              </div>
+                            )}
+                          </div>
+                        )) : <div style={{ padding:"16px 14px", fontSize:11.5, color:"#9A9A8A", textAlign:"center" }}>No active programs flagged right now.</div>}
+                      </div>
+                    </div>
+                    {/* Assays Pending */}
+                    <div style={{ border:"1px solid #E2DCD0", borderRadius:10, overflow:"hidden" }}>
+                      <div style={{ padding:"9px 14px", background:"#FBF6E8", borderBottom:"1px solid #EFE3C4", display:"flex", alignItems:"center", gap:7 }}>
+                        <Timer size={13} color="#B07A08" strokeWidth={2.2}/>
+                        <span style={{ fontSize:11.5, fontWeight:800, color:"#8A6510" }}>Assays Pending</span>
+                        <span style={{ fontSize:9, color:"#A88A3A", marginLeft:"auto", fontWeight:700, fontStyle:"italic" }}>peak speculation</span>
+                      </div>
+                      <div>
+                        {assaysPending.length ? assaysPending.map((d,i)=>(
+                          <div key={i} onClick={()=>openProfile(d.company,d.ticker)}
+                            style={{ padding:"10px 14px", borderBottom:i<assaysPending.length-1?"1px solid #F2EEE6":"none", cursor:"pointer" }}
+                            onMouseEnter={e=>e.currentTarget.style.background="#FFFDF6"}
+                            onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                            <div style={{ display:"flex", alignItems:"baseline", gap:7 }}>
+                              <span style={{ fontSize:13, fontWeight:700, color:"#1A1A14" }}>{d.company}</span>
+                              <span style={{ ...MONO, fontSize:10, color:"#B07A08", fontWeight:700 }}>{(d.ticker||"").split(".")[0]}</span>
+                              {(d.pending||0)>0 && <span style={{ ...S.badge("amber"), fontSize:8.5, fontWeight:700, marginLeft:"auto" }}>{d.pending} pending</span>}
+                            </div>
+                            <div style={{ fontSize:11, color:"#6A6A5A", marginTop:2, lineHeight:1.4 }}>{d.highlight}</div>
+                          </div>
+                        )) : <div style={{ padding:"16px 14px", fontSize:11.5, color:"#9A9A8A", textAlign:"center" }}>No pending assays flagged right now.</div>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 2 — Permitting & Economics Timeline (estimated) */}
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+                    <Scale size={15} color="#B07A08" strokeWidth={2}/>
+                    <span style={{ ...S.lbl, letterSpacing:"0.12em", color:"#1A1A14" }}>PERMITTING &amp; ECONOMICS TIMELINE</span>
+                    <span style={{ fontSize:8.5, color:"#9A8A5A", fontWeight:700, fontStyle:"italic", border:"1px solid #E2DCD0", borderRadius:4, padding:"1px 6px" }}>ESTIMATED</span>
+                  </div>
+                  <div style={{ display:"grid", gridTemplateColumns: isMobile?"1fr":"1fr 1fr 1fr", gap:12 }}>
+                    {QUARTERS.map(q=>{
+                      const items = CATALYST_MILESTONES.filter(m=>m.quarter===q);
+                      return (
+                        <div key={q} style={{ border:"1px solid #E2DCD0", borderRadius:10, overflow:"hidden", background:"#FCFBF8" }}>
+                          <div style={{ padding:"8px 13px", background:"#F5F3EE", borderBottom:"1px solid #E2DCD0", fontSize:12, fontWeight:800, color:"#1A1A14", letterSpacing:"0.03em" }}>{q}</div>
+                          <div style={{ padding:"4px 0" }}>
+                            {items.length ? items.map((m,i)=>(
+                              <div key={i} onClick={()=>openProfile(m.company,m.ticker)}
+                                style={{ padding:"9px 13px", borderBottom:i<items.length-1?"1px solid #F2EEE6":"none", cursor:"pointer" }}
+                                onMouseEnter={e=>e.currentTarget.style.background="#FFFFFF"}
+                                onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                                <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:3 }}>
+                                  <span style={{ width:7, height:7, borderRadius:2, background:TYPE_COLOR[m.type]||TYPE_COLOR.Other, display:"inline-block", flexShrink:0 }}/>
+                                  <span style={{ fontSize:9, fontWeight:800, color:TYPE_COLOR[m.type]||TYPE_COLOR.Other, textTransform:"uppercase", letterSpacing:"0.04em" }}>{m.type}</span>
+                                  <span style={{ ...MONO, fontSize:9.5, color:"#B07A08", fontWeight:700, marginLeft:"auto" }}>{(m.ticker||"").split(".")[0]}</span>
+                                </div>
+                                <div style={{ fontSize:12, fontWeight:700, color:"#1A1A14", lineHeight:1.25 }}>{m.company}</div>
+                                <div style={{ fontSize:10.5, color:"#6A6A5A", marginTop:2, lineHeight:1.4 }}>{m.label}</div>
+                              </div>
+                            )) : <div style={{ padding:"14px 13px", fontSize:10.5, color:"#B8AE9C", textAlign:"center" }}>No milestones flagged.</div>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Disclaimer */}
+                  <div style={{ marginTop:16, padding:"10px 14px", background:"#FAFAF7", border:"1px solid #E8E4DE", borderRadius:8, fontSize:10, color:"#9A9A8A", lineHeight:1.6 }}>
+                    <strong style={{ color:"#6A6A5A" }}>How to read this:</strong> The Drill &amp; Assay Countdown is derived from tracked drill-program data and press releases, and may lag reality. The Permitting &amp; Economics timeline shows <strong>estimated</strong> milestone windows based on public company guidance — actual timing frequently shifts. Catalysts are not guarantees; verify with company filings and news. Not investment advice.
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+
         {/* Drill Result Tracker */}
         <div id="sec-drill" style={{ scrollMarginTop:90,  marginBottom:48, marginTop:24 }}>
           <div style={{ ...RuleH, display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
@@ -4397,7 +4538,7 @@ export default function App() {
           )}
 
           {SIDEBAR_NAV.map(item=>{
-            const ICONS = { Home, Star, Map, Hammer, DollarSign, Timer, Users, Activity, Play, Globe, Newspaper };
+            const ICONS = { Home, Star, Map, Hammer, DollarSign, Timer, Users, Activity, Play, Globe, Newspaper, Flag };
             const Icon = ICONS[item.icon] || Atom;
             const active = tab==="overview" && activeSection===item.id;
             return (
