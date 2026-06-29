@@ -1670,33 +1670,40 @@ export default function App() {
               (drillResults||[]).forEach(r=>{
                 const d = r.date ? new Date(r.date) : null;
                 const dated = d && !isNaN(d.getTime()) && !/^\d{4}$/.test(String(r.date));
-                // keep results from the last 90 days (or undated seed results as a fallback)
                 if (dated && now-d.getTime()>NINETY) return;
                 const key = r.company || r.ticker;
                 const gt = r.gt != null ? r.gt : (r.thickness_m!=null && r.grade_pct!=null ? +(r.thickness_m*r.grade_pct).toFixed(1) : null);
                 const cur = byCo[key];
-                // keep the best (highest grade×thickness) result per company
                 if (!cur || (gt!=null && (cur._gt==null || gt>cur._gt))) {
                   const bits = [];
                   if (r.project) bits.push(r.project);
                   if (r.interval_text) bits.push(r.interval_text);
                   else if (r.thickness_m!=null && r.grade_pct!=null) bits.push(`${r.thickness_m} m @ ${r.grade_pct}% U₃O₈`);
                   if (r.hole) bits.push(`hole ${r.hole}`);
-                  byCo[key] = {
-                    company: r.company || key,
-                    ticker: r.ticker,
-                    detail: bits.join(" · ") || "Recent drill result",
-                    date: dated ? r.date : null,
-                    gt,
-                    _gt: gt,
-                    co: findCo(r.company, r.ticker),
-                  };
+                  byCo[key] = { company:r.company||key, ticker:r.ticker, detail:bits.join(" · ")||"Recent drill result", date:dated?r.date:null, gt, _gt:gt, co:findCo(r.company,r.ticker) };
                 }
               });
-              // sort companies by their best grade×thickness, strongest first
-              return Object.values(byCo)
-                .sort((a,b)=> (b._gt||0)-(a._gt||0))
-                .map(({_gt, ...rest})=>rest);
+              let out = Object.values(byCo).sort((a,b)=> (b._gt||0)-(a._gt||0)).map(({_gt, ...rest})=>rest);
+              // Fallback: if the live feed produced nothing, show the static DRILLING programs.
+              if (!out.length) {
+                out = DRILLING.map(d=>({
+                  company: d.company, ticker: d.ticker,
+                  detail: [d.program, d.highlight].filter(Boolean).join(" · ") || d.status,
+                  date: d.updated || null,
+                  co: findCo(d.company, d.ticker),
+                }));
+              }
+              return out;
+            };
+            // Pending-assay rows: live news first, else the static DRILLING programs with pending holes.
+            const pendingRows = ()=>{
+              if (pendingLive) return newsRows(pendingRe, 60);
+              return DRILLING.filter(d=>(d.pending||0)>0).map(d=>({
+                company: d.company, ticker: d.ticker,
+                detail: `${d.pending} hole${d.pending>1?"s":""} pending${d.program?` · ${d.program}`:""}`,
+                date: d.updated || null,
+                co: findCo(d.company, d.ticker),
+              }));
             };
             const projectRows = ()=> COMPANIES.filter(c=>c.projects?.length).map(c=>{
               const names = c.projects.map(p=> typeof p==="string" ? p : (p?.name || "")).filter(Boolean);
@@ -1717,10 +1724,10 @@ export default function App() {
                 explain:"An estimate of the Athabasca Basin's total historical + current uranium endowment — roughly 10% of global known uranium resources. This is a basin-wide figure, not a single company's." },
               { icon:Map,       label:"Active Projects",  value:activeProjects, decimals:0, spark:spk(3), trend:null, rows:projectRows,
                 explain:"Total exploration & development projects across all tracked basin companies." },
-              { icon:Hammer,    label:"Active Drills",    value:activeDrills, decimals:0, spark:spk(1), trend:drillsLive?"live":null, up:true, note:drillsLive?"companies drilling · 90d":null, rows:drillsLive?drillRows:null,
-                explain:drillsLive?"Companies with a drill result reported in the last 90 days.":"Active drill programs across the basin (snapshot)." },
-              { icon:Timer,     label:"Pending Assays",   value:pendingAssays, decimals:0, spark:spk(2), trend:pendingLive?"live":null, note:pendingLive?"companies awaiting · 60d":null, rows:pendingLive?(()=>newsRows(pendingRe,60)):null,
-                explain:pendingLive?"Companies whose recent news indicates drilling underway or assays pending (last 60 days).":"Holes drilled and awaiting assay results (snapshot)." },
+              { icon:Hammer,    label:"Active Drills",    value:activeDrills, decimals:0, spark:spk(1), trend:drillsLive?"live":null, up:true, note:drillsLive?"companies drilling · 90d":null, rows:drillRows,
+                explain:drillsLive?"Companies with a drill result reported in the last 90 days.":"Active drill programs across the basin." },
+              { icon:Timer,     label:"Pending Assays",   value:pendingAssays, decimals:0, spark:spk(2), trend:pendingLive?"live":null, note:pendingLive?"companies awaiting · 60d":null, rows:pendingRows,
+                explain:pendingLive?"Companies whose recent news indicates drilling underway or assays pending (last 60 days).":"Holes drilled and awaiting assay results across the basin." },
               { icon:Landmark,  label:"Open Raises",      value:openRaises, decimals:0, spark:spk(7), trend:raisesLive?"live":null, note:raisesLive?"financings active · 60d":null, rows:raisesLive?(()=>newsRows(raiseRe,60)):(()=>FINANCINGS.filter(f=>f.status==="Open").map(f=>({company:f.company,ticker:f.ticker,detail:`${f.type} · ${f.amount}`,co:findCo(f.company,f.ticker)}))),
                 explain:raisesLive?"Companies with financing activity in the news over the last 60 days.":"Currently open financings across the basin." },
               { icon:DollarSign,label:"Total Market Cap", value:totalMktCap/1e9, prefix:"$", suffix:"B", decimals:1, spark:spk(5), trend:totalMktCap>0?"live":null, up:true, rows:mktCapRows,
