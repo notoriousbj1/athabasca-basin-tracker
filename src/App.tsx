@@ -1727,13 +1727,17 @@ export default function App() {
             });
             const mktCapRows = ()=>{
               const parseSh = s=>{ const n=parseFloat(s||"0"); if(!s)return 0; if(s.includes("B"))return n*1e9; if(s.includes("M"))return n*1e6; if(s.includes("K"))return n*1e3; return n; };
-              return COMPANIES.map(c=>({ company:c.name, ticker:c.ticker, _v:gP(c)*parseSh(c.sharesBasic), co:c }))
-                .filter(r=>r._v>0).sort((a,b)=>b._v-a._v)
-                .map(r=>({ ...r, detail: r._v>=1e9?`$${(r._v/1e9).toFixed(2)}B`:`$${(r._v/1e6).toFixed(0)}M` }));
+              const rows = COMPANIES.map(c=>({ company:c.name, ticker:c.ticker, _v:gP(c)*parseSh(c.sharesBasic), co:c }))
+                .filter(r=>r._v>0).sort((a,b)=>b._v-a._v);
+              const max = rows[0]?._v || 1;
+              return rows.map(r=>({ ...r, barPct: Math.round((r._v/max)*100), detail: r._v>=1e9?`$${(r._v/1e9).toFixed(2)}B`:`$${(r._v/1e6).toFixed(0)}M` }));
             };
-            const volRows = ()=> COMPANIES.map(c=>({ company:c.name, ticker:c.ticker, _v:gVol(c), co:c }))
-                .filter(r=>r._v>0).sort((a,b)=>b._v-a._v)
-                .map(r=>({ ...r, detail: r._v>=1e6?`${(r._v/1e6).toFixed(2)}M shares`:`${(r._v/1e3).toFixed(0)}K shares` }));
+            const volRows = ()=>{
+              const rows = COMPANIES.map(c=>({ company:c.name, ticker:c.ticker, _v:gVol(c), co:c }))
+                .filter(r=>r._v>0).sort((a,b)=>b._v-a._v);
+              const max = rows[0]?._v || 1;
+              return rows.map(r=>({ ...r, barPct: Math.round((r._v/max)*100), detail: r._v>=1e6?`${(r._v/1e6).toFixed(2)}M shares`:`${(r._v/1e3).toFixed(0)}K shares` }));
+            };
 
             const cards = [
               { icon:Atom,      label:"Total Resources",  value:900, suffix:" Mlb", decimals:0, prefix:"~", spark:spk(4), note:"~10% global", trend:null,
@@ -4525,7 +4529,16 @@ export default function App() {
                         {r.gt != null && <span style={{ ...S.badge("amber"), fontSize:8.5, fontWeight:700 }} title="Grade × Thickness score">G×T {r.gt}</span>}
                         {r.date && <span style={{ fontSize:10, color:"#9A9A8A", marginLeft:"auto" }}>{r.date}</span>}
                       </div>
-                      {r.detail && <div style={{ fontSize:11.5, color:"#6A6A5A", marginTop:3, lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{r.detail}</div>}
+                      {r.barPct != null ? (
+                        <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:5 }}>
+                          <div style={{ flex:1, height:7, background:"#F0EBE1", borderRadius:4, overflow:"hidden" }}>
+                            <div style={{ width:`${Math.max(2,r.barPct)}%`, height:"100%", background:"linear-gradient(90deg,#B07A08,#D4A03A)", borderRadius:4 }}/>
+                          </div>
+                          <span style={{ ...MONO, fontSize:11, fontWeight:700, color:"#6A6A5A", whiteSpace:"nowrap", minWidth:72, textAlign:"right" }}>{r.detail}</span>
+                        </div>
+                      ) : (
+                        r.detail && <div style={{ fontSize:11.5, color:"#6A6A5A", marginTop:3, lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{r.detail}</div>
+                      )}
                     </div>
                     {r.co && <span style={{ fontSize:15, color:"#C8BEA8", flexShrink:0 }}>›</span>}
                   </div>
