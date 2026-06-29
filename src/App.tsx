@@ -1416,7 +1416,7 @@ export default function App() {
   useEffect(()=>{ const t=setInterval(()=>setNow(new Date()), 1000); return ()=>clearInterval(t); },[]);
 
   // TSX/TSXV market status (open 9:30–16:00 ET, Mon–Fri). Computed in Eastern Time
-  // regardless of the viewer's timezone, but displayed time stays local.
+  // regardless of the viewer's timezone.
   const marketStatus = (()=>{
     try {
       const fmt = new Intl.DateTimeFormat("en-US",{ timeZone:"America/Toronto", weekday:"short", hour:"2-digit", minute:"2-digit", hour12:false });
@@ -1426,9 +1426,23 @@ export default function App() {
       const mm = parseInt(parts.find(p=>p.type==="minute")?.value||"0",10);
       const isWeekday = !["Sat","Sun"].includes(wd);
       const mins = hh*60+mm;
-      const open = isWeekday && mins>=570 && mins<960; // 9:30=570, 16:00=960
-      return { open, label: open ? "Market Open" : "Market Closed" };
-    } catch { return { open:false, label:"Market Closed" }; }
+      const OPEN=570, CLOSE=960; // 9:30 / 16:00 ET
+      const open = isWeekday && mins>=OPEN && mins<CLOSE;
+      let detail;
+      if (open) {
+        const left = CLOSE - mins;
+        const h=Math.floor(left/60), m=left%60;
+        detail = left<=60 ? `Closes in ${left}m` : `Closes 4:00 PM ET`;
+      } else if (isWeekday && mins<OPEN) {
+        const till = OPEN - mins;
+        detail = till<=60 ? `Opens in ${till}m` : `Opens 9:30 AM ET`;
+      } else {
+        // after close on a weekday, or weekend → next weekday open
+        const nextDay = (wd==="Fri" || (wd==="Sat")) ? "Mon" : (wd==="Sun" ? "Mon" : null);
+        detail = nextDay ? `Opens ${nextDay} 9:30 AM` : `Opens 9:30 AM ET`;
+      }
+      return { open, label: open ? "Open" : "Closed", detail };
+    } catch { return { open:false, label:"Closed", detail:"" }; }
   })();
 
   // When locked, add blurred filler rows so the list fills down to the news column height.
@@ -4208,23 +4222,28 @@ export default function App() {
 
           {/* Live date / time / market status */}
           {sidebarOpen && (
-            <div style={{ margin:"4px 12px 10px", padding:"10px 12px", background:"#FFFFFF", border:"1px solid #E2DCD0", borderRadius:8 }}>
-              <div style={{ fontSize:11, fontWeight:700, color:"#1A1A14", letterSpacing:"0.01em" }}>
-                {now.toLocaleDateString(undefined,{ weekday:"long", month:"short", day:"numeric" })}
-              </div>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:5 }}>
-                <span style={{ ...MONO, fontSize:12, fontWeight:700, color:"#6A6A5A", letterSpacing:"0.02em" }}>
+            <div style={{ margin:"4px 12px 10px", padding:"11px 13px", background:"#FFFFFF", border:"1px solid #E2DCD0", borderRadius:8 }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:7 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"#1A1A14", letterSpacing:"0.01em" }}>
+                  {now.toLocaleDateString(undefined,{ weekday:"long", month:"short", day:"numeric" })}
+                </div>
+                <span style={{ ...MONO, fontSize:11.5, fontWeight:700, color:"#6A6A5A", letterSpacing:"0.02em" }}>
                   {now.toLocaleTimeString(undefined,{ hour:"2-digit", minute:"2-digit", second:"2-digit" })}
                 </span>
-                <span style={{ display:"inline-flex", alignItems:"center", gap:4 }}>
+              </div>
+              {/* Market status pill */}
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"6px 9px", borderRadius:6,
+                background: marketStatus.open ? "#EAF8EF" : "#FBEDED",
+                border: `1px solid ${marketStatus.open ? "#BDE9CC" : "#F1D2D2"}` }}>
+                <span style={{ display:"inline-flex", alignItems:"center", gap:6 }}>
                   <span className={marketStatus.open?"stat-live-dot":undefined}
-                    style={{ width:6, height:6, borderRadius:"50%", background:marketStatus.open?"#16C44A":"#C01818", display:"inline-block" }}/>
-                  <span style={{ fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", color:marketStatus.open?"#16A34A":"#C01818" }}>
-                    {marketStatus.open?"Open":"Closed"}
+                    style={{ width:7, height:7, borderRadius:"50%", background:marketStatus.open?"#16C44A":"#C01818", display:"inline-block" }}/>
+                  <span style={{ fontSize:10, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.05em", color:marketStatus.open?"#16A34A":"#C01818" }}>
+                    {marketStatus.label}
                   </span>
                 </span>
+                <span style={{ fontSize:8.5, color:"#9A8A6A", fontWeight:600, whiteSpace:"nowrap" }}>{marketStatus.detail}</span>
               </div>
-              <div style={{ fontSize:8, color:"#9A9A8A", marginTop:4, letterSpacing:"0.04em" }}>TSX / TSXV</div>
             </div>
           )}
 
