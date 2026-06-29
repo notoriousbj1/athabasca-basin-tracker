@@ -1047,6 +1047,22 @@ function PriceOutlookTable() {
 }
 
 // ─────────────────────────────────────────────
+// Viewport hook — true when screen is phone-sized
+// ─────────────────────────────────────────────
+function useIsMobile(breakpoint = 760) {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < breakpoint : false
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", onResize);
+    onResize();
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
+}
+
+// ─────────────────────────────────────────────
 // Animated count-up number (ticks from 0 to target on mount)
 // ─────────────────────────────────────────────
 function CountUp({ value, prefix="", suffix="", decimals=0, duration=900, style }) {
@@ -1086,6 +1102,8 @@ function Sparkline({ data, color="#B07A08", w=54, h=18 }) {
 // MAIN APP
 // ─────────────────────────────────────────────
 export default function App() {
+  const isMobile = useIsMobile();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [tab, setTab]             = useState("overview");
   const [expanded, setExpanded]   = useState(null);
   const [companyModal, setCompanyModal] = useState(null);
@@ -1323,6 +1341,7 @@ export default function App() {
 
   // Sidebar navigation: switch to overview if needed, then smooth-scroll to the section.
   const goToSection = useCallback((item) => {
+    setMobileNavOpen(false);
     if (item.kind === "contact") {
       window.location.href = "mailto:admin@juniorstocks.com";
       return;
@@ -1433,6 +1452,9 @@ export default function App() {
 
   // TSX/TSXV market status (open 9:30–16:00 ET, Mon–Fri). Computed in Eastern Time
   // regardless of the viewer's timezone.
+  // On mobile the sidebar is a full-width drawer, so always show expanded content there.
+  const navExpanded = sidebarOpen || isMobile;
+
   const marketStatus = (()=>{
     try {
       const fmt = new Intl.DateTimeFormat("en-US",{ timeZone:"America/Toronto", weekday:"short", hour:"2-digit", minute:"2-digit", hour12:false });
@@ -1533,7 +1555,7 @@ export default function App() {
     return (
       <div>
         {/* Spot price sparkline + 4 info pits */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 256px", gap:0, marginBottom:20, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }} className="spot-glow">
+        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 256px", gap:0, marginBottom:20, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }} className="spot-glow">
           <div style={{ padding:"14px 20px", borderRight:"1px solid #D8D0C4" }}>
             <div style={{ display:"flex", alignItems:"baseline", gap:12, marginBottom:4, flexWrap:"wrap" }}>
               <div style={{ ...SERIF, fontSize:38, fontWeight:700, color:"#B07A08", lineHeight:1, letterSpacing:"-1px" }}>
@@ -1787,7 +1809,7 @@ export default function App() {
         {/* Featured Stories — two column */}
         <div id="sec-featured" style={{ marginBottom:20, paddingBottom:20, borderBottom:"2px solid #D8D0C4", scrollMarginTop:90 }}>
           <div style={{ ...S.lbl, color:"#B07A08", marginBottom:12, letterSpacing:"0.15em" }}>FEATURED STORIES</div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1px 1fr", gap:"0 24px" }}>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1px 1fr", gap: isMobile ? "24px 0" : "0 24px" }}>
 
             {/* Left — top basin story */}
             <div>
@@ -1852,7 +1874,7 @@ export default function App() {
             </div>
 
             {/* Vertical rule */}
-            <div style={{ background:"#D8D0C4" }}/>
+            {!isMobile && <div style={{ background:"#D8D0C4" }}/>}
 
             {/* Right — Juniorstocks.com feature */}
             <div>
@@ -1904,7 +1926,7 @@ export default function App() {
         </div>
 
         {/* Companies + News 2-col */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 300px", gap:"0 18px", marginBottom:20, alignItems:"start" }}>
+        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 300px", gap:isMobile?"16px 0":"0 18px", marginBottom:20, alignItems:"start" }}>
           {/* Left: Companies */}
           <div ref={coListRef} style={{ ...S.card, marginBottom:0 }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
@@ -2218,7 +2240,7 @@ export default function App() {
                 .slice(0, 10);
 
               return (
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 220px", gap:0 }}>
+                <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 220px", gap:0 }}>
                   {/* MAP */}
                   <div style={{ position:"relative", borderRight:"1px solid #D8D0C4" }}>
                     {/* Data-layer toggles bar */}
@@ -2295,7 +2317,10 @@ export default function App() {
                         onMouseLeave={()=>{ setBmtHover(null); mapDrag.current=null; }}
                         onMouseDown={e=>{ if(mapView.z>1){ mapDrag.current={ sx:e.clientX, sy:e.clientY, cx:mapView.cx, cy:mapView.cy, w:e.currentTarget.getBoundingClientRect().width }; } }}
                         onMouseMove={e=>{ if(mapDrag.current){ const d=mapDrag.current; const scale=(SVG_W/mapView.z)/d.w; setMapView(v=>({ ...v, cx:d.cx-(e.clientX-d.sx)*scale, cy:d.cy-(e.clientY-d.sy)*scale })); } }}
-                        onMouseUp={()=>{ mapDrag.current=null; }}>
+                        onMouseUp={()=>{ mapDrag.current=null; }}
+                        onTouchStart={e=>{ if(mapView.z>1 && e.touches[0]){ const t=e.touches[0]; mapDrag.current={ sx:t.clientX, sy:t.clientY, cx:mapView.cx, cy:mapView.cy, w:e.currentTarget.getBoundingClientRect().width }; } }}
+                        onTouchMove={e=>{ if(mapDrag.current && e.touches[0]){ const t=e.touches[0]; const d=mapDrag.current; const scale=(SVG_W/mapView.z)/d.w; setMapView(v=>({ ...v, cx:d.cx-(t.clientX-d.sx)*scale, cy:d.cy-(t.clientY-d.sy)*scale })); } }}
+                        onTouchEnd={()=>{ mapDrag.current=null; }}>
                         <defs>
                           <radialGradient id="basinFill" cx="50%" cy="45%" r="65%">
                             <stop offset="0%" stopColor="#F0E2C0" stopOpacity="0.75"/>
@@ -2759,7 +2784,8 @@ export default function App() {
                 { tint:"#F8F1E9", bar:"#B07A4A", rank:"#8A5A2E", glyph:"🥉" }, // bronze
               ];
               return (
-                <>
+                <div style={{ overflowX: isMobile ? "auto" : "visible", WebkitOverflowScrolling:"touch" }}>
+                  <div style={{ minWidth: isMobile ? 680 : "auto" }}>
                   {/* Header row */}
                   <div style={{ display:"grid", gridTemplateColumns:COLS, gap:0, padding:"11px 18px", borderBottom:"2px solid #D8D0C4", background:"#FAF8F3", fontSize:9.5, fontWeight:800, color:"#6A6A5A", textTransform:"uppercase", letterSpacing:"0.07em" }}>
                     <div style={{ ...hCell }} onClick={()=>sortBy("gt")}>Rank</div>
@@ -2833,7 +2859,8 @@ export default function App() {
                     </div>
                     {drillGenAt && <span>Updated {new Date(drillGenAt).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span>}
                   </div>
-                </>
+                  </div>
+                </div>
               );
             })()}
           </div>
@@ -2893,7 +2920,7 @@ export default function App() {
                       const evts = filtered.filter(e=>e.region===band.key).sort((a,b)=>b.amount-a.amount);
                       const maxAmt = Math.max(...evts.map(e=>e.amount), 1);
                       return (
-                        <div key={band.key} style={{ display:"grid", gridTemplateColumns:"112px 1fr", border:"1px solid #E8E4DE", borderRadius:8, overflow:"hidden", background:"#FBFAF6" }}>
+                        <div key={band.key} style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "112px 1fr", border:"1px solid #E8E4DE", borderRadius:8, overflow:"hidden", background:"#FBFAF6" }}>
                           {/* Mini-map cell */}
                           <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:6, padding:"10px 6px", background:"#F4F1EA", borderRight:"1px solid #E8E4DE", position:"relative" }}>
                             <div style={{ position:"absolute", left:6, top:0, bottom:0, display:"flex", alignItems:"center" }}>
@@ -3295,7 +3322,7 @@ export default function App() {
             const ang = Math.PI*(1 - score/100); // 0→π
             const nx = CX + R*Math.cos(ang), ny = CY - R*Math.sin(ang);
             return (
-              <div style={{ display:"grid", gridTemplateColumns:"320px 1fr", gap:20 }}>
+              <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "320px 1fr", gap:20 }}>
 
                 {/* LEFT — gauge + volume */}
                 <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
@@ -3768,7 +3795,7 @@ export default function App() {
               {globalNewsLoading?"Fetching…":"↻ Refresh"}
             </button>
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"0 24px" }}>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap:"0 24px" }}>
             {(globalNews.length>0?globalNews:STATIC_GLOBAL_NEWS).slice(0,9).map((n,i,arr)=>{
               const cols = 3;
               const lastRowStart = arr.length - (arr.length % cols === 0 ? cols : arr.length % cols);
@@ -3858,7 +3885,7 @@ export default function App() {
 
             {isE && (
               <div style={{ marginTop:16, paddingTop:16, borderTop:"1px solid #1C2840" }}>
-                <div style={{ display:"grid", gridTemplateColumns:"180px 1fr", gap:16, marginBottom:14 }}>
+                <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "180px 1fr", gap:16, marginBottom:14 }}>
                   {/* Cap table */}
                   <div>
                     <div style={{ ...S.lbl, marginBottom:8 }}>📋 Capital Structure</div>
@@ -4233,10 +4260,33 @@ export default function App() {
 
 
       {/* Sidebar + Content layout */}
+      {/* Mobile hamburger button */}
+      {isMobile && (
+        <button onClick={()=>setMobileNavOpen(true)}
+          style={{ position:"fixed", top:36, left:10, zIndex:60, width:42, height:42, borderRadius:10, background:"#FFFFFF", border:"1px solid #D8D0C4", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", boxShadow:"0 2px 8px rgba(0,0,0,0.12)" }}
+          aria-label="Open menu">
+          <Menu size={20} color="#1A1A14"/>
+        </button>
+      )}
+
+      {/* Mobile drawer backdrop */}
+      {isMobile && mobileNavOpen && (
+        <div onClick={()=>setMobileNavOpen(false)}
+          style={{ position:"fixed", inset:0, background:"rgba(26,26,20,0.5)", zIndex:55 }}/>
+      )}
+
       <div style={{ display:"flex", alignItems:"flex-start" }}>
 
-        {/* Collapsible Sidebar */}
-        <aside style={{
+        {/* Collapsible Sidebar (drawer on mobile) */}
+        <aside style={ isMobile ? {
+          position:"fixed", top:0, left:0, height:"100vh", width:268,
+          transform: mobileNavOpen ? "translateX(0)" : "translateX(-100%)",
+          transition:"transform 0.25s ease", zIndex:58,
+          background:"#F5F3EE", borderRight:"1px solid #D8D0C4",
+          overflowY:"auto", overflowX:"hidden", paddingTop:0, paddingBottom:24,
+          display:"flex", flexDirection:"column", gap:2,
+          boxShadow: mobileNavOpen ? "4px 0 24px rgba(0,0,0,0.18)" : "none",
+        } : {
           position:"sticky", top:0, alignSelf:"flex-start",
           width: sidebarOpen ? 224 : 60, flexShrink:0,
           height:"100vh", overflowY:"auto", overflowX:"hidden",
@@ -4245,9 +4295,9 @@ export default function App() {
           display:"flex", flexDirection:"column", gap:2, zIndex:20,
         }}>
           {/* Logo + title */}
-          <div style={{ display:"flex", alignItems:"center", gap:11, padding: sidebarOpen ? "18px 16px 16px" : "18px 0 14px", justifyContent: sidebarOpen ? "flex-start" : "center" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:11, padding: (sidebarOpen||isMobile) ? "18px 16px 16px" : "18px 0 14px", justifyContent: (sidebarOpen||isMobile) ? "flex-start" : "center" }}>
             <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADgAAAA4CAYAAACohjseAAATK0lEQVR42u2aaXQc1ZXH/6+quqp3dWttbZaszZssWwaMd9kYjAPDamyYcEjIyjKZmUCGMFlAliEhGzPZgDjkhJAYSIwBA8aAg5GFbbzKsWxrX1pLq1vqfe9a35sPkM/BIDGZnLmfqs6pc+791b313q33v8A/uJFPxQn5wM2Ch28RAaB3xx4VABhj/8ffHiFgjHEf3ubBjEq4UYk8uAFgN2P8X+Fny4TZAqOUcuQDwz1PtK6aSgS1m2+8fjMFIbv37HljbmGldRshxwAIuxljt3KcMRsZJbMFBsB034P3zWv+1y13hmzpSysuaM+cXEWepABZcVi/59hi9fP5OUfX9JPv/u6J7/+4F4C6le3GHu7WGQWdMcBWxri2D8rN3PrkD5rmXHfZ7VqJ+dYRU6Io0N5z2+KVSx56VRxZRBnFdVpdb/vhQ61YX7u7hrgj9qC2O7mve9fTd7WdA5BrZYy1EUL/bgAX3tti73myw/Stp3+0sObaS7+oFPK3TJiyzhBkBE+eu+fGurWbXs2fvikcnjaoQWErKeC3Rstf+9n5V94gLXU7C2QJ5YY1ZU3jpcRbvc+8fOcPu/NvX65FnzuZAvCJ0sl/sqy1ct3H056xPx4Tfz6+75HCDYuenHDQ5u6sVySSiQRHxn5yk2Wp6Wh5+p6R6ITCq+CoZiCei2vhImHRnXTJXw6Mdp5kdmm1d3RCTMy1NkvNZV+o++I6t/+LL7xvuXaR85sDd2c62jrY/04Gi2BH9dyyr7/Q9jlKaUQ2UyfvNG+0O91rI4npI5vGyvYOL8n7yTEMgQcHGTp0UDAwJKHgctRj2YXcg4+6jl9rtbrW5UKx9xnR35E0Eqccnz/w5V270D/qRwSpTxWQEIJbbrmFj9TbljRfvqTauLrqVyZBdGQSyXe0eO5dMc2x/if2H7z3vrtviNhJcZammEGAHNNgIiaoRCOEcoyC4yoUKfjITx7fa/6XVVeq0KDqrIW5zZsYp2cWn6N3B48PeTsHWRf2vGh8nGL9WIDsg/1L2jl14Nn+VKAvXsJvy7c6Gsy8FSIEnN936IbeFY5/tlFTUYHMq6e1Sd7E82ypqZyFtTQZ1oJwEIks5kvpMd5vKjHbw8n3BnZJm+a/rgZyMEJZKJw2WO12v1ieV9iwt/zeO1tYq9JB2vRZ3wcZY4QQwn//4DNbJkv4W074hu5rKl7o1hVGJauJ83f1P9DRqN5sKeRvW5GswAAJo0QswiLJg1E5iiCnod5SibiWwTRVsAxl6OIjsDR6VNIdvF+Y4/ov1adRk5139fm9ITrP/e2rD25/7W2yfTdjzPiwMWCzssgQQtDO2oU1TZvrPV9a8fsTmLAJgcwbeUXuqwrtHkvG7/+VnFXStQ3zv1ExSrVUMoMzQS9bhhLWFR5jpZqFNekFjCQ1Vqs5GEnKLDUdZ4Uh3pDnOJpz6dRhRZH7hOr85UZK1kxJ7WCUqJud9UUrPLLtja/+ti2O3rBxMTFzF/Pwn+if+I62DnPzd25oPSNFy5R0NssMUKvD4WLJ2Ht/On/kcPdc45G+/gGjJxMU3s+O8U3OCt5H0nyNs4h3ma384dwoH2IZviczxXOcwBeaHbyqakLFgG4sLpm7Y0XU+b6WTR0yzXW6KKWGMZrJjsSjZdYH1jyMF3vMLe8+LMwKIGOMbCPbuO1nn79rvETc5ktNAQrSVofVRRTdt/fggZ9ZLpvz38OTk3w6l+MKJTu5PL8aWdHAOEmixlKEw1kvFjvKIQgCssRAWlcAk4Bym5tYcgY30jfKna3ET+v7yS+JwMYEl9nFKTSd6J1GqEzYtqrr0bs6NrQRxhiZ8RLtWdTDB3KWsjmXzisdsoaTgmiaI5l4G+9PvWobz76ZW1p8v19JN1THrUaxJY8bowmMkBhygoHrnY04Lftg4yRAZzie8GKlvRohJQ1GKdLZFJK5LKkze2hQz9nK53pqB7p6H3Vwkq55zDdwdiGrptN7pITerYxEwm95Q+mxjg46c4CEoOfFbta8eW2lcOv8R31avJcfSTxvlulfzvz0nXdGbyy4Z33xoiu7e4f1Cmu+MKrGkeQ0GCKw2T4fZzU/RtQYlollOJUax3JrJda56uESrDge6IWVCQAEmIhAlEDCUAqE8rhNNVn+0Pd7fmlJGEn5JcNELLlSaQs3kny75wfPTH3U9f8jlugHixZVdCUlGvVCset+NJY8ESUK79hY7eJLnDd39Q/RNY4awZuYRolkh0Y1gFJkNAUROQMnE5AzFDBQLLWX40feA+iJ+3BnzVrEdQU2UYKF4xBKx3irN0vd5Z7rEytKimVNhe60/ULT+W8YhM43qKHO2iKTJTqXURU5NRA0silZMhui+TPZKrYqWToRNnKcm0iMUQYHTCgVHNByOrriPnzG3ABN0RDPprFE9OC5wEmYDYL3QwM4FOpHg7MM04kIMtksKuxuNkVzXGnSOnm1UqHl62azNp226BdChqEaMqyUzBpgCgoUZoDYTLwaToxRVUuUXb/sqwdDFw7WFJdgNBGijc5yHI94UcmcWC3MgWAA74b7cLVUB1XTEJczuNRSAU3TYAaH7sg4zodHUSjaMRyZQrGzgGr5IvIV7s8Fn1l8pySZ40ZaHuVcEs8AQOfYrAFCAlSmU+IUoafktyaL1Ca/U7mqIEbOXFB8MBGebCxYgFpzEU4Gh3A0NIgK2FHKbPjzVA8WiEWQDIKhWAArXdWoNOej0VqGCrMLCTWHxWU1GIlOkkK7HWKSdoVFZfOYM91sojjAuS0AGFUvsjG5KEBVUaFB53RFhRHJnlKAdeN8xnOrfVHWrCDqpQnuleFjbLlUih211+HR+uvQEehFT2gCy2wVODzdjxrBjYySw3B8CpzG4EtFYOdFzHUWYTIRZjCbOJ1psVJmTcepUpqLyuvELD1FOACEcJhVQF1jOscceirXrVsFO8dLFX6kke8qmmvixU5PUT44jbKjwUEcnu5FIpPCl8pWY1leJU5MDWAO50RfYhKXu6rRMz2OUCqGdWULMJEIo9M3iJwiM1eVBz3y9OnasopKbyIMIU7LqY13gNFu8JwDWW32SlRNUYPxRKLp3H6Wb75CkIHpZBwJm7HcHw+d7pQncMTXz2BQuE1WbD/1IiKZBO6asxZU1gDGEEknkcnmcPuclVhXMg/vDHQi32JHoSUPTNWY22nDbdalZyb45OXT/hC4iAZDJBsEge3nTJxIUrnZa9UEj1U0QCdpQh6monAFgjlkYin08LFlm2jVCAM1rqlr5prs5fhj7xGUm10QdIZfdL2FRY4ynJvyYoHVg0PjF/DayCns6T2OuU4PRqemYBVErGxYzPlz04aQVbw+LXlpajIK5k9DN7CBSygjnInzUafdNGuApoWFTiOlvmuIYhUskl3PqAaNqXRETBcsslU4NjrrB+NEI8+dP0wz6SwWOcrhjU1jLDqFCrML0UQCw5EA1hXPg5tZsLFiMQLJKFRVQY2jiL4SOE9KhYLBxoJKcUCNFiCYoyyrGBTErsqsms/pB8VFbuesAeoRhdIz0we0PGmzGpehU0q4HJhfTUEstDV1BPtOnFJ92Fy5mFVbi2BnIobDU0jKMgSDg5VJGAsHMRQMoMJZiKMj3fDHIvi3NTciI2dYS9NiTLHMqSlRWxqIR8GnNQZGCQ3nQAWymTs1/TYX0mahRBmA9lYh8r0DY5pTsKHK2ayEUrqmG4TojEQjCXSZwstLVXPXqqoF6AyMkFg8gRpXMWKpFGKpFGBQOIkEgRIEEhEcHb6AbY2r8YWmDej09sEnp0hfYhJ5CbVrgk+viPrCMBkcASOExmWdq3UtMVyiI/zwG160twof9Y/wo2dwPSjqClUumo0QRfkL6pyCagbRFJXJ00nWa0Tmfda1LDeUmor59SRX7yxmkXQS5WYXSFZFVpFh401IZTIgBpDHmbFmzgIcGD6H9sGzzGKzckQ0xZvclan+zHSDMZlijFJm5ImEW1YoEBM7y2LpKJZUUawHnfkSJW0UNy7PBm767fvcC933CYn0Y1yVJUprnTwyuh7mFS7hZFXjcqjTUpKHioJiemK4F3lEQo3Tg4HABK6bfxnyBStyyRRq8j3Y13UUq6vmwwDPTmS9OJ8dOyM4LVXBXIrnsrrOGgt5rrkgKgp4zPq2777gjc+9X7duQQ6kjc5OJ7Njj4qtC+NCRX6ZrShvAd8X/BrP9OelujxTVFLJlE1usinc8eI5xZBlBZqmI5pKwpPnRpdvBAe6TuELl10JolHkizaEsxkouRzW1zcyvUhEhZB3LCwoSxJmjUjNJSY+X3zeGpO/ljeveCGtdJRi68LY0C/fVmavVWMM2N2t+27YuVeFIXPrG3Yak8kLtunk3SpVLngd8uZKwxKscOVpI9FJziJKyBg6RgKTWFkxHz3jg/jzuZPYetkGlDrdSMo5HB3ugazJ3PLa+bo1Y0wOOZKbDTvrteraPUJK7+KuqvuVBkMN/NNv9mJ3t46LPNa/6NYHhFC0tmiZ21/8TyLnomyp5/vJDPuc9nr/D7hY7tfNBVUoF50T4y4d3niQzs8vhtc/Bo4Ahc5CBKIRLPRU4PRQN/zREDzufHpIGUa94PY3u6osNC3v1PaPfi+bI3fQRQU/hCInYl/a+wDaWzRwF3+cf/GAAMH2Q0a8vTfAnZl6mGiaoSr6KlNhwa5T57ptfc+8+/pAavoFfXk+ydkMaIbOiCQhk8uBB8G1l6zC04ffRJ9vFPWFpWyETwIrS8gR/4VdY7tOvHbu+KCNz3P8Qc/pq3gzo0J38GF5f28A6w8ZYBd/zPlxABkIYWCtdHLjUy8LjL0kzHVAG4ppzGq5Y2ila8vW6NyzGAtuz1tbBbXcShhh1BsKYMPCJYhnU5iIhWBzuahWIJB4g0DsMfro3dqyE33LLdfCafk8HUvopvl5kEz8y/6W37wE1kpBCPs4OsXH1yZ2dFC0tlBXZ7yP2zhnixqXbWwyx1ROVfTmfM+1pZeV2wfiPx4o09apPLOlJoJGQ1kVF4hF4ItOG+JSDx9vkOIlw5kv33Hp5suPm6fqBgdGF5FppQ4eidibiyL8znNfSa0r8+OKZ/WPG+YnEV8IDo2y1IbPxly3NcuswX2N2h0hgiCUD/gHfxOcb/3Oas98i6nTv713ntFkzs8rHu3x6tXFpdRfywvKHKF/g8/+jas2bLrjedpz8+mDR39uNsz3GhlFslw9h7NMZx/y3bbrTRy608D2jy++fCJ1CW1tQHsrSa36Ya/rgZZLdAtXa8Q1yaaK58PxePJCce6a9Q1LG28Ycm8/UBRw0mp7Q3F9Oce5Te2fHSl9rGBt43efNc6vDZ3x7suLCIrGcVfxjW5iK7G+k657/DsKa5VB2oxPEuInAwSA379H0QLdKRYNCqsrtirhnMgSitUM075sOH11Z3qsuKC55opv+hp//FbpuD7FEr1Phza+eHal9PPf9R6uUQejcGTor5WsdhMtkjyOJQVp6bWRrwT93V7c/Z7+ScObGYWXMQ6EmCp7/+PbCYl7WDkWMEyq9jXmND+kRdQStVbib11zBVt/znpPgmXUE03s6b0nj/CmEdkQ3eIUF0w9okrSE+a1Ht6hajsm5v30MTCmYgZUXm5GAAmhaG81oltfetJqE48Ll3p4Bu4SjpH9vN3MC90peV/wAhmp0jcl51qveSfSz/MXkrKQZ+YJj/0a+Ev4S4p5i1U4EbnplafQ3qpjhiTsmQEEgI079MwFb1g6MtFmLTRrRr50jRBXTkJglOjMxEc0llSz2bSqZsWYwTgGE3iDCtHcaVJsvdbqsWjikYnt2Z6xCDbu0GcqrJkDpAxguzG25dkOc0R+yrymskyWNTsn4AzJs/BMZ0RmBpdhMjF0SkiexHMc6VRTht28trzMGpefGtuyqwNsNwWduSmLmQMEALLNQHuLpt//7uMWgglusftmPmvsI24JjFIoMJCBCkYNELcZSOn7uEb3zRKjPvXf2x/Hzkt0kG3GTIY0s4AAsP6QEdjXOSmenn7Q3VC8hsm5CcGgMU4SkKYKy0IDkwQwRqM0p/js8wtXi2eCDwb2dQbw1dP6TIcz84CEsBbWSsY27dxrVsl+5/KqVQRsP1dkYzloVGWGwRdZGUeNN50rylebNPbm2FW/frmFtbIP27G/c0AAHVybjt1b1fizXd/NK3bUigI5LVh4IhMNOejEZOGJheC0s9hRl/3D2Yewe6vWwbXpsxHLrMyqgQFs625KCOnK31T7amFlEVKyOqXykpVylIoZZcpRWcAZ3uSr4W+90cUYo2Tb7AzlzUoGP9TzGRhj44++/bLFlwhZOf6YbqIC5ZlgI/wx3pcOTba9tQcfDBbM2lzlrAH+9XuUU5ngyPZ9J4X+1Otmg88IOpG5odS+wCMHjsvnM0HMItzM9KJ/y8YTuipxVAkkEp6l1XnI6FODj799MN3rD2JiOj3b7mcfEAC+vkJXzwbN6eHgePi0dyA5Ek5jy7wIDo3R2Xb9qYw0AwCuarIhES8GgCKLPRTq6EnjH80sV84rs1w5r+zT9Cl8ms5ymif4wVU//t9myP4HNzb5ELgYO0kAAAAASUVORK5CYII=" alt="logo" style={{ width:38, height:38, objectFit:"contain", flexShrink:0 }}/>
-            {sidebarOpen && (
+            {navExpanded && (
               <div style={{ minWidth:0 }}>
                 <div style={{ fontSize:14, fontWeight:800, color:"#B07A08", letterSpacing:"0.03em", lineHeight:1.05 }}>ATHABASCA<br/>BASIN TRACKER</div>
               </div>
@@ -4255,23 +4305,30 @@ export default function App() {
           </div>
 
           <div style={{ borderBottom:"1px solid #E2DCD0", margin:"0 0 6px" }}/>
-          {/* Collapse toggle row — tagline left, chevron right */}
-          <div style={{ display:"flex", alignItems:"center", justifyContent: sidebarOpen?"space-between":"center", padding: sidebarOpen?"4px 10px 8px 16px":"4px 0 8px", gap:8 }}>
-            {sidebarOpen && (
+          {/* Collapse toggle row — tagline left, chevron/close right */}
+          <div style={{ display:"flex", alignItems:"center", justifyContent: navExpanded?"space-between":"center", padding: navExpanded?"4px 10px 8px 16px":"4px 0 8px", gap:8 }}>
+            {navExpanded && (
               <div style={{ fontSize:9.5, color:"#6A6A5A", letterSpacing:"0.05em", textTransform:"uppercase", lineHeight:1.45, minWidth:0, fontWeight:600 }}>
                 Uranium Intelligence<br/>Dashboard <span style={{ color:"#B07A08", fontWeight:700 }}>by Juniorstocks.com</span>
               </div>
             )}
-            <button onClick={()=>setSidebarOpen(o=>!o)}
-              title={sidebarOpen?"Collapse":"Expand"}
-              style={{ display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
-                background:"none", border:"none", cursor:"pointer", color:"#9A9A8A", padding:4 }}>
-              {sidebarOpen ? <ChevronLeft size={18}/> : <Menu size={18}/>}
-            </button>
+            {isMobile ? (
+              <button onClick={()=>setMobileNavOpen(false)}
+                title="Close menu"
+                style={{ display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+                  background:"none", border:"none", cursor:"pointer", color:"#9A9A8A", padding:4, fontSize:22, lineHeight:1 }}>×</button>
+            ) : (
+              <button onClick={()=>setSidebarOpen(o=>!o)}
+                title={sidebarOpen?"Collapse":"Expand"}
+                style={{ display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+                  background:"none", border:"none", cursor:"pointer", color:"#9A9A8A", padding:4 }}>
+                {sidebarOpen ? <ChevronLeft size={18}/> : <Menu size={18}/>}
+              </button>
+            )}
           </div>
 
           {/* Live date / time / market status */}
-          {sidebarOpen && (
+          {navExpanded && (
             <div style={{ margin:"4px 12px 10px", padding:"11px 13px", background:"#FFFFFF", border:"1px solid #E2DCD0", borderRadius:8 }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:7 }}>
                 <div style={{ fontSize:11, fontWeight:700, color:"#1A1A14", letterSpacing:"0.01em" }}>
@@ -4303,11 +4360,11 @@ export default function App() {
             const active = tab==="overview" && activeSection===item.id;
             return (
               <button key={item.id} onClick={()=>goToSection(item)}
-                title={!sidebarOpen ? item.label : undefined}
+                title={!navExpanded ? item.label : undefined}
                 style={{
                   display:"flex", alignItems:"center", gap:12,
-                  padding: sidebarOpen ? "10px 16px" : "10px 0",
-                  justifyContent: sidebarOpen ? "flex-start" : "center",
+                  padding: navExpanded ? "10px 16px" : "10px 0",
+                  justifyContent: navExpanded ? "flex-start" : "center",
                   background: active ? "#FFFFFF" : "transparent",
                   borderLeft: active ? "3px solid #B07A08" : "3px solid transparent",
                   borderTop:"none", borderRight:"none", borderBottom:"none",
@@ -4320,22 +4377,22 @@ export default function App() {
                 onMouseEnter={e=>{ if(!active) e.currentTarget.style.background="#EDE9E1"; }}
                 onMouseLeave={e=>{ if(!active) e.currentTarget.style.background="transparent"; }}>
                 <Icon size={18} strokeWidth={active?2.4:2} color={active?"#B07A08":"#8A8A7A"} style={{ flexShrink:0 }}/>
-                {sidebarOpen && <span style={{ overflow:"hidden", textOverflow:"ellipsis" }}>{item.label}</span>}
+                {navExpanded && <span style={{ overflow:"hidden", textOverflow:"ellipsis" }}>{item.label}</span>}
               </button>
             );
           })}
 
           {/* Tab links the sidebar doesn't cover (News Feed, Financings, Politics) */}
-          {sidebarOpen && <div style={{ ...S.lbl, padding:"16px 16px 6px", fontSize:9, color:"#B8AE9C" }}>MORE</div>}
+          {navExpanded && <div style={{ ...S.lbl, padding:"16px 16px 6px", fontSize:9, color:"#B8AE9C" }}>MORE</div>}
           {[{id:"news",label:"News Feed",icon:Newspaper},{id:"financings",label:"Financings",icon:Landmark},{id:"politics",label:"Politics",icon:Flag}].map(t=>{
             const Icon = t.icon; const active = tab===t.id;
             return (
               <button key={t.id} onClick={()=>{ setTab(t.id); window.scrollTo({top:0}); }}
-                title={!sidebarOpen ? t.label : undefined}
+                title={!navExpanded ? t.label : undefined}
                 style={{
                   display:"flex", alignItems:"center", gap:12,
-                  padding: sidebarOpen ? "10px 16px" : "10px 0",
-                  justifyContent: sidebarOpen ? "flex-start" : "center",
+                  padding: navExpanded ? "10px 16px" : "10px 0",
+                  justifyContent: navExpanded ? "flex-start" : "center",
                   background: active ? "#FFFFFF" : "transparent",
                   borderLeft: active ? "3px solid #B07A08" : "3px solid transparent",
                   borderTop:"none", borderRight:"none", borderBottom:"none",
@@ -4346,13 +4403,13 @@ export default function App() {
                 onMouseEnter={e=>{ if(!active) e.currentTarget.style.background="#EDE9E1"; }}
                 onMouseLeave={e=>{ if(!active) e.currentTarget.style.background="transparent"; }}>
                 <Icon size={18} strokeWidth={active?2.4:2} color={active?"#B07A08":"#8A8A7A"} style={{ flexShrink:0 }}/>
-                {sidebarOpen && <span>{t.label}</span>}
+                {navExpanded && <span>{t.label}</span>}
               </button>
             );
           })}
 
           {/* U₃O₈ Spot price card — spacing that survives sidebar overflow/scroll */}
-          {sidebarOpen && (
+          {navExpanded && (
             <div style={{ marginTop:"auto", marginLeft:12, marginRight:12, marginBottom:28, padding:"12px 14px", background:"#FFFFFF", border:"1px solid #E2DCD0", borderRadius:8, flexShrink:0 }}>
               <div style={{ ...S.lbl, marginBottom:4, fontSize:8.5 }}>U₃O₈ SPOT · USD/LB</div>
               <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
@@ -4379,7 +4436,7 @@ export default function App() {
         </aside>
 
         {/* Content */}
-        <main style={{ ...S.main, flex:1, minWidth:0, position:"relative" }}>
+        <main style={{ ...S.main, flex:1, minWidth:0, position:"relative", padding: isMobile ? "60px 14px 20px" : S.main.padding, width: isMobile ? "100%" : undefined }}>
           {/* Scroll progress bar — sticky at top of content, starts where the sidebar ends */}
           <div style={{ position:"sticky", top:0, zIndex:15, height:3, background:"#E8E2D6", margin:"-16px -20px 13px", borderRadius:0 }}>
             <div style={{ height:"100%", width:`${scrollPct}%`, background:"linear-gradient(90deg, #B07A08, #D4A03A)", transition:"width 0.15s ease-out", willChange:"width" }}/>
@@ -4447,7 +4504,7 @@ export default function App() {
         const tc = sentPost.tag==="Bullish" ? "#16A34A" : sentPost.tag==="Bearish" ? "#C01818" : "#B07A08";
         return (
           <div onClick={()=>setSentPost(null)}
-            style={{ position:"fixed", inset:0, background:"rgba(26,26,20,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+            style={{ position:"fixed", inset:0, background:"rgba(26,26,20,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding: isMobile ? 10 : 20 }}>
             <div onClick={e=>e.stopPropagation()}
               style={{ background:"#FFFFFF", borderRadius:12, padding:"28px 30px", width:"100%", maxWidth:480, boxShadow:"0 24px 64px rgba(0,0,0,0.18)", position:"relative" }}>
               <button onClick={()=>setSentPost(null)}
@@ -4500,7 +4557,7 @@ export default function App() {
         const rows = statModal.rows || [];
         return (
           <div onClick={()=>setStatModal(null)}
-            style={{ position:"fixed", inset:0, background:"rgba(26,26,20,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+            style={{ position:"fixed", inset:0, background:"rgba(26,26,20,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding: isMobile ? 10 : 20 }}>
             <div onClick={e=>e.stopPropagation()}
               style={{ background:"#FFFFFF", borderRadius:12, width:"100%", maxWidth:520, maxHeight:"80vh", boxShadow:"0 24px 64px rgba(0,0,0,0.18)", position:"relative", display:"flex", flexDirection:"column", overflow:"hidden" }}>
               {/* Header */}
@@ -4561,7 +4618,7 @@ export default function App() {
       {/* Subscribe modal */}
       {showSubModal && (
         <div onClick={()=>setShowSubModal(false)}
-          style={{ position:"fixed", inset:0, background:"rgba(26,26,20,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          style={{ position:"fixed", inset:0, background:"rgba(26,26,20,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding: isMobile ? 10 : 20 }}>
           <div onClick={e=>e.stopPropagation()}
             style={{ background:"#FFFFFF", borderRadius:12, padding:"32px 36px", width:"100%", maxWidth:440, boxShadow:"0 24px 64px rgba(0,0,0,0.18)", position:"relative" }}>
 
@@ -4665,7 +4722,7 @@ export default function App() {
 
         return (
           <div onClick={()=>setCompanyModal(null)}
-            style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+            style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.55)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding: isMobile ? 10 : 20 }}>
             <div onClick={e=>e.stopPropagation()}
               style={{ background:"#FFFFFF", borderRadius:12, width:"100%", maxWidth:620, maxHeight:"90vh", overflowY:"auto", boxShadow:"0 20px 60px rgba(0,0,0,0.3)" }}>
 
@@ -4718,7 +4775,7 @@ export default function App() {
 
               {/* Key stats */}
               <div style={{ padding:"8px 24px 4px" }}>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:0, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
+                <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap:0, border:"1px solid #D8D0C4", borderRadius:8, overflow:"hidden" }}>
                   {[
                     ["Market Cap",  mktCap>0?mktCapStr:(c.marketCap?`$${c.marketCap}`:"—")],
                     ["Shares (Basic)", c.sharesBasic||"—"],
