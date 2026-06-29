@@ -1779,7 +1779,6 @@ export default function App() {
                           );
                         });
                       })()}
-                      <span style={{ fontSize:11, color:"#9A9A8A", marginLeft:"auto" }}>{featuredStory.date}</span>
                     </div>
                     {(featuredStory.image || basinSat) && (
                       <img src={featuredStory.image || basinSat} alt={featuredStory.headline}
@@ -1794,6 +1793,7 @@ export default function App() {
                       {featuredStory.summary}
                     </p>
                     <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                      <span style={{ fontSize:11, color:"#9A9A8A" }}>{featuredStory.date}</span>
                       <span style={{ fontSize:11, color:"#B07A08", fontWeight:600 }}>Read full article →</span>
                     </div>
                   </div>
