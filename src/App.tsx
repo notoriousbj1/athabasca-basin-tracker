@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LineChart, Line, AreaChart, Area, ComposedChart, Legend, ScatterChart, Scatter, ZAxis, ReferenceArea, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LineChart, Line, AreaChart, Area, ComposedChart, Legend, ScatterChart, Scatter, ZAxis, ReferenceArea, CartesianGrid, PieChart, Pie } from "recharts";
 import { Atom, Hammer, Timer, DollarSign, Building2, Zap, Globe, TrendingUp, BarChart3, Newspaper, Landmark, Play, Map, Activity, Flag, Scale, Users, Tag, Radio, Linkedin, Star, Home, ChevronLeft, ChevronRight, Menu } from "lucide-react";
 
 // ─────────────────────────────────────────────
@@ -1772,7 +1772,7 @@ export default function App() {
                 explain:pendingLive?"Companies whose recent news indicates drilling underway or assays pending (last 60 days).":"Holes drilled and awaiting assay results across the basin." },
               { icon:Landmark,  label:"Open Raises",      value:openRaises, decimals:0, spark:spk(7), trend:raisesLive?"live":null, note:raisesLive?"financings active · 60d":null, rows:raisesLive?(()=>newsRows(raiseRe,60)):(()=>FINANCINGS.filter(f=>f.status==="Open").map(f=>({company:f.company,ticker:f.ticker,detail:`${f.type} · ${f.amount}`,co:findCo(f.company,f.ticker)}))),
                 explain:raisesLive?"Companies with financing activity in the news over the last 60 days.":"Currently open financings across the basin." },
-              { icon:DollarSign,label:"Total Market Cap", value:totalMktCap/1e9, prefix:"$", suffix:"B", decimals:1, spark:spk(5), trend:totalMktCap>0?"live":null, up:true, rows:mktCapRows,
+              { icon:DollarSign,label:"Total Market Cap", value:totalMktCap/1e9, prefix:"$", suffix:"B", decimals:1, spark:spk(5), trend:totalMktCap>0?"live":null, up:true, rows:mktCapRows, chart:"donut",
                 explain:"Combined market capitalization of all 21 tracked basin companies, by live price × shares outstanding." },
               { icon:Activity,  label:"Daily Volume",     value:totalVol/1e6, suffix:"M", decimals:1, spark:spk(6), trend:null, dim:totalVol===0, rows:totalVol>0?volRows:null,
                 explain:"Combined shares traded today across tracked companies. Populates when live quotes are available." },
@@ -1783,7 +1783,7 @@ export default function App() {
                   const Icon = c.icon;
                   return (
                     <div key={c.label} className="stat-card"
-                      onClick={()=>setStatModal({ label:c.label, icon:c.icon, explain:c.explain, rows: c.rows ? c.rows() : [], live: c.trend==="live" })}
+                      onClick={()=>setStatModal({ label:c.label, icon:c.icon, explain:c.explain, rows: c.rows ? c.rows() : [], live: c.trend==="live", chart: c.chart })}
                       style={{ background:"linear-gradient(150deg, #FFFFFF 0%, #FFFCF3 100%)", border:"1px solid #E2DCD0", borderRadius:10, padding:"13px 15px", position:"relative", overflow:"hidden", cursor:"pointer", transition:"border-color 0.15s ease, transform 0.15s ease", animationDelay:`${i*60}ms` }}>
                       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
                         <Icon size={16} strokeWidth={2} color="#B07A08"/>
@@ -4573,6 +4573,48 @@ export default function App() {
               </div>
               {/* Rows */}
               <div style={{ overflowY:"auto", padding: rows.length ? "8px 0" : "0" }}>
+                {statModal.chart==="donut" && rows.length>0 && (()=>{
+                  // Top 6 companies by value + grouped "Others"
+                  const withV = rows.filter(r=>r._v!=null && r._v>0);
+                  const total = withV.reduce((s,r)=>s+r._v,0);
+                  const top = withV.slice(0,6);
+                  const restV = withV.slice(6).reduce((s,r)=>s+r._v,0);
+                  const PALETTE = ["#B07A08","#1A5AA8","#0E7C7B","#C9A227","#3B3B7A","#84CC16"];
+                  const data = top.map((r,i)=>({ name:(r.ticker||"").split(".")[0]||r.company, full:r.company, value:r._v, color:PALETTE[i%PALETTE.length] }));
+                  if (restV>0) data.push({ name:"Others", full:`${withV.length-6} more companies`, value:restV, color:"#C8BEA8" });
+                  const fmt = v => v>=1e9?`$${(v/1e9).toFixed(2)}B`:`$${(v/1e6).toFixed(0)}M`;
+                  return (
+                    <div style={{ padding:"6px 16px 14px" }}>
+                      <div style={{ position:"relative", height:210 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={58} outerRadius={92} paddingAngle={1.5} stroke="none">
+                              {data.map((d,i)=><Cell key={i} fill={d.color}/>)}
+                            </Pie>
+                            <Tooltip formatter={(v,n,p)=>[`${fmt(v)} · ${((v/total)*100).toFixed(1)}%`, p?.payload?.full||n]}
+                              contentStyle={{ fontSize:12, borderRadius:8, border:"1px solid #D8D0C4" }}/>
+                          </PieChart>
+                        </ResponsiveContainer>
+                        {/* Center total */}
+                        <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", pointerEvents:"none" }}>
+                          <div style={{ fontSize:9, color:"#9A9A8A", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em" }}>Basin Total</div>
+                          <div style={{ ...MONO, fontSize:20, fontWeight:800, color:"#1A1A14" }}>{fmt(total)}</div>
+                        </div>
+                      </div>
+                      {/* Legend */}
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:"5px 12px", justifyContent:"center", marginTop:10 }}>
+                        {data.map((d,i)=>(
+                          <span key={i} style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:10.5, color:"#6A6A5A" }}>
+                            <span style={{ width:9, height:9, borderRadius:2, background:d.color, display:"inline-block" }}/>
+                            <span style={{ fontWeight:700, color:"#1A1A14" }}>{d.name}</span>
+                            <span style={{ ...MONO, color:"#9A9A8A" }}>{((d.value/total)*100).toFixed(0)}%</span>
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ borderBottom:"1px solid #EDE8E0", margin:"14px -16px 0" }}/>
+                    </div>
+                  );
+                })()}
                 {rows.length ? rows.map((r,i)=>(
                   <div key={i}
                     onClick={()=>{ if(r.co){ setStatModal(null); setCompanyModal(r.co); } }}
