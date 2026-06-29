@@ -44,6 +44,7 @@ Rules:
 - Only include results where a grade in % U3O8 and a thickness in metres are BOTH present.
 - Do NOT invent or estimate numbers. If a release mentions drilling but gives no assay, skip it.
 - confidence: "high" if hole ID + thickness + grade all present; "medium" if thickness + grade but no hole ID; "low" if numbers are approximate or ambiguous.
+- Project name normalization: some projects are referred to by short forms. Treat "RL" or "RL Project" as Skyharbour's "Russell Lake (RL)" project; "PLS" as Fission/PLS "Patterson Lake South"; "PLN" as F3's "Patterson Lake North"; "ACKIO" / "Hook" as Geiger's Hook project. Output the project with its full name where known.
 - If no valid results exist, return {"results": []}.`;
 
 exports.handler = async () => {
