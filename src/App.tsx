@@ -1669,11 +1669,34 @@ export default function App() {
               const NINETY = 90*24*3600*1000, now=Date.now(), byCo={};
               (drillResults||[]).forEach(r=>{
                 const d = r.date ? new Date(r.date) : null;
-                if (!d || isNaN(d.getTime()) || /^\d{4}$/.test(String(r.date)) || now-d.getTime()>NINETY) return;
+                const dated = d && !isNaN(d.getTime()) && !/^\d{4}$/.test(String(r.date));
+                // keep results from the last 90 days (or undated seed results as a fallback)
+                if (dated && now-d.getTime()>NINETY) return;
                 const key = r.company || r.ticker;
-                if (!byCo[key]) byCo[key] = { company:r.company||key, ticker:r.ticker, detail:r.interval_text||r.hole||"Recent result", date:r.date, co:findCo(r.company,r.ticker) };
+                const gt = r.gt != null ? r.gt : (r.thickness_m!=null && r.grade_pct!=null ? +(r.thickness_m*r.grade_pct).toFixed(1) : null);
+                const cur = byCo[key];
+                // keep the best (highest grade×thickness) result per company
+                if (!cur || (gt!=null && (cur._gt==null || gt>cur._gt))) {
+                  const bits = [];
+                  if (r.project) bits.push(r.project);
+                  if (r.interval_text) bits.push(r.interval_text);
+                  else if (r.thickness_m!=null && r.grade_pct!=null) bits.push(`${r.thickness_m} m @ ${r.grade_pct}% U₃O₈`);
+                  if (r.hole) bits.push(`hole ${r.hole}`);
+                  byCo[key] = {
+                    company: r.company || key,
+                    ticker: r.ticker,
+                    detail: bits.join(" · ") || "Recent drill result",
+                    date: dated ? r.date : null,
+                    gt,
+                    _gt: gt,
+                    co: findCo(r.company, r.ticker),
+                  };
+                }
               });
-              return Object.values(byCo);
+              // sort companies by their best grade×thickness, strongest first
+              return Object.values(byCo)
+                .sort((a,b)=> (b._gt||0)-(a._gt||0))
+                .map(({_gt, ...rest})=>rest);
             };
             const projectRows = ()=> COMPANIES.filter(c=>c.projects?.length).map(c=>{
               const names = c.projects.map(p=> typeof p==="string" ? p : (p?.name || "")).filter(Boolean);
@@ -4476,6 +4499,7 @@ export default function App() {
                       <div style={{ display:"flex", alignItems:"baseline", gap:8 }}>
                         <span style={{ fontSize:13.5, fontWeight:700, color:"#1A1A14" }}>{r.company}</span>
                         {r.ticker && <span style={{ ...MONO, fontSize:11, color:"#B07A08", fontWeight:700 }}>{(r.ticker||"").split(".")[0]}</span>}
+                        {r.gt != null && <span style={{ ...S.badge("amber"), fontSize:8.5, fontWeight:700 }} title="Grade × Thickness score">G×T {r.gt}</span>}
                         {r.date && <span style={{ fontSize:10, color:"#9A9A8A", marginLeft:"auto" }}>{r.date}</span>}
                       </div>
                       {r.detail && <div style={{ fontSize:11.5, color:"#6A6A5A", marginTop:3, lineHeight:1.4, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{r.detail}</div>}
