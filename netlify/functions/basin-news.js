@@ -188,21 +188,36 @@ const AGGREGATE_FEEDS = [
 
 // Distinctive name tokens per company for matching headlines (drop generic words).
 function companyMatchers() {
-  const GENERIC = new Set(["energy","uranium","resources","corp","corporation","inc","ltd","mining","metals","group","the","of","and","royalty","3.0"]);
+  // Words too generic to identify a company on their own.
+  const GENERIC = new Set(["energy","uranium","resources","corp","corporation","inc","ltd","mining","metals","group","the","of","and","royalty","3.0","canadian","american","north","standard","global","bay","fortune","uranium's"]);
+  // Tickers that collide with common English words — require a strong ticker context for these.
   return COMPANIES.map(co => {
-    const tokens = co.name.toLowerCase().replace(/[.,]/g," ").split(/\s+/).filter(t=>t && !GENERIC.has(t));
-    return { co, tokens };
+    const tokens = co.name.toLowerCase().replace(/[.,]/g," ").split(/\s+/).filter(t=>t.length>2 && !GENERIC.has(t));
+    return { co, tokens, ticker: (co.ticker||"").split(".")[0].toLowerCase() };
   });
 }
 
+// Common English words that some tickers collide with (FOR, ISO, URC-ish, etc.)
+const TICKER_WORD_COLLISIONS = new Set(["for","iso","atha","appia","cosa","manu","beep","urc","canu","syh","ptu","cvv","dml","nxe","uec","fcu","fuu","aaz","api","stnd","sask"]);
+
 function tagToCompany(text, matchers) {
   const t = (text||"").toLowerCase();
-  for (const { co, tokens } of matchers) {
-    // ticker as a standalone token like "(TSXV: PTU)" or " PTU "
-    const tk = co.ticker.toLowerCase();
-    if (new RegExp(`[(:\\s]${tk}[)\\s,.]`).test(t)) return co;
-    // distinctive name token(s)
-    if (tokens.length && tokens.every(tok => t.includes(tok))) return co;
+  for (const { co, tokens, ticker } of matchers) {
+    // 1) Ticker match — but only in a STRONG context: inside parentheses or after an
+    //    exchange prefix, e.g. "(TSXV: PTU)", "(TSX-V:SYH)", "TSXV: FOR". This avoids
+    //    matching the bare English word (e.g. ticker "FOR" inside a sentence).
+    const tk = ticker.replace(/[^a-z0-9]/g,"");
+    if (tk.length>=2) {
+      const strong = new RegExp(`(?:tsxv?|tsx-v|tsx|cse|nyse|otcqb|otcqx|nasdaq|frankfurt|\\([a-z.\\s-]*)[:\\s-]\\s*${tk}\\b`, "i");
+      if (strong.test(t)) return co;
+    }
+    // 2) Name-token match — require ALL distinctive tokens, and for single-token names
+    //    require at least 4 chars so we don't match on something too generic.
+    if (tokens.length) {
+      const ok = tokens.every(tok => new RegExp(`\\b${tok}\\b`).test(t));
+      const distinctEnough = tokens.length >= 2 || tokens[0].length >= 4;
+      if (ok && distinctEnough) return co;
+    }
   }
   return null;
 }
