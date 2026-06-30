@@ -1890,6 +1890,12 @@ export default function App() {
               ) : (
                 <a href={featuredStory.url||"#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
                   <div>
+                    {(featuredStory.image || basinSat) && (
+                      <img src={featuredStory.image || basinSat} alt={featuredStory.headline}
+                        style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:220 }}
+                        onError={e=>{ if(basinSat && e.target.src!==basinSat){ e.target.src=basinSat; } else { e.target.style.display="none"; } }}
+                      />
+                    )}
                     <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center", flexWrap:"wrap" }}>
                       {featuredStory.source && <span style={{ ...S.badge("blue"), fontSize:10 }}>{featuredStory.source}</span>}
                       {(featuredStory.category||featuredStory.type) && <span style={{ ...S.badge("gray"), fontSize:10 }}>{featuredStory.category||featuredStory.type}</span>}
@@ -1918,12 +1924,6 @@ export default function App() {
                         });
                       })()}
                     </div>
-                    {(featuredStory.image || basinSat) && (
-                      <img src={featuredStory.image || basinSat} alt={featuredStory.headline}
-                        style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:220 }}
-                        onError={e=>{ if(basinSat && e.target.src!==basinSat){ e.target.src=basinSat; } else { e.target.style.display="none"; } }}
-                      />
-                    )}
                     <h2 style={{ ...SERIF, fontSize:22, fontWeight:700, color:"#1A1A14", lineHeight:1.35, margin:"0 0 10px", letterSpacing:"-0.01em" }}>
                       {featuredStory.headline}
                     </h2>
@@ -1948,6 +1948,12 @@ export default function App() {
               <a href="https://www.juniorstocks.com/canada-s-new-nuclear-strategy-the-ground-to-grid-plan-to-power-the-future"
                 target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
                 <div>
+                  <img
+                    src="https://cdn.investor-files.net/medium_hf_20260625_160449_1e560766_4e83_4179_af4b_0b03bac5635e_384a9d1218.png"
+                    alt="Canada nuclear strategy"
+                    style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:220 }}
+                    onError={e=>{ e.target.style.display="none"; }}
+                  />
                   {(()=>{
                     const co = COMPANIES.find(c=>c.ticker==="CCO.TO"||c.ticker==="CCO"||c.altTicker==="CCO");
                     const ch = co ? gCh(co) : null;
@@ -1966,12 +1972,6 @@ export default function App() {
                       </div>
                     );
                   })()}
-                  <img
-                    src="https://cdn.investor-files.net/medium_hf_20260625_160449_1e560766_4e83_4179_af4b_0b03bac5635e_384a9d1218.png"
-                    alt="Canada nuclear strategy"
-                    style={{ width:"100%", borderRadius:8, marginBottom:10, display:"block", objectFit:"cover", maxHeight:220 }}
-                    onError={e=>{ e.target.style.display="none"; }}
-                  />
                   <h2 style={{ ...SERIF, fontSize:20, fontWeight:700, color:"#1A1A14", lineHeight:1.35, margin:"0 0 8px", letterSpacing:"-0.01em" }}>
                     Canada's New Nuclear Strategy: The Ground-to-Grid Plan to Power the Future
                   </h2>
