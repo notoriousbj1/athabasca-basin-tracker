@@ -1366,13 +1366,17 @@ export default function App() {
       const doScroll = () => {
         if (item.target === "top") { window.scrollTo({ top:0, behavior:"smooth" }); return; }
         const el = document.getElementById(item.target);
-        if (el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+        if (!el) return;
+        // On mobile, offset for the sticky top header so the section title isn't hidden behind it.
+        const offset = isMobile ? 76 : 0;
+        const y = el.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top: Math.max(0, y), behavior:"smooth" });
       };
       // if we just switched tabs, wait a tick for the section to render
       if (tab !== "overview") setTimeout(doScroll, 80); else doScroll();
       setActiveSection(item.id);
     }
-  }, [tab]);
+  }, [tab, isMobile]);
 
   // Scroll progress bar: how far down the page the user has scrolled (0–100%).
   // Driven by requestAnimationFrame so updates sync with the paint cycle (smooth, no jank).
