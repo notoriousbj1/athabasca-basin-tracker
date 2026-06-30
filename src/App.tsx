@@ -316,7 +316,7 @@ const FINANCINGS = [
   { company:"IsoEnergy", ticker:"ISO.V", type:"Brokered PP", amount:"$10M CAD", pricePerUnit:"$2.35/sh", units:"4.26M shares", warrants:"None", agents:"Canaccord Genuity", closed:"Mar 2025", purpose:"Hurricane delineation drill program & G&A", status:"Closed" },
   { company:"Skyharbour Resources", ticker:"SYH.V", type:"Non-Brokered PP", amount:"$3.5M CAD", pricePerUnit:"$0.62/unit", units:"5.65M units", warrants:"Full wt @ $0.85 / 24mo", agents:"Company", closed:"Apr 2025", purpose:"Moore Lake drilling, basin exploration", status:"Closed" },
   { company:"F3 Uranium", ticker:"FUU.V", type:"Non-Brokered PP", amount:"$2M CAD", pricePerUnit:"$0.27/unit", units:"7.41M units", warrants:"Full wt @ $0.40 / 18mo", agents:"Company", closed:"In Progress", purpose:"PLN summer 2025 drill program", status:"Open" },
-  { company:"Geiger Energy", ticker:"BEEP.V", type:"Non-Brokered PP", amount:"$6M CAD", pricePerUnit:"$0.10/unit", units:"60M units", warrants:"Full wt @ $0.15 / 12mo", agents:"Company", closed:"2025", purpose:"ACKIO / Aberdeen drill programs", status:"Closed" },
+  { company:"Canadian Uranium", ticker:"CANU.CN", type:"Non-Brokered PP", amount:"$2M CAD", pricePerUnit:"$1.00/unit", units:"2M units", warrants:"½ wt @ $1.50 / 24mo (accel. ≥$2.00)", agents:"Company", closed:"In Progress", purpose:"Athabasca exploration & working capital", status:"Open", url:"https://www.juniorminingnetwork.com/junior-miner-news/press-releases/3274-cse/canu/206046-canadian-uranium-announces-non-brokered-private-placement-of-up-to-2-million.html" },
 ];
 
 const INFLUENCERS = [
@@ -1809,7 +1809,7 @@ export default function App() {
                 // only a real, specific date — skip vague "In Progress"/"2025"
                 closeDate: (f.closed && !/progress|2025|2026|open|tbd/i.test(f.closed)) ? f.closed : null,
                 rStatus: f.status,
-                url: findRaiseUrl(f),
+                url: f.url || findRaiseUrl(f),
                 raise:true,
               })).sort((a,b)=>b._v-a._v);
               const max = rows[0]?._v || 1;
