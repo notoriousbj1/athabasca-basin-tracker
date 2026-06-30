@@ -1596,8 +1596,8 @@ export default function App() {
               )}
               <button onClick={fetchSpot} style={{ ...S.btn("s"), padding:"3px 10px", fontSize:10, marginLeft:"auto" }} disabled={spotLoading}>↻</button>
             </div>
-            <div style={{ ...S.lbl, marginBottom:6, display:"flex", alignItems:"center", gap:8 }}>
-              U₃O₈ SPOT — 6-MONTH PRICE TREND
+            <div style={{ ...S.lbl, marginBottom:6, display:"flex", flexDirection: isMobile?"column":"row", alignItems: isMobile?"flex-start":"center", gap: isMobile?2:8 }}>
+              <span>{isMobile ? "U₃O₈ SPOT — 6-MO TREND" : "U₃O₈ SPOT — 6-MONTH PRICE TREND"}</span>
               {spot.sourceUrl && (
                 <a href={spot.sourceUrl} target="_blank" rel="noopener noreferrer"
                   style={{ fontSize:9, color:"#9A9A8A", fontWeight:500, textDecoration:"none", letterSpacing:"0.04em" }}>
