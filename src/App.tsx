@@ -1362,7 +1362,8 @@ export default function App() {
       return;
     }
     if (item.kind === "scroll") {
-      if (tab !== "overview") setTab("overview");
+      const needTab = tab !== "overview";
+      if (needTab) setTab("overview");
       const doScroll = () => {
         if (item.target === "top") { window.scrollTo({ top:0, behavior:"smooth" }); return; }
         const el = document.getElementById(item.target);
@@ -1372,8 +1373,9 @@ export default function App() {
         const y = el.getBoundingClientRect().top + window.scrollY - offset;
         window.scrollTo({ top: Math.max(0, y), behavior:"smooth" });
       };
-      // if we just switched tabs, wait a tick for the section to render
-      if (tab !== "overview") setTimeout(doScroll, 80); else doScroll();
+      // Defer to next frame so layout is settled; wait longer if we just switched tabs.
+      if (needTab) setTimeout(()=>requestAnimationFrame(doScroll), 90);
+      else requestAnimationFrame(doScroll);
       setActiveSection(item.id);
     }
   }, [tab, isMobile]);
@@ -1618,7 +1620,7 @@ export default function App() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <div style={{ display:"grid", gridTemplateRows:"1fr 1fr 1fr", gridTemplateColumns:"1fr" }}>
+          <div style={{ display:"grid", ...(isMobile ? { gridTemplateColumns:"1fr 1fr 1fr", gridTemplateRows:"1fr", borderTop:"1px solid #D8D0C4" } : { gridTemplateRows:"1fr 1fr 1fr", gridTemplateColumns:"1fr" }) }}>
             {(()=>{
               const currentPrice = spot.price || sparkData[sparkData.length-1]?.price || 79.5;
               const threeMonthPrice = sparkData[Math.floor(sparkData.length/2)]?.price || currentPrice;
@@ -1629,9 +1631,12 @@ export default function App() {
                 ["52-Wk Low",  `$${spot.low52||73}`,   "red"  ],
                 ["Trend",      trendLabel,              trendUp?"green":"red"],
               ].map(([label,val,color],idx,arr)=>(
-                <div key={label} style={{ padding:"12px 16px", borderLeft:"1px solid #D8D0C4", borderBottom:idx<arr.length-1?"1px solid #D8D0C4":"none", display:"flex", flexDirection:"column", justifyContent:"center" }}>
-                  <div style={{ ...S.lbl, marginBottom:4 }}>{label}</div>
-                  <div style={{ ...SERIF, fontSize:20, fontWeight:700, lineHeight:1,
+                <div key={label} style={{ padding: isMobile?"10px 12px":"12px 16px",
+                  borderLeft: isMobile ? (idx>0?"1px solid #D8D0C4":"none") : "1px solid #D8D0C4",
+                  borderBottom: isMobile ? "none" : (idx<arr.length-1?"1px solid #D8D0C4":"none"),
+                  display:"flex", flexDirection:"column", justifyContent:"center", alignItems: isMobile?"center":"flex-start" }}>
+                  <div style={{ ...S.lbl, marginBottom:4, fontSize: isMobile?9:undefined, textAlign:isMobile?"center":"left" }}>{label}</div>
+                  <div style={{ ...SERIF, fontSize: isMobile?17:20, fontWeight:700, lineHeight:1,
                     color:color==="green"?"#1A7A44":"#C01818" }}>{val}</div>
                 </div>
               ));
@@ -4659,7 +4664,7 @@ export default function App() {
                 const Icon = item.Icon;
                 return (
                   <button key={item.id}
-                    onClick={()=>{ setTab("overview"); goToSection(item); }}
+                    onClick={()=>goToSection(item)}
                     style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:2, background: active?"#1A1A14":"transparent", border:"none", borderRadius:18, padding:active?"8px 14px":"8px 12px", cursor:"pointer", transition:"background 0.18s ease" }}>
                     <Icon size={20} strokeWidth={active?2.4:2} color={active?"#FFFFFF":"#6A6A5A"}/>
                     <span style={{ fontSize:8.5, fontWeight:active?800:600, color:active?"#FFFFFF":"#9A9A8A", letterSpacing:"0.02em" }}>{item.label}</span>
