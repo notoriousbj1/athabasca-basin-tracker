@@ -1897,8 +1897,8 @@ export default function App() {
                       />
                     )}
                     <div style={{ display:"flex", gap:6, marginBottom:8, alignItems:"center", flexWrap:"wrap" }}>
-                      {featuredStory.source && <span style={{ ...S.badge("blue"), fontSize:10 }}>{featuredStory.source}</span>}
-                      {(featuredStory.category||featuredStory.type) && <span style={{ ...S.badge("gray"), fontSize:10 }}>{featuredStory.category||featuredStory.type}</span>}
+                      {featuredStory.source && <span style={{ ...S.badge("blue"), fontSize:12, padding:"3px 9px" }}>{featuredStory.source}</span>}
+                      {(featuredStory.category||featuredStory.type) && <span style={{ ...S.badge("gray"), fontSize:12, padding:"3px 9px" }}>{featuredStory.category||featuredStory.type}</span>}
                       {/* Clickable ticker pills for any tracked company mentioned in the story */}
                       {(()=>{
                         const text = `${featuredStory.headline||""} ${featuredStory.summary||""}`.toLowerCase();
@@ -1915,7 +1915,7 @@ export default function App() {
                             <span key={c.id}
                               onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); setCompanyModal(c); }}
                               title={`View ${c.name} profile`}
-                              style={{ ...S.badge(up?"green":"red"), fontSize:10, cursor:"pointer", transition:"filter 0.12s ease, transform 0.12s ease" }}
+                              style={{ ...S.badge(up?"green":"red"), fontSize:12, padding:"3px 9px", cursor:"pointer", transition:"filter 0.12s ease, transform 0.12s ease" }}
                               onMouseEnter={e=>{ e.currentTarget.style.filter="brightness(0.93)"; e.currentTarget.style.transform="translateY(-1px)"; }}
                               onMouseLeave={e=>{ e.currentTarget.style.filter="none"; e.currentTarget.style.transform="none"; }}>
                               {(c.ticker||"").split(".")[0]} {ch!==null ? `${up?"▲":"▼"} ${Math.abs(ch).toFixed(2)}%` : ""}
@@ -1963,12 +1963,12 @@ export default function App() {
                         <span
                           onClick={(e)=>{ if(co){ e.preventDefault(); e.stopPropagation(); setCompanyModal(co); } }}
                           title={co ? `View ${co.name} profile` : undefined}
-                          style={{ ...S.badge(ch!==null?(up?"green":"red"):"amber"), fontSize:10, cursor:co?"pointer":"default", transition:"filter 0.12s ease, transform 0.12s ease" }}
+                          style={{ ...S.badge(ch!==null?(up?"green":"red"):"amber"), fontSize:12, padding:"3px 9px", cursor:co?"pointer":"default", transition:"filter 0.12s ease, transform 0.12s ease" }}
                           onMouseEnter={e=>{ if(co){ e.currentTarget.style.filter="brightness(0.93)"; e.currentTarget.style.transform="translateY(-1px)"; } }}
                           onMouseLeave={e=>{ e.currentTarget.style.filter="none"; e.currentTarget.style.transform="none"; }}>
                           CCO {ch!==null ? `${up?"▲":"▼"} ${Math.abs(ch).toFixed(2)}%` : ""}
                         </span>
-                        <span style={{ ...S.badge("gray"), fontSize:10 }}>News</span>
+                        <span style={{ ...S.badge("gray"), fontSize:12, padding:"3px 9px" }}>News</span>
                       </div>
                     );
                   })()}
