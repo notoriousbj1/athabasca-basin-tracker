@@ -1631,12 +1631,18 @@ export default function App() {
                 ["52-Wk Low",  `$${spot.low52||73}`,   "red"  ],
                 ["Trend",      trendLabel,              trendUp?"green":"red"],
               ].map(([label,val,color],idx,arr)=>(
-                <div key={label} style={{ padding: isMobile?"10px 12px":"12px 16px",
-                  borderLeft: isMobile ? (idx>0?"1px solid #D8D0C4":"none") : "1px solid #D8D0C4",
-                  borderBottom: isMobile ? "none" : (idx<arr.length-1?"1px solid #D8D0C4":"none"),
-                  display:"flex", flexDirection:"column", justifyContent:"center", alignItems: isMobile?"center":"flex-start" }}>
-                  <div style={{ ...S.lbl, marginBottom:4, fontSize: isMobile?9:undefined, textAlign:isMobile?"center":"left" }}>{label}</div>
-                  <div style={{ ...SERIF, fontSize: isMobile?17:20, fontWeight:700, lineHeight:1,
+                <div key={label} style={ isMobile ? {
+                  padding:"10px 12px",
+                  borderLeft: idx>0?"1px solid #D8D0C4":"none",
+                  display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", textAlign:"center"
+                } : {
+                  padding:"12px 16px",
+                  borderLeft:"1px solid #D8D0C4",
+                  borderBottom: idx<arr.length-1?"1px solid #D8D0C4":"none",
+                  display:"flex", flexDirection:"column", justifyContent:"center"
+                }}>
+                  <div style={{ ...S.lbl, marginBottom:4, ...(isMobile?{ fontSize:9 }:{}) }}>{label}</div>
+                  <div style={{ ...SERIF, fontSize: isMobile?16:20, fontWeight:700, lineHeight:1,
                     color:color==="green"?"#1A7A44":"#C01818" }}>{val}</div>
                 </div>
               ));
