@@ -5,6 +5,8 @@ import { Atom, Hammer, Timer, DollarSign, Building2, Zap, Globe, TrendingUp, Bar
 // ─────────────────────────────────────────────
 // COMPANY DATA
 // ─────────────────────────────────────────────
+const LOGO_SRC = "data:image/png;base64,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";
+
 const COMPANIES = [
   {
     id:"cameco", ticker:"CCO.TO", altTicker:"CCJ", name:"Cameco", fullName:"Cameco Corporation",
@@ -4443,33 +4445,42 @@ export default function App() {
 
 
       {/* Sidebar + Content layout */}
-      {/* Mobile hamburger button */}
+      {/* Mobile top header — logo, tagline, date + market status */}
       {isMobile && (
-        <button onClick={()=>setMobileNavOpen(true)}
-          style={{ position:"fixed", top:36, left:10, zIndex:60, width:42, height:42, borderRadius:10, background:"#FFFFFF", border:"1px solid #D8D0C4", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", boxShadow:"0 2px 8px rgba(0,0,0,0.12)" }}
-          aria-label="Open menu">
-          <Menu size={20} color="#1A1A14"/>
-        </button>
-      )}
-
-      {/* Mobile drawer backdrop */}
-      {isMobile && mobileNavOpen && (
-        <div onClick={()=>setMobileNavOpen(false)}
-          style={{ position:"fixed", inset:0, background:"rgba(26,26,20,0.5)", zIndex:55 }}/>
+        <div style={{ position:"sticky", top:0, zIndex:50, background:"#F5F3EE", borderBottom:"1px solid #D8D0C4", padding:"10px 14px 9px" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <img src={LOGO_SRC} alt="logo" style={{ width:34, height:34, objectFit:"contain", flexShrink:0 }}/>
+            <div style={{ minWidth:0, flex:1 }}>
+              <div style={{ fontSize:13, fontWeight:800, color:"#B07A08", letterSpacing:"0.02em", lineHeight:1.05 }}>ATHABASCA BASIN TRACKER</div>
+              <div style={{ fontSize:8.5, color:"#6A6A5A", letterSpacing:"0.04em", textTransform:"uppercase", fontWeight:600, marginTop:1 }}>
+                Uranium Intelligence Dashboard <span style={{ color:"#B07A08", fontWeight:700 }}>by Juniorstocks.com</span>
+              </div>
+            </div>
+          </div>
+          {/* Date + time + market status row */}
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:8 }}>
+            <span style={{ fontSize:10.5, fontWeight:700, color:"#1A1A14" }}>
+              {now.toLocaleDateString(undefined,{ weekday:"short", month:"short", day:"numeric" })}
+            </span>
+            <span style={{ ...MONO, fontSize:10.5, fontWeight:700, color:"#6A6A5A" }}>
+              {now.toLocaleTimeString(undefined,{ hour:"2-digit", minute:"2-digit", second:"2-digit" })}
+            </span>
+            <span style={{ display:"inline-flex", alignItems:"center", gap:5, marginLeft:"auto", padding:"3px 9px", borderRadius:20,
+              background: marketStatus.open ? "#EAF8EF" : "#FBEDED", border:`1px solid ${marketStatus.open ? "#BDE9CC" : "#F1D2D2"}` }}>
+              <span className={marketStatus.open?"stat-live-dot":undefined}
+                style={{ width:6, height:6, borderRadius:"50%", background:marketStatus.open?"#16C44A":"#C01818", display:"inline-block" }}/>
+              <span style={{ fontSize:9, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.05em", color:marketStatus.open?"#16A34A":"#C01818" }}>{marketStatus.label}</span>
+              {marketStatus.detail && <span style={{ fontSize:8, color:"#9A8A6A", fontWeight:600 }}>· {marketStatus.detail}</span>}
+            </span>
+          </div>
+        </div>
       )}
 
       <div style={{ display:"flex", alignItems:"flex-start" }}>
 
-        {/* Collapsible Sidebar (drawer on mobile) */}
-        <aside style={ isMobile ? {
-          position:"fixed", top:0, left:0, height:"100vh", width:268,
-          transform: mobileNavOpen ? "translateX(0)" : "translateX(-100%)",
-          transition:"transform 0.25s ease", zIndex:58,
-          background:"#F5F3EE", borderRight:"1px solid #D8D0C4",
-          overflowY:"auto", overflowX:"hidden", paddingTop:0, paddingBottom:24,
-          display:"flex", flexDirection:"column", gap:2,
-          boxShadow: mobileNavOpen ? "4px 0 24px rgba(0,0,0,0.18)" : "none",
-        } : {
+        {/* Collapsible Sidebar — hidden on mobile (replaced by bottom nav bar) */}
+        {!isMobile && (
+        <aside style={{
           position:"sticky", top:0, alignSelf:"flex-start",
           width: sidebarOpen ? 224 : 60, flexShrink:0,
           height:"100vh", overflowY:"auto", overflowX:"hidden",
@@ -4495,19 +4506,12 @@ export default function App() {
                 Uranium Intelligence<br/>Dashboard <span style={{ color:"#B07A08", fontWeight:700 }}>by Juniorstocks.com</span>
               </div>
             )}
-            {isMobile ? (
-              <button onClick={()=>setMobileNavOpen(false)}
-                title="Close menu"
-                style={{ display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
-                  background:"none", border:"none", cursor:"pointer", color:"#9A9A8A", padding:4, fontSize:22, lineHeight:1 }}>×</button>
-            ) : (
-              <button onClick={()=>setSidebarOpen(o=>!o)}
-                title={sidebarOpen?"Collapse":"Expand"}
-                style={{ display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
-                  background:"none", border:"none", cursor:"pointer", color:"#9A9A8A", padding:4 }}>
-                {sidebarOpen ? <ChevronLeft size={18}/> : <Menu size={18}/>}
-              </button>
-            )}
+            <button onClick={()=>setSidebarOpen(o=>!o)}
+              title={sidebarOpen?"Collapse":"Expand"}
+              style={{ display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+                background:"none", border:"none", cursor:"pointer", color:"#9A9A8A", padding:4 }}>
+              {sidebarOpen ? <ChevronLeft size={18}/> : <Menu size={18}/>}
+            </button>
           </div>
 
           {/* Live date / time / market status */}
@@ -4617,9 +4621,10 @@ export default function App() {
           {/* Spacer to guarantee breathing room below the card when the sidebar scrolls */}
           <div style={{ height:16, flexShrink:0 }} aria-hidden="true"/>
         </aside>
+        )}
 
         {/* Content */}
-        <main style={{ ...S.main, flex:1, minWidth:0, position:"relative", padding: isMobile ? "60px 14px 20px" : S.main.padding, width: isMobile ? "100%" : undefined }}>
+        <main style={{ ...S.main, flex:1, minWidth:0, position:"relative", padding: isMobile ? "8px 14px 90px" : S.main.padding, width: isMobile ? "100%" : undefined }}>
           {/* Scroll progress bar — sticky at top of content, starts where the sidebar ends */}
           <div style={{ position:"sticky", top:0, zIndex:15, height:3, background:"#E8E2D6", margin:"-16px -20px 13px", borderRadius:0 }}>
             <div style={{ height:"100%", width:`${scrollPct}%`, background:"linear-gradient(90deg, #B07A08, #D4A03A)", transition:"width 0.15s ease-out", willChange:"width" }}/>
@@ -4632,6 +4637,35 @@ export default function App() {
           {tab==="politics"   && renderPolitics()}
         </main>
       </div>
+
+      {/* Mobile bottom navigation bar */}
+      {isMobile && (()=>{
+        const BOTTOM_NAV = [
+          { id:"top",          label:"Home",     Icon:Home,       target:"top"          },
+          { id:"sec-featured", label:"Featured", Icon:Star,       target:"sec-featured" },
+          { id:"sec-map",      label:"Map",      Icon:Map,        target:"sec-map"      },
+          { id:"sec-catalyst", label:"Catalyst", Icon:Flag,       target:"sec-catalyst" },
+          { id:"sec-drill",    label:"Drills",   Icon:Hammer,     target:"sec-drill"    },
+        ];
+        return (
+          <div style={{ position:"fixed", left:0, right:0, bottom:0, zIndex:60, display:"flex", justifyContent:"center", padding:"0 12px 12px", pointerEvents:"none" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:2, background:"rgba(255,255,255,0.92)", backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)", border:"1px solid #D8D0C4", borderRadius:26, padding:"6px 8px", boxShadow:"0 6px 24px rgba(26,26,20,0.18)", pointerEvents:"auto" }}>
+              {BOTTOM_NAV.map(item=>{
+                const active = tab==="overview" && activeSection===item.id;
+                const Icon = item.Icon;
+                return (
+                  <button key={item.id}
+                    onClick={()=>{ setTab("overview"); goToSection(item); }}
+                    style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:2, background: active?"#1A1A14":"transparent", border:"none", borderRadius:18, padding:active?"8px 14px":"8px 12px", cursor:"pointer", transition:"background 0.18s ease" }}>
+                    <Icon size={20} strokeWidth={active?2.4:2} color={active?"#FFFFFF":"#6A6A5A"}/>
+                    <span style={{ fontSize:8.5, fontWeight:active?800:600, color:active?"#FFFFFF":"#9A9A8A", letterSpacing:"0.02em" }}>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Footer */}
       <footer style={{ background:"#F5F3EE", borderTop:"1px solid #D8D0C4", padding:"20px 24px", marginTop:8 }}>
