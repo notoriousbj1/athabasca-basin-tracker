@@ -128,12 +128,15 @@ exports.handler = async () => {
       // Prefer the feed-title company (reliable, since each feed is company-specific),
       // then fall back to parsing the headline text.
       const co = companyFromFeed(r.raw_company) || tagToCompany(`${r.raw_company||""} ${r.title}`, matchers);
+      // Only keep news that maps to one of the tracked basin companies — this drops
+      // unrelated releases that come through broad industry feeds (e.g. Westport Fuel).
+      if (!co) continue;
       const d = r.published_at ? new Date(r.published_at) : null;
       out.push({
         headline: cleanTitle(r.title),
         url: r.url,
-        company: co ? co.name : null,
-        ticker:  co ? co.ticker : null,
+        company: co.name,
+        ticker:  co.ticker,
         source:  r.source || "Newswire",
         date: d && !isNaN(d) ? d.toLocaleDateString("en-US",{ month:"short", day:"numeric", year:"numeric" }) : null,
         dateMs: d && !isNaN(d) ? d.getTime() : 0,
