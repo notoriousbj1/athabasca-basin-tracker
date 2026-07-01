@@ -1231,8 +1231,17 @@ export default function App() {
   const fetchNews = useCallback(async () => {
     setNL(true);
     try {
-      const res = await fetch("/.netlify/functions/basin-news");
-      const data = await res.json();
+      // Primary: Supabase-backed news (fed by Zapier). Falls back to the
+      // legacy RSS scraper if the DB endpoint isn't configured/returns nothing.
+      let data = [];
+      try {
+        const res = await fetch("/.netlify/functions/news-db");
+        if (res.ok) data = await res.json();
+      } catch {}
+      if (!Array.isArray(data) || data.length === 0) {
+        const res2 = await fetch("/.netlify/functions/basin-news");
+        if (res2.ok) data = await res2.json();
+      }
       if (Array.isArray(data) && data.length > 0) setNews(data);
     } catch(e) { console.error("News fetch failed", e); }
     setNL(false);
@@ -2158,42 +2167,46 @@ export default function App() {
               </div>
             )}
           </div>
-          {/* Right: News */}
-          <div ref={newsColRef} style={{ ...S.card, marginBottom:0 }}>
-            <div>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-            <div style={{ ...S.lbl, letterSpacing:"0.15em" }}>LATEST RELEASES</div>
-            <button onClick={fetchNews} disabled={newsLoading}
-              style={{ ...S.btn("s"), fontSize:9, padding:"3px 8px" }}>
-              {newsLoading ? "Fetching…" : "↻"}
-            </button>
-          </div>
+          {/* Right: Company News */}
+          <div ref={newsColRef} style={{ ...S.card, marginBottom:0, display:"flex", flexDirection:"column", maxHeight: isMobile ? "none" : 820 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10, flexShrink:0 }}>
+              <div style={{ ...S.lbl, letterSpacing:"0.15em" }}>COMPANY NEWS</div>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                {news.length>0 && <span style={{ fontSize:9, color:"#9A9A8A" }}>{news.length} items</span>}
+                <button onClick={fetchNews} disabled={newsLoading}
+                  style={{ ...S.btn("s"), fontSize:9, padding:"3px 8px" }}>
+                  {newsLoading ? "Fetching…" : "↻"}
+                </button>
+              </div>
+            </div>
           {newsLoading && (
-            <div style={{ fontSize:11, color:"#9A9A8A", padding:"12px 0" }}>Searching for latest releases…</div>
+            <div style={{ fontSize:11, color:"#9A9A8A", padding:"12px 0" }}>Searching for latest news…</div>
           )}
-            {(news.length>0 ? news.slice(0,5) : [
-              { company:"NexGen Energy",  ticker:"NXE",    date:"Jun 9",  headline:"Arrow CNSC Environmental Assessment Advancing — Q4 Decision Expected",  type:"Regulatory",  url:"https://www.newsfilecorp.com" },
-              { company:"IsoEnergy",      ticker:"ISO.V",  date:"Jun 7",  headline:"Hurricane Delineation Complete — Resource Update Due Q3 2025",           type:"Drilling",    url:"https://www.newsfilecorp.com" },
-              { company:"Denison Mines",  ticker:"DML.TO", date:"Jun 5",  headline:"Wheeler River Phoenix ISR Pilot Approval Received",                      type:"Regulatory",  url:"https://www.globenewswire.com" },
-              { company:"Atha Energy",    ticker:"SASK.V", date:"Jun 4",  headline:"CMB 5,000m Summer Campaign Underway",                                    type:"Exploration",  url:"https://www.newsfilecorp.com" },
-              { company:"Skyharbour",     ticker:"SYH.V",  date:"Jun 2",  headline:"Moore Lake Best Hole: 0.62% U₃O₈ / 4.2m at 563m",                      type:"Drilling",    url:"https://www.newsfilecorp.com" },
-            ]).map((n,i)=>{
-              const co=COMPANIES.find(c=>c.ticker===n.ticker||c.altTicker===n.ticker||c.name.toLowerCase().includes((n.company||"").split(" ")[0]?.toLowerCase()));
+            <div style={{ overflowY: isMobile ? "visible" : "auto", flex:1, marginRight:-6, paddingRight:6 }}>
+            {(news.length>0 ? news.slice(0,25) : [
+              { company:"NexGen Energy",  ticker:"NXE",    date:"Jun 9",  headline:"Arrow CNSC Environmental Assessment Advancing — Q4 Decision Expected",  source:"Newsfile",  url:"https://www.newsfilecorp.com" },
+              { company:"IsoEnergy",      ticker:"ISO.V",  date:"Jun 7",  headline:"Hurricane Delineation Complete — Resource Update Due Q3 2025",           source:"Newsfile",    url:"https://www.newsfilecorp.com" },
+              { company:"Denison Mines",  ticker:"DML.TO", date:"Jun 5",  headline:"Wheeler River Phoenix ISR Pilot Approval Received",                      source:"GlobeNewswire",  url:"https://www.globenewswire.com" },
+              { company:"Atha Energy",    ticker:"SASK.V", date:"Jun 4",  headline:"CMB 5,000m Summer Campaign Underway",                                    source:"Newsfile",  url:"https://www.newsfilecorp.com" },
+              { company:"Skyharbour",     ticker:"SYH.V",  date:"Jun 2",  headline:"Moore Lake Best Hole: 0.62% U₃O₈ / 4.2m at 563m",                      source:"Newsfile",    url:"https://www.newsfilecorp.com" },
+            ]).map((n,i,arr)=>{
+              const co=n.ticker ? COMPANIES.find(c=>c.ticker===n.ticker||c.altTicker===n.ticker||(n.company&&c.name.toLowerCase().includes((n.company||"").split(" ")[0]?.toLowerCase()))) : null;
               const ch=co?gCh(co):0, up=ch>=0;
               const hasUrl = n.url && n.url !== "#";
+              const label = n.source || n.type;
               return (
-                <div key={i} style={{ paddingBottom:10, marginBottom:10, borderBottom:"1px solid #D8D0C4" }}>
+                <div key={i} style={{ paddingBottom:10, marginBottom:10, borderBottom:i<arr.length-1?"1px solid #E8E4DE":"none" }}>
                   <div style={{ display:"flex", gap:5, alignItems:"center", marginBottom:5, flexWrap:"wrap" }}>
-                    <span className={up?"up-arrow":""} style={{ fontSize:12, color:up?"#16C44A":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>
-                    <span style={{ fontSize:12, fontWeight:700, color:"#1A1A14" }}>{n.company}</span>
-                    <span style={{ ...MONO, fontSize:10, fontWeight:600, color:co?.color||"#B07A08" }}>{n.ticker}</span>
-                    <span style={{ ...S.badge("gray"), fontSize:9 }}>{n.type}</span>
+                    {co && <span className={up?"up-arrow":""} style={{ fontSize:12, color:up?"#16C44A":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>}
+                    <span style={{ fontSize:12, fontWeight:700, color:"#1A1A14" }}>{n.company || "Uranium sector"}</span>
+                    {n.ticker && <span style={{ ...MONO, fontSize:10, fontWeight:600, color:co?.color||"#B07A08" }}>{n.ticker}</span>}
+                    {label && <span style={{ ...S.badge("gray"), fontSize:8.5 }}>{label}</span>}
                     <span style={{ fontSize:9, color:"#6A6A5A", marginLeft:"auto" }}>{n.date}</span>
                   </div>
                   {hasUrl ? (
                     <a href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none", display:"block" }}>
                       <div style={{ fontSize:12, color:"#1A1A14", lineHeight:1.4, fontWeight:500, marginBottom:4 }}>{n.headline}</div>
-                      <div style={{ fontSize:10, color:"#B07A08", fontWeight:700 }}>Read full release →</div>
+                      <div style={{ fontSize:10, color:"#B07A08", fontWeight:700 }}>Read full story →</div>
                     </a>
                   ) : (
                     <div style={{ fontSize:12, color:"#1A1A14", lineHeight:1.4 }}>{n.headline}</div>
