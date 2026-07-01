@@ -44,20 +44,25 @@ function companyMatchers() {
   return COMPANIES.map(co => {
     const tokens = co.name.toLowerCase().replace(/[.,]/g," ").split(/\s+/)
       .filter(t => t.length > 2 && !GENERIC.has(t));
-    return { co, tokens, tk: (co.ticker||"").toLowerCase() };
+    return { co, tokens, tk: (co.ticker||"").toLowerCase(), fullName: co.name.toLowerCase() };
   });
 }
 
-// Attribute a release to a company by STRONG ticker context or distinctive name tokens.
-// (Same guards we debugged: bare "for" won't match Fortune Bay, "Canadian" won't match CANU.)
+// Attribute a release to a company by STRONG ticker context, full-name phrase,
+// or distinctive name tokens. (Guards: bare "for" won't match Fortune Bay,
+// bare "Canadian" won't match Canadian Uranium — but the FULL name will.)
 function tagToCompany(text, matchers) {
   const t = (text||"").toLowerCase();
-  for (const { co, tokens, tk } of matchers) {
+  for (const { co, tokens, tk, fullName } of matchers) {
+    // 1) Strong ticker context, e.g. "(TSX:NXE)", "CSE: CANU"
     if (tk.length >= 2) {
-      // ticker only counts inside (TSXV: FOR) / "CSE: CANU" style context
       const strong = new RegExp(`(?:tsxv?|tsx-v|tsx|cse|nyse|otcqb|otcqx|nasdaq|frankfurt|\\([a-z.\\s-]*)[:\\s-]\\s*${tk}\\b`, "i");
       if (strong.test(t)) return co;
     }
+    // 2) The full company name appears as a phrase (catches all-generic names
+    //    like "Canadian Uranium" / "Fortune Bay" that have no distinctive token).
+    if (fullName.length >= 6 && t.includes(fullName)) return co;
+    // 3) Distinctive (non-generic) name tokens all present.
     if (tokens.length) {
       const ok = tokens.every(tok => new RegExp(`\\b${tok}\\b`).test(t));
       const distinctEnough = tokens.length >= 2 || tokens[0].length >= 4;
@@ -102,16 +107,32 @@ exports.handler = async () => {
     const seen = new Set();
     const out = [];
 
+    // Given a Google-News feed title like: "NexGen Energy" uranium - Google News
+    // pull out the quoted company name so we can tag it directly.
+    const companyFromFeed = (raw) => {
+      if (!raw) return null;
+      const quoted = raw.match(/"([^"]+)"/);
+      const probe = quoted ? quoted[1] : raw;
+      // match the extracted name against our tracked companies
+      const p = probe.toLowerCase();
+      for (const { co, tokens } of matchers) {
+        if (co.name.toLowerCase() === p) return co;
+        if (tokens.length && tokens.every(t => p.includes(t))) return co;
+      }
+      return null;
+    };
+
     for (const r of rows) {
       if (!r.title || !r.url || seen.has(r.url)) continue;
       seen.add(r.url);
-      // Prefer matching against title + the feed's own company label if present.
-      const co = tagToCompany(`${r.raw_company||""} ${r.title}`, matchers);
+      // Prefer the feed-title company (reliable, since each feed is company-specific),
+      // then fall back to parsing the headline text.
+      const co = companyFromFeed(r.raw_company) || tagToCompany(`${r.raw_company||""} ${r.title}`, matchers);
       const d = r.published_at ? new Date(r.published_at) : null;
       out.push({
-        headline: r.title,
+        headline: cleanTitle(r.title),
         url: r.url,
-        company: co ? co.name : (r.raw_company || null),
+        company: co ? co.name : null,
         ticker:  co ? co.ticker : null,
         source:  r.source || "Newswire",
         date: d && !isNaN(d) ? d.toLocaleDateString("en-US",{ month:"short", day:"numeric", year:"numeric" }) : null,
@@ -141,4 +162,14 @@ exports.handler = async () => {
 
 function cors() {
   return { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" };
+}
+
+// Google News appends " - Publisher" to headlines. Strip the trailing source
+// for a cleaner display (keep the rest of the title intact).
+function cleanTitle(t) {
+  if (!t) return t;
+  // remove a trailing " - Something" only if it looks like a publisher tag (short, no sentence punctuation)
+  const m = t.match(/^(.*)\s[-–]\s([^-–]{2,40})$/);
+  if (m && !/[.!?]$/.test(m[2])) return m[1].trim();
+  return t.trim();
 }
