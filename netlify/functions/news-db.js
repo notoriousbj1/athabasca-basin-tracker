@@ -147,7 +147,7 @@ exports.handler = async () => {
     for (const r of out) {
       const key = r.ticker || r.company || r.headline;
       counts[key] = (counts[key]||0) + 1;
-      if (counts[key] <= 3) balanced.push(r);
+      if (counts[key] <= 5) balanced.push(r);
     }
 
     return {
