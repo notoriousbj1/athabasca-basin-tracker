@@ -2198,8 +2198,18 @@ export default function App() {
                 <div key={i} style={{ paddingBottom:10, marginBottom:10, borderBottom:i<arr.length-1?"1px solid #E8E4DE":"none" }}>
                   <div style={{ display:"flex", gap:5, alignItems:"center", marginBottom:5, flexWrap:"wrap" }}>
                     {co && <span className={up?"up-arrow":""} style={{ fontSize:12, color:up?"#16C44A":"#C01818", fontWeight:900 }}>{up?"▲":"▼"}</span>}
-                    <span style={{ fontSize:12, fontWeight:700, color:"#1A1A14" }}>{n.company || "Uranium sector"}</span>
-                    {n.ticker && <span style={{ ...MONO, fontSize:10, fontWeight:600, color:co?.color||"#B07A08" }}>{n.ticker}</span>}
+                    {co ? (
+                      <span onClick={()=>setCompanyModal(co)}
+                        title={`View ${co.name} profile`}
+                        style={{ display:"inline-flex", alignItems:"center", gap:5, cursor:"pointer", transition:"opacity 0.12s ease" }}
+                        onMouseEnter={e=>{ e.currentTarget.style.opacity="0.65"; }}
+                        onMouseLeave={e=>{ e.currentTarget.style.opacity="1"; }}>
+                        <span style={{ fontSize:12, fontWeight:700, color:"#1A1A14", borderBottom:"1px dotted #C8BEA8" }}>{n.company}</span>
+                        {n.ticker && <span style={{ ...MONO, fontSize:10, fontWeight:600, color:co.color||"#B07A08" }}>{n.ticker}</span>}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize:12, fontWeight:700, color:"#1A1A14" }}>{n.company || "Uranium sector"}</span>
+                    )}
                     {label && <span style={{ ...S.badge("gray"), fontSize:8.5 }}>{label}</span>}
                     <span style={{ fontSize:9, color:"#6A6A5A", marginLeft:"auto" }}>{n.date}</span>
                   </div>
